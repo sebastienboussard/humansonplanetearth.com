@@ -4,11 +4,12 @@ body {
   padding: 0;
   font-family: 'Helvetica Neue', sans-serif;
   background-color: #f0e6d2; /* Light earthy background */
-  color: #3e3e3e; /* Darker text */
+  color: #3e3e3e; /* Dark text */
   height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
+  overflow: hidden;
 }
 
 .container {
@@ -29,10 +30,23 @@ h1 {
   text-decoration: none;
   font-size: 1.5em;
   border-radius: 10px;
-  transition: background-color 0.3s;
+  transition: background-color 0.3s, transform 0.3s;
 }
 
 .links a:hover {
   background-color: #5f4b3b; /* Darker brown on hover */
+  transform: scale(1.05); /* Slight grow effect on hover */
+}
+
+/* Fade-in animation */
+.fade-in {
+  opacity: 0;
+  animation: fadeIn 2s ease forwards;
+}
+
+@keyframes fadeIn {
+  to {
+    opacity: 1;
+  }
 }
 
