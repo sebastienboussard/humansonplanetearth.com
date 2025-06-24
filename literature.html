@@ -3,8 +3,196 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Literature and resources exploring the human experience. Books, videos, and media that challenge and inspire.">
+  <meta name="keywords" content="literature, books, bell hooks, andreas malm, garys economics, human experience, education">
+  <meta name="author" content="Humans on Planet Earth">
+  <meta name="theme-color" content="#8c7b6b">
+  
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://humansonplanetearth.com/literature.html">
+  <meta property="og:title" content="Literature – Humans on Planet Earth">
+  <meta property="og:description" content="Literature and resources exploring the human experience. Books, videos, and media that challenge and inspire.">
+  <meta property="og:image" content="https://humansonplanetearth.com/og-image.jpg">
+
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image">
+  <meta property="twitter:url" content="https://humansonplanetearth.com/literature.html">
+  <meta property="twitter:title" content="Literature – Humans on Planet Earth">
+  <meta property="twitter:description" content="Literature and resources exploring the human experience. Books, videos, and media that challenge and inspire.">
+  <meta property="twitter:image" content="https://humansonplanetearth.com/og-image.jpg">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+  
+  <!-- Web App Manifest -->
+  <link rel="manifest" href="/config/manifest.json">
+  
+  <!-- Preload critical resources -->
+  <link rel="preload" href="assets/css/style.css" as="style">
+  
   <title>Literature – Humans on Planet Earth</title>
   <link rel="stylesheet" href="assets/css/style.css">
+  <style>
+    .literature-container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+    
+    .literature-intro {
+      text-align: center;
+      margin-bottom: 50px;
+      color: var(--text-medium);
+      font-size: 1.1rem;
+      line-height: 1.6;
+    }
+    
+    .literature-section {
+      margin-bottom: 60px;
+    }
+    
+    .section-title {
+      color: var(--primary-dark);
+      font-size: 2rem;
+      margin-bottom: 30px;
+      text-align: center;
+      border-bottom: 3px solid var(--primary-color);
+      padding-bottom: 15px;
+    }
+    
+    .resource-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 30px;
+      margin-bottom: 40px;
+    }
+    
+    .resource-card {
+      background-color: var(--background-white);
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      transition: var(--transition);
+      border-left: 5px solid var(--primary-color);
+    }
+    
+    .resource-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+    
+    .resource-content {
+      padding: 25px;
+    }
+    
+    .resource-title {
+      color: var(--primary-dark);
+      font-size: 1.3rem;
+      margin: 0 0 10px 0;
+      font-weight: 600;
+    }
+    
+    .resource-author {
+      color: var(--primary-color);
+      font-size: 1rem;
+      margin: 0 0 15px 0;
+      font-style: italic;
+    }
+    
+    .resource-description {
+      color: var(--text-medium);
+      line-height: 1.6;
+      margin-bottom: 20px;
+    }
+    
+    .resource-link {
+      display: inline-block;
+      background-color: var(--primary-color);
+      color: white;
+      text-decoration: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      transition: var(--transition);
+      font-weight: 500;
+    }
+    
+    .resource-link:hover,
+    .resource-link:focus {
+      background-color: var(--primary-dark);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow);
+      outline: none;
+    }
+    
+    .resource-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 15px;
+      padding-top: 15px;
+      border-top: 1px solid var(--border-color);
+      font-size: 0.9rem;
+      color: var(--text-medium);
+    }
+    
+    .resource-type {
+      background-color: var(--background-hover);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+    
+    .resource-type.book {
+      background-color: #e8f4f8;
+      color: #2c5aa0;
+    }
+    
+    .resource-type.video {
+      background-color: #ffe8e8;
+      color: #c53030;
+    }
+    
+    .youtube-embed {
+      position: relative;
+      width: 100%;
+      height: 0;
+      padding-bottom: 56.25%; /* 16:9 aspect ratio */
+      margin-bottom: 20px;
+    }
+    
+    .youtube-embed iframe {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border-radius: 8px;
+    }
+    
+    @media (max-width: 768px) {
+      .literature-container {
+        padding: 20px 15px;
+      }
+      
+      .resource-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+      }
+      
+      .resource-content {
+        padding: 20px;
+      }
+      
+      .section-title {
+        font-size: 1.5rem;
+      }
+    }
+  </style>
 </head>
 <body class="blog">
   <header class="sticky-header fade-in">
@@ -17,9 +205,102 @@
     </nav>
   </header>
 
-  <main class="blog-container">
-    <p class="intro">Coming soon... A collection of literature that explores the human experience.</p>
-    
+  <main class="literature-container">
+    <p class="literature-intro fade-in">
+      A curated collection of books, videos, and media that challenge our understanding of humanity, 
+      society, and the systems that shape our world. These resources inspire reflection and action.
+    </p>
+
+    <section class="literature-section fade-in">
+      <h2 class="section-title">Books</h2>
+      <div class="resource-grid">
+        <article class="resource-card">
+          <div class="resource-content">
+            <h3 class="resource-title">The Will to Change</h3>
+            <p class="resource-author">by bell hooks</p>
+            <p class="resource-description">
+              A powerful exploration of masculinity and the ways men can embrace feminism and emotional growth. 
+              hooks challenges traditional gender roles and offers a vision for healthier, more authentic male identity.
+            </p>
+            <a href="https://www.goodreads.com/book/show/17607.The_Will_to_Change" 
+               class="resource-link" 
+               target="_blank" 
+               rel="noopener noreferrer">
+              Learn More
+            </a>
+            <div class="resource-meta">
+              <span class="resource-type book">Book</span>
+              <span>Feminism • Masculinity • Social Change</span>
+            </div>
+          </div>
+        </article>
+
+        <article class="resource-card">
+          <div class="resource-content">
+            <h3 class="resource-title">How to Blow Up a Pipeline</h3>
+            <p class="resource-author">by Andreas Malm</p>
+            <p class="resource-description">
+              A provocative argument for climate activism and the necessity of direct action in the face of 
+              environmental crisis. Malm examines the history of social movements and their strategies for change.
+            </p>
+            <a href="https://www.goodreads.com/book/show/55612347-how-to-blow-up-a-pipeline" 
+               class="resource-link" 
+               target="_blank" 
+               rel="noopener noreferrer">
+              Learn More
+            </a>
+            <div class="resource-meta">
+              <span class="resource-type book">Book</span>
+              <span>Climate Justice • Activism • Social Movements</span>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="literature-section fade-in">
+      <h2 class="section-title">Videos</h2>
+      <div class="resource-grid">
+        <article class="resource-card">
+          <div class="resource-content">
+            <h3 class="resource-title">Gary's Economics</h3>
+            <p class="resource-author">YouTube Channel</p>
+            <p class="resource-description">
+              Educational content that breaks down complex economic concepts and challenges mainstream 
+              economic narratives. Gary provides accessible explanations of how economic systems work 
+              and their impact on society.
+            </p>
+            <a href="https://www.youtube.com/@garyseconomics" 
+               class="resource-link" 
+               target="_blank" 
+               rel="noopener noreferrer">
+              Watch on YouTube
+            </a>
+            <div class="resource-meta">
+              <span class="resource-type video">Video</span>
+              <span>Economics • Education • Social Analysis</span>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="literature-section fade-in">
+      <h2 class="section-title">Featured Video</h2>
+      <div class="youtube-embed">
+        <iframe 
+          src="https://www.youtube.com/embed/pUKaB4P5Qns" 
+          title="Gary's Economics - Understanding Economic Systems" 
+          frameborder="0" 
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+          allowfullscreen>
+        </iframe>
+      </div>
+      <p style="text-align: center; color: var(--text-medium); font-style: italic;">
+        Gary's Economics - Understanding Economic Systems and Their Impact on Society
+      </p>
+    </section>
+
     <nav class="back-link">
       <a href="/">← Back to Home</a>
     </nav>
