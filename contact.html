@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Get in touch with Humans on Planet Earth. Share your thoughts, questions, or collaborate with us.">
+  <meta name="keywords" content="contact, get in touch, humans on planet earth, collaboration">
+  <meta name="author" content="Humans on Planet Earth">
+  <meta name="theme-color" content="#8c7b6b">
+  
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://humansonplanetearth.com/contact.html">
+  <meta property="og:title" content="Contact – Humans on Planet Earth">
+  <meta property="og:description" content="Get in touch with Humans on Planet Earth. Share your thoughts, questions, or collaborate with us.">
+  <meta property="og:image" content="https://humansonplanetearth.com/og-image.jpg">
+
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image">
+  <meta property="twitter:url" content="https://humansonplanetearth.com/contact.html">
+  <meta property="twitter:title" content="Contact – Humans on Planet Earth">
+  <meta property="twitter:description" content="Get in touch with Humans on Planet Earth. Share your thoughts, questions, or collaborate with us.">
+  <meta property="twitter:image" content="https://humansonplanetearth.com/og-image.jpg">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+  
+  <!-- Web App Manifest -->
+  <link rel="manifest" href="/config/manifest.json">
+  
+  <!-- Preload critical resources -->
+  <link rel="preload" href="assets/css/style.css" as="style">
+  
+  <title>Contact – Humans on Planet Earth</title>
+  <link rel="stylesheet" href="assets/css/style.css">
+  <style>
+    .contact-container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+    
+    .contact-intro {
+      text-align: center;
+      margin-bottom: 50px;
+      color: var(--text-medium);
+      font-size: 1.1rem;
+      line-height: 1.6;
+    }
+    
+    .contact-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+      margin-bottom: 50px;
+    }
+    
+    .contact-info {
+      background-color: var(--background-white);
+      padding: 30px;
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow);
+    }
+    
+    .contact-info h3 {
+      color: var(--primary-dark);
+      margin-bottom: 20px;
+      font-size: 1.3rem;
+    }
+    
+    .contact-method {
+      margin-bottom: 20px;
+      padding: 15px;
+      background-color: var(--background-hover);
+      border-radius: 8px;
+      border-left: 4px solid var(--primary-color);
+    }
+    
+    .contact-method h4 {
+      color: var(--primary-dark);
+      margin: 0 0 8px 0;
+      font-size: 1.1rem;
+    }
+    
+    .contact-method p {
+      margin: 0;
+      color: var(--text-medium);
+    }
+    
+    .contact-form {
+      background-color: var(--background-white);
+      padding: 30px;
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow);
+    }
+    
+    .form-group {
+      margin-bottom: 20px;
+    }
+    
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--primary-dark);
+      font-weight: 500;
+    }
+    
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid var(--border-color);
+      border-radius: 6px;
+      font-size: 1rem;
+      font-family: inherit;
+      background-color: white;
+      transition: var(--transition);
+      box-sizing: border-box;
+    }
+    
+    .form-group input:focus,
+    .form-group textarea:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 3px rgba(140, 123, 107, 0.1);
+    }
+    
+    .form-group textarea {
+      min-height: 120px;
+      resize: vertical;
+    }
+    
+    .form-group.required label::after {
+      content: " *";
+      color: #e74c3c;
+    }
+    
+    .submit-btn {
+      background-color: var(--primary-color);
+      color: white;
+      padding: 15px 30px;
+      border: none;
+      border-radius: var(--border-radius);
+      font-size: 1.1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: var(--transition);
+      width: 100%;
+    }
+    
+    .submit-btn:hover,
+    .submit-btn:focus {
+      background-color: var(--primary-dark);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow);
+      outline: none;
+    }
+    
+    .submit-btn:disabled {
+      background-color: var(--border-color);
+      cursor: not-allowed;
+      transform: none;
+    }
+    
+    .form-note {
+      margin-top: 20px;
+      padding: 15px;
+      background-color: var(--background-hover);
+      border-radius: 8px;
+      font-size: 0.9rem;
+      color: var(--text-medium);
+      text-align: center;
+    }
+    
+    @media (max-width: 768px) {
+      .contact-grid {
+        grid-template-columns: 1fr;
+        gap: 30px;
+      }
+      
+      .contact-container {
+        padding: 20px 15px;
+      }
+      
+      .contact-info,
+      .contact-form {
+        padding: 20px;
+      }
+    }
+  </style>
+</head>
+<body class="blog">
+  <header class="sticky-header fade-in">
+    <h1>Contact</h1>
+    <nav>
+      <a href="/">Home</a>
+      <a href="/blog.html">Thoughts</a>
+      <a href="/literature.html">Literature</a>
+      <a href="/contact.html" aria-current="page">Contact</a>
+    </nav>
+  </header>
+
+  <main class="contact-container">
+    <p class="contact-intro fade-in">
+      Have thoughts to share? Questions about humanity? Want to collaborate? 
+      We'd love to hear from you. Every human perspective adds to our collective understanding.
+    </p>
+
+    <div class="contact-grid fade-in">
+      <div class="contact-info">
+        <h3>Get in Touch</h3>
+        
+        <div class="contact-method">
+          <h4>Email</h4>
+          <p>hello@humansonplanetearth.com</p>
+        </div>
+        
+        <div class="contact-method">
+          <h4>Response Time</h4>
+          <p>We typically respond within 24-48 hours</p>
+        </div>
+        
+        <div class="contact-method">
+          <h4>Collaboration</h4>
+          <p>Open to guest posts, partnerships, and meaningful discussions</p>
+        </div>
+        
+        <div class="contact-method">
+          <h4>Mission</h4>
+          <p>To help humans live their best human experience through education, reflection, and connection</p>
+        </div>
+      </div>
+
+      <div class="contact-form">
+        <h3>Send a Message</h3>
+        <form id="contactForm" action="#" method="POST">
+          <div class="form-group required">
+            <label for="name">Name</label>
+            <input type="text" id="name" name="name" required aria-describedby="name-help">
+          </div>
+          
+          <div class="form-group required">
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" required aria-describedby="email-help">
+          </div>
+          
+          <div class="form-group">
+            <label for="subject">Subject</label>
+            <select id="subject" name="subject">
+              <option value="">Select a topic...</option>
+              <option value="general">General Inquiry</option>
+              <option value="collaboration">Collaboration</option>
+              <option value="guest-post">Guest Post</option>
+              <option value="feedback">Feedback</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          
+          <div class="form-group required">
+            <label for="message">Message</label>
+            <textarea id="message" name="message" required aria-describedby="message-help" placeholder="Share your thoughts, questions, or ideas..."></textarea>
+          </div>
+          
+          <button type="submit" class="submit-btn" id="submitBtn">
+            Send Message
+          </button>
+        </form>
+        
+        <div class="form-note">
+          <p>Your privacy is important to us. We'll never share your information with third parties.</p>
+        </div>
+      </div>
+    </div>
+
+    <nav class="back-link">
+      <a href="/">← Back to Home</a>
+    </nav>
+  </main>
+  
+  <script src="assets/js/script.js"></script>
+  <script>
+    // Contact form handling
+    document.getElementById('contactForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      const submitBtn = document.getElementById('submitBtn');
+      const originalText = submitBtn.textContent;
+      
+      // Show loading state
+      submitBtn.textContent = 'Sending...';
+      submitBtn.disabled = true;
+      
+      // Simulate form submission (replace with actual form handling)
+      setTimeout(() => {
+        alert('Thank you for your message! We\'ll get back to you soon.');
+        this.reset();
+        submitBtn.textContent = originalText;
+        submitBtn.disabled = false;
+      }, 2000);
+    });
+    
+    // Form validation
+    const requiredFields = document.querySelectorAll('.form-group.required input, .form-group.required textarea');
+    requiredFields.forEach(field => {
+      field.addEventListener('blur', function() {
+        if (!this.value.trim()) {
+          this.style.borderColor = '#e74c3c';
+        } else {
+          this.style.borderColor = '#e0d0c0';
+        }
+      });
+    });
+  </script>
+</body>
+</html> 

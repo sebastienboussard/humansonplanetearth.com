@@ -1,13 +1,14 @@
 const CACHE_NAME = 'hope-v1';
 const urlsToCache = [
   '/',
-  '/style.css',
-  '/script.js',
+  '/assets/css/style.css',
+  '/assets/js/script.js',
   '/blog.html',
   '/literature.html',
+  '/contact.html',
   '/blog/why-we-listen.html',
   '/blog/the-picky-activist.html',
-  '/manifest.json'
+  '/config/manifest.json'
 ];
 
 // Install event - cache resources
