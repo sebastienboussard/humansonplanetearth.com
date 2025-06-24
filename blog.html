@@ -3,37 +3,74 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Blog – Humans on Planet Earth</title>
+  <meta name="description" content="Reflections, questions, and stories from Humans On Planet Earth. Explore human thoughts and experiences.">
+  <meta name="keywords" content="human thoughts, philosophy, human experience, blog, reflections">
+  <meta name="author" content="Humans on Planet Earth">
+  <meta name="theme-color" content="#8c7b6b">
+  
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://humansonplanetearth.com/blog.html">
+  <meta property="og:title" content="Human Thoughts – Humans on Planet Earth">
+  <meta property="og:description" content="Reflections, questions, and stories from Humans On Planet Earth.">
+  <meta property="og:image" content="https://humansonplanetearth.com/og-image.jpg">
+
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image">
+  <meta property="twitter:url" content="https://humansonplanetearth.com/blog.html">
+  <meta property="twitter:title" content="Human Thoughts – Humans on Planet Earth">
+  <meta property="twitter:description" content="Reflections, questions, and stories from Humans On Planet Earth.">
+  <meta property="twitter:image" content="https://humansonplanetearth.com/og-image.jpg">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+  
+  <!-- Web App Manifest -->
+  <link rel="manifest" href="/manifest.json">
+  
+  <!-- Preload critical resources -->
+  <link rel="preload" href="style.css" as="style">
+  
+  <title>Human Thoughts – Humans on Planet Earth</title>
   <link rel="stylesheet" href="style.css">
 </head>
-<body class ="blog">
+<body class="blog">
   <header class="sticky-header fade-in">
     <h1>Human Thoughts</h1>
+    <nav>
+      <a href="/">Home</a>
+      <a href="/blog.html" aria-current="page">Thoughts</a>
+      <a href="/literature.html">Literature</a>
+    </nav>
   </header>
 
-  <div class="blog-container">
-    <p class="intro">Reflections, questions, and stories from Humans On Planet Earth. /n HOPE! </p>
+  <main class="blog-container">
+    <p class="intro">Reflections, questions, and stories from Humans On Planet Earth. HOPE!</p>
 
-    <div class="blog-list fade-in">
-      <div class="blog-post">
+    <section class="blog-list fade-in">
+      <article class="blog-post">
         <a href="blog/why-we-listen.html">
-          <h2>Humanities Greatest Weapon</h2>
-          <p>To find humanitiy's greatest weapon, look no further than what's gatekept by the Elite</p>
+          <h2>Humanity's Greatest Weapon</h2>
+          <p>To find humanity's greatest weapon, look no further than what's gatekept by the Elite</p>
         </a>
-      </div>
+      </article>
 
-      <div class="blog-post">
-        <a href="blog/the-first-human.html">
+      <article class="blog-post">
+        <a href="blog/the-picky-activist.html">
           <h2>The Picky Activist</h2>
-          <p>You can't pick and choose which injustices matter, but you can prioritize your battles"</p>
+          <p>You can't pick and choose which injustices matter, but you can prioritize your battles</p>
         </a>
-      </div>
-    </div>
+      </article>
+    </section>
 
-    <div class="back-link">
+    <nav class="back-link">
       <a href="/">← Back to Home</a>
-    </div>
-  </div>
+    </nav>
+  </main>
+  <script src="script.js"></script>
 </body>
 </html>
 

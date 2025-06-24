@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Page not found - Humans on Planet Earth">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Page Not Found – Humans on Planet Earth</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .error-container {
+      text-align: center;
+      padding: 60px 20px;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    
+    .error-code {
+      font-size: 8rem;
+      color: var(--primary-color);
+      margin: 0;
+      font-weight: 300;
+      opacity: 0.7;
+    }
+    
+    .error-message {
+      font-size: 1.5rem;
+      color: var(--text-dark);
+      margin: 20px 0 40px;
+    }
+    
+    .error-description {
+      color: var(--text-medium);
+      margin-bottom: 40px;
+      line-height: 1.6;
+    }
+    
+    .error-links {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      align-items: center;
+    }
+    
+    .error-links a {
+      display: inline-block;
+      padding: 12px 24px;
+      background-color: var(--primary-color);
+      color: white;
+      text-decoration: none;
+      border-radius: var(--border-radius);
+      transition: var(--transition);
+      border: 2px solid transparent;
+    }
+    
+    .error-links a:hover,
+    .error-links a:focus {
+      background-color: var(--primary-dark);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow);
+      outline: none;
+    }
+    
+    .error-links a.secondary {
+      background-color: transparent;
+      color: var(--primary-dark);
+      border-color: var(--primary-color);
+    }
+    
+    .error-links a.secondary:hover,
+    .error-links a.secondary:focus {
+      background-color: var(--primary-color);
+      color: white;
+    }
+  </style>
+</head>
+<body class="blog">
+  <header class="sticky-header fade-in">
+    <h1>Humans on Planet Earth</h1>
+  </header>
+
+  <main class="error-container">
+    <h1 class="error-code fade-in">404</h1>
+    <h2 class="error-message fade-in">Page Not Found</h2>
+    <p class="error-description fade-in">
+      The page you're looking for doesn't exist. Perhaps it was moved, deleted, or you entered the wrong URL.
+    </p>
+    
+    <nav class="error-links fade-in">
+      <a href="/">← Back to Home</a>
+      <a href="/blog.html" class="secondary">Browse Thoughts</a>
+      <a href="/literature.html" class="secondary">Explore Literature</a>
+    </nav>
+  </main>
+  
+  <script src="script.js"></script>
+</body>
+</html> 

@@ -1,0 +1,27 @@
+{
+  "name": "Humans on Planet Earth",
+  "short_name": "HOPE",
+  "description": "Help humans live the best human experience. Education is Power.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f0e6d2",
+  "theme_color": "#8c7b6b",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon-16x16.png",
+      "sizes": "16x16",
+      "type": "image/png"
+    },
+    {
+      "src": "/favicon-32x32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ]
+} 
