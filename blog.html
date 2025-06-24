@@ -36,6 +36,151 @@
   
   <title>Human Thoughts – Humans on Planet Earth</title>
   <link rel="stylesheet" href="assets/css/style.css">
+  <style>
+    .blog-header {
+      text-align: center;
+      margin-bottom: 40px;
+      padding: 30px;
+      background-color: var(--background-white);
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow);
+    }
+    
+    .blog-header h2 {
+      color: var(--primary-dark);
+      margin-bottom: 15px;
+      font-size: 1.8rem;
+    }
+    
+    .blog-header p {
+      color: var(--text-medium);
+      font-size: 1.1rem;
+      line-height: 1.6;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    
+    .new-post-section {
+      background-color: var(--background-hover);
+      padding: 25px;
+      border-radius: var(--border-radius);
+      margin-bottom: 40px;
+      border-left: 5px solid var(--primary-color);
+    }
+    
+    .new-post-section h3 {
+      color: var(--primary-dark);
+      margin-bottom: 15px;
+      font-size: 1.3rem;
+    }
+    
+    .new-post-steps {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+      margin-top: 20px;
+    }
+    
+    .step {
+      background-color: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .step-number {
+      background-color: var(--primary-color);
+      color: white;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+    
+    .step h4 {
+      color: var(--primary-dark);
+      margin-bottom: 8px;
+      font-size: 1.1rem;
+    }
+    
+    .step p {
+      color: var(--text-medium);
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+    
+    .template-link {
+      display: inline-block;
+      background-color: var(--primary-color);
+      color: white;
+      text-decoration: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      margin-top: 15px;
+      transition: var(--transition);
+      font-weight: 500;
+    }
+    
+    .template-link:hover,
+    .template-link:focus {
+      background-color: var(--primary-dark);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow);
+      outline: none;
+    }
+    
+    .blog-stats {
+      display: flex;
+      justify-content: center;
+      gap: 30px;
+      margin-bottom: 30px;
+      flex-wrap: wrap;
+    }
+    
+    .stat {
+      text-align: center;
+      padding: 15px;
+      background-color: var(--background-white);
+      border-radius: 8px;
+      min-width: 120px;
+    }
+    
+    .stat-number {
+      font-size: 2rem;
+      font-weight: bold;
+      color: var(--primary-color);
+      display: block;
+    }
+    
+    .stat-label {
+      color: var(--text-medium);
+      font-size: 0.9rem;
+      margin-top: 5px;
+    }
+    
+    @media (max-width: 768px) {
+      .new-post-steps {
+        grid-template-columns: 1fr;
+      }
+      
+      .blog-stats {
+        gap: 15px;
+      }
+      
+      .stat {
+        min-width: 100px;
+        padding: 10px;
+      }
+      
+      .stat-number {
+        font-size: 1.5rem;
+      }
+    }
+  </style>
 </head>
 <body class="blog">
   <header class="sticky-header fade-in">
@@ -49,9 +194,63 @@
   </header>
 
   <main class="blog-container">
-    <p class="intro">Reflections, questions, and stories from Humans On Planet Earth. HOPE!</p>
+    <div class="blog-header fade-in">
+      <h2>Reflections & Stories</h2>
+      <p>
+        A collection of thoughts, questions, and stories that explore what it means to be human. 
+        Each post is a window into the human experience, inviting reflection and conversation.
+      </p>
+    </div>
+
+    <div class="blog-stats fade-in">
+      <div class="stat">
+        <span class="stat-number">2</span>
+        <span class="stat-label">Posts</span>
+      </div>
+      <div class="stat">
+        <span class="stat-number">∞</span>
+        <span class="stat-label">Possibilities</span>
+      </div>
+    </div>
+
+    <div class="new-post-section fade-in">
+      <h3>📝 Want to Add a New Post?</h3>
+      <p>Creating a new blog post is simple. Here's how:</p>
+      
+      <div class="new-post-steps">
+        <div class="step">
+          <div class="step-number">1</div>
+          <h4>Copy Template</h4>
+          <p>Use our blog template as a starting point for your new post.</p>
+        </div>
+        
+        <div class="step">
+          <div class="step-number">2</div>
+          <h4>Write Content</h4>
+          <p>Replace the placeholder text with your thoughts, stories, or reflections.</p>
+        </div>
+        
+        <div class="step">
+          <div class="step-number">3</div>
+          <h4>Add to List</h4>
+          <p>Add your new post to this page and update the sitemap.</p>
+        </div>
+        
+        <div class="step">
+          <div class="step-number">4</div>
+          <h4>Publish</h4>
+          <p>Upload your files and your new post is live!</p>
+        </div>
+      </div>
+      
+      <a href="/blog-template.html" class="template-link" target="_blank">
+        📄 Open Blog Template
+      </a>
+    </div>
 
     <section class="blog-list fade-in">
+      <h3 style="text-align: center; color: var(--primary-dark); margin-bottom: 30px;">Latest Posts</h3>
+      
       <article class="blog-post">
         <a href="blog/why-we-listen.html">
           <h2>Humanity's Greatest Weapon</h2>
