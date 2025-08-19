@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Create Blog Post – Humans on Planet Earth</title>
+  <link rel="stylesheet" href="assets/css/style.css">
+  <style>
+    .creator-container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+    
+    .creator-header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+    
+    .form-group {
+      margin-bottom: 20px;
+    }
+    
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--primary-dark);
+      font-weight: 500;
+    }
+    
+    .form-group input,
+    .form-group textarea {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid var(--border-color);
+      border-radius: 6px;
+      font-size: 1rem;
+      font-family: inherit;
+      background-color: white;
+      transition: var(--transition);
+      box-sizing: border-box;
+    }
+    
+    .form-group input:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 3px rgba(140, 123, 107, 0.1);
+    }
+    
+    .form-group textarea {
+      min-height: 300px;
+      resize: vertical;
+      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+      font-size: 14px;
+    }
+    
+    .generate-btn {
+      background-color: var(--primary-color);
+      color: white;
+      padding: 15px 30px;
+      border: none;
+      border-radius: var(--border-radius);
+      font-size: 1.1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: var(--transition);
+      width: 100%;
+      margin-bottom: 20px;
+    }
+    
+    .generate-btn:hover,
+    .generate-btn:focus {
+      background-color: var(--primary-dark);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow);
+      outline: none;
+    }
+    
+    .output-section {
+      margin-top: 40px;
+      padding: 20px;
+      background-color: var(--background-hover);
+      border-radius: var(--border-radius);
+      border-left: 5px solid var(--primary-color);
+    }
+    
+    .output-content {
+      background-color: white;
+      padding: 20px;
+      border-radius: 6px;
+      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+      font-size: 14px;
+      white-space: pre-wrap;
+      overflow-x: auto;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    
+    .copy-btn {
+      background-color: #27ae60;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 15px;
+      transition: var(--transition);
+    }
+    
+    .copy-btn:hover {
+      background-color: #219a52;
+    }
+    
+    .instructions {
+      background-color: var(--background-white);
+      padding: 20px;
+      border-radius: var(--border-radius);
+      margin-bottom: 30px;
+    }
+    
+    .instructions h3 {
+      color: var(--primary-dark);
+      margin-bottom: 15px;
+    }
+    
+    .instructions ol {
+      color: var(--text-medium);
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body class="blog">
+  <header class="sticky-header fade-in">
+    <h1>Create Blog Post</h1>
+    <nav>
+      <a href="/">Home</a>
+      <a href="/blog.html">Thoughts</a>
+      <a href="/literature.html">Literature</a>
+      <a href="/contact.html">Contact</a>
+    </nav>
+  </header>
+
+  <main class="creator-container">
+    <div class="creator-header fade-in">
+      <h2>📝 Blog Post Creator</h2>
+      <p>Create a new text-based blog post with ease</p>
+    </div>
+
+    <div class="instructions fade-in">
+      <h3>How to Use:</h3>
+      <ol>
+        <li>Fill out the form below with your post details</li>
+        <li>Click "Generate Blog Post" to create the text file content</li>
+        <li>Copy the generated content</li>
+        <li>Save it as a .txt file in the posts/ folder</li>
+        <li>Add the filename to blog-parser.js postFiles array</li>
+        <li>Refresh your blog page to see the new post!</li>
+      </ol>
+    </div>
+
+    <form id="postForm" class="fade-in">
+      <div class="form-group">
+        <label for="title">Post Title</label>
+        <input type="text" id="title" required placeholder="e.g., The Nature of Human Connection">
+      </div>
+
+      <div class="form-group">
+        <label for="slug">URL Slug</label>
+        <input type="text" id="slug" required placeholder="e.g., nature-of-human-connection">
+      </div>
+
+      <div class="form-group">
+        <label for="date">Date</label>
+        <input type="text" id="date" required placeholder="e.g., March 15, 2025">
+      </div>
+
+      <div class="form-group">
+        <label for="description">Description</label>
+        <input type="text" id="description" required placeholder="Brief description for the blog list">
+      </div>
+
+      <div class="form-group">
+        <label for="tags">Tags (comma-separated)</label>
+        <input type="text" id="tags" placeholder="e.g., philosophy, humanity, connection">
+      </div>
+
+      <div class="form-group">
+        <label for="content">Content (use ## for headers, **bold**, *italic*, > for quotes, - for lists)</label>
+        <textarea id="content" required placeholder="Write your blog post content here...
+
+## Main Section
+
+Your thoughts and ideas go here. You can use:
+
+- **Bold text** for emphasis
+- *Italic text* for subtle emphasis
+- ## Headers for sections
+- ### Subheaders for subsections
+- > Blockquotes for important thoughts
+- - Lists like this one
+
+## Another Section
+
+Continue your post..."></textarea>
+      </div>
+
+      <button type="submit" class="generate-btn">Generate Blog Post</button>
+    </form>
+
+    <div id="outputSection" class="output-section" style="display: none;">
+      <h3>Generated Blog Post Content:</h3>
+      <div id="outputContent" class="output-content"></div>
+      <button id="copyBtn" class="copy-btn">Copy to Clipboard</button>
+      <div style="margin-top: 15px; color: var(--text-medium); font-size: 0.9rem;">
+        <strong>Next steps:</strong>
+        <ol style="margin-top: 10px;">
+          <li>Save this content as <code id="filename"></code> in the posts/ folder</li>
+          <li>Add '<code id="filenameJs"></code>' to the postFiles array in assets/js/blog-parser.js</li>
+          <li>Refresh your blog page</li>
+        </ol>
+      </div>
+    </div>
+
+    <nav class="back-link">
+      <a href="/blog.html">← Back to Thoughts</a>
+    </nav>
+  </main>
+
+  <script>
+    // Auto-generate slug from title
+    document.getElementById('title').addEventListener('input', function() {
+      const title = this.value;
+      const slug = title.toLowerCase()
+        .replace(/[^a-z0-9\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '');
+      document.getElementById('slug').value = slug;
+    });
+
+    // Set current date
+    document.getElementById('date').value = new Date().toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+
+    // Form submission
+    document.getElementById('postForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      const title = document.getElementById('title').value;
+      const slug = document.getElementById('slug').value;
+      const date = document.getElementById('date').value;
+      const description = document.getElementById('description').value;
+      const tags = document.getElementById('tags').value;
+      const content = document.getElementById('content').value;
+
+      const blogPost = `---
+title: ${title}
+date: ${date}
+slug: ${slug}
+description: ${description}
+tags: ${tags}
+---
+
+${content}`;
+
+      document.getElementById('outputContent').textContent = blogPost;
+      document.getElementById('filename').textContent = `${slug}.txt`;
+      document.getElementById('filenameJs').textContent = `${slug}.txt`;
+      document.getElementById('outputSection').style.display = 'block';
+      
+      // Scroll to output
+      document.getElementById('outputSection').scrollIntoView({ behavior: 'smooth' });
+    });
+
+    // Copy to clipboard
+    document.getElementById('copyBtn').addEventListener('click', function() {
+      const content = document.getElementById('outputContent').textContent;
+      navigator.clipboard.writeText(content).then(() => {
+        this.textContent = 'Copied!';
+        setTimeout(() => {
+          this.textContent = 'Copy to Clipboard';
+        }, 2000);
+      });
+    });
+  </script>
+</body>
+</html> 

@@ -238,32 +238,16 @@
 
       <div class="contact-form">
         <h3>Send a Message</h3>
-        <form id="contactForm" action="#" method="POST">
+        <form id="contactForm">
           <div class="form-group required">
-            <label for="name">Name</label>
-            <input type="text" id="name" name="name" required aria-describedby="name-help">
-          </div>
-          
-          <div class="form-group required">
-            <label for="email">Email</label>
-            <input type="email" id="email" name="email" required aria-describedby="email-help">
-          </div>
-          
-          <div class="form-group">
-            <label for="subject">Subject</label>
-            <select id="subject" name="subject">
-              <option value="">Select a topic...</option>
-              <option value="general">General Inquiry</option>
-              <option value="collaboration">Collaboration</option>
-              <option value="guest-post">Guest Post</option>
-              <option value="feedback">Feedback</option>
-              <option value="other">Other</option>
-            </select>
-          </div>
-          
-          <div class="form-group required">
-            <label for="message">Message</label>
-            <textarea id="message" name="message" required aria-describedby="message-help" placeholder="Share your thoughts, questions, or ideas..."></textarea>
+            <label for="message">Your Message</label>
+            <textarea 
+              id="message" 
+              name="message" 
+              required 
+              placeholder="Share your thoughts, questions, or ideas about humanity, education, or anything else on your mind..."
+              rows="8"
+            ></textarea>
           </div>
           
           <button type="submit" class="submit-btn" id="submitBtn">
@@ -272,7 +256,16 @@
         </form>
         
         <div class="form-note">
-          <p>Your privacy is important to us. We'll never share your information with third parties.</p>
+          <p>Messages are stored locally and will be visible to the site owner when they visit this page.</p>
+        </div>
+        
+        <!-- Admin section (only visible when accessing with ?admin=true) -->
+        <div id="adminSection" style="display: none; margin-top: 40px; padding: 20px; background: var(--background-hover); border-radius: 8px;">
+          <h3>📬 Messages</h3>
+          <div id="messagesList"></div>
+          <button onclick="clearMessages()" style="background: #e74c3c; color: white; border: none; padding: 10px 20px; border-radius: 6px; margin-top: 15px; cursor: pointer;">
+            Clear All Messages
+          </button>
         </div>
       </div>
     </div>
@@ -284,9 +277,12 @@
   
   <script src="assets/js/script.js"></script>
   <script>
-    // Contact form handling
+    // Contact form handling with local storage
     document.getElementById('contactForm').addEventListener('submit', function(e) {
       e.preventDefault();
+      
+      const message = document.getElementById('message').value.trim();
+      if (!message) return;
       
       const submitBtn = document.getElementById('submitBtn');
       const originalText = submitBtn.textContent;
@@ -295,25 +291,76 @@
       submitBtn.textContent = 'Sending...';
       submitBtn.disabled = true;
       
-      // Simulate form submission (replace with actual form handling)
+      // Store message locally
+      const messages = JSON.parse(localStorage.getItem('contactMessages') || '[]');
+      const newMessage = {
+        id: Date.now(),
+        message: message,
+        timestamp: new Date().toLocaleString(),
+        userAgent: navigator.userAgent.substring(0, 100) // Basic info for context
+      };
+      
+      messages.unshift(newMessage); // Add to beginning
+      localStorage.setItem('contactMessages', JSON.stringify(messages));
+      
+      // Simulate sending delay
       setTimeout(() => {
-        alert('Thank you for your message! We\'ll get back to you soon.');
+        alert('Thank you for your message! It has been received.');
         this.reset();
         submitBtn.textContent = originalText;
         submitBtn.disabled = false;
-      }, 2000);
+        
+        // Update admin view if visible
+        if (document.getElementById('adminSection').style.display !== 'none') {
+          displayMessages();
+        }
+      }, 1000);
     });
     
-    // Form validation
-    const requiredFields = document.querySelectorAll('.form-group.required input, .form-group.required textarea');
-    requiredFields.forEach(field => {
-      field.addEventListener('blur', function() {
-        if (!this.value.trim()) {
-          this.style.borderColor = '#e74c3c';
-        } else {
-          this.style.borderColor = '#e0d0c0';
-        }
-      });
+    // Admin functionality
+    function displayMessages() {
+      const messages = JSON.parse(localStorage.getItem('contactMessages') || '[]');
+      const messagesList = document.getElementById('messagesList');
+      
+      if (messages.length === 0) {
+        messagesList.innerHTML = '<p style="color: var(--text-medium); font-style: italic;">No messages yet.</p>';
+        return;
+      }
+      
+      messagesList.innerHTML = messages.map(msg => `
+        <div style="background: white; padding: 15px; margin-bottom: 15px; border-radius: 8px; border-left: 4px solid var(--primary-color);">
+          <div style="font-size: 0.9rem; color: var(--text-medium); margin-bottom: 10px;">
+            ${msg.timestamp}
+          </div>
+          <div style="white-space: pre-wrap; line-height: 1.5;">
+            ${msg.message}
+          </div>
+        </div>
+      `).join('');
+    }
+    
+    function clearMessages() {
+      if (confirm('Are you sure you want to clear all messages? This cannot be undone.')) {
+        localStorage.removeItem('contactMessages');
+        displayMessages();
+      }
+    }
+    
+    // Check for admin access
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('admin') === 'true') {
+      document.getElementById('adminSection').style.display = 'block';
+      displayMessages();
+    }
+    
+    // Simple form validation
+    const messageField = document.getElementById('message');
+    messageField.addEventListener('blur', function() {
+      if (!this.value.trim()) {
+        this.style.borderColor = '#e74c3c';
+      } else {
+        this.style.borderColor = '#e0d0c0';
+      }
     });
   </script>
 </body>

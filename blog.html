@@ -113,26 +113,6 @@
       line-height: 1.5;
     }
     
-    .template-link {
-      display: inline-block;
-      background-color: var(--primary-color);
-      color: white;
-      text-decoration: none;
-      padding: 12px 24px;
-      border-radius: 6px;
-      margin-top: 15px;
-      transition: var(--transition);
-      font-weight: 500;
-    }
-    
-    .template-link:hover,
-    .template-link:focus {
-      background-color: var(--primary-dark);
-      transform: translateY(-2px);
-      box-shadow: var(--shadow);
-      outline: none;
-    }
-    
     .blog-stats {
       display: flex;
       justify-content: center;
@@ -159,6 +139,95 @@
     .stat-label {
       color: var(--text-medium);
       font-size: 0.9rem;
+      margin-top: 5px;
+    }
+
+    .post-meta {
+      margin-top: 10px;
+      font-size: 0.9rem;
+      color: var(--text-medium);
+    }
+
+    .post-tags {
+      margin-left: 10px;
+      font-style: italic;
+    }
+
+    .tag {
+      background-color: var(--background-hover);
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      margin-right: 5px;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 60px;
+      color: var(--text-medium);
+      font-style: italic;
+    }
+
+    .upload-btn {
+      display: inline-block;
+      background-color: #27ae60;
+      color: white;
+      text-decoration: none;
+      padding: 12px 24px;
+      border: none;
+      border-radius: var(--border-radius);
+      transition: var(--transition);
+      font-weight: 500;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+
+    .upload-btn:hover,
+    .upload-btn:focus {
+      background-color: #219a52;
+      transform: translateY(-2px);
+      box-shadow: var(--shadow);
+      outline: none;
+    }
+
+    .upload-btn:disabled {
+      background-color: #95a5a6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .template-link {
+      display: inline-block;
+      background-color: var(--primary-color);
+      color: white;
+      text-decoration: none;
+      padding: 12px 24px;
+      border-radius: var(--border-radius);
+      transition: var(--transition);
+      font-weight: 500;
+    }
+
+    .template-link:hover,
+    .template-link:focus {
+      background-color: var(--primary-dark);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow);
+      outline: none;
+    }
+
+    .upload-badge {
+      background-color: #27ae60;
+      color: white;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      margin-left: 10px;
+    }
+
+    .upload-info {
+      color: #27ae60;
+      font-size: 0.9rem;
+      font-style: italic;
       margin-top: 5px;
     }
     
@@ -194,83 +263,13 @@
   </header>
 
   <main class="blog-container">
-    <div class="blog-header fade-in">
-      <h2>Reflections & Stories</h2>
-      <p>
-        A collection of thoughts, questions, and stories that explore what it means to be human. 
-        Each post is a window into the human experience, inviting reflection and conversation.
-      </p>
+    <div class="loading">
+      Loading thoughts...
     </div>
-
-    <div class="blog-stats fade-in">
-      <div class="stat">
-        <span class="stat-number">2</span>
-        <span class="stat-label">Posts</span>
-      </div>
-      <div class="stat">
-        <span class="stat-number">∞</span>
-        <span class="stat-label">Possibilities</span>
-      </div>
-    </div>
-
-    <div class="new-post-section fade-in">
-      <h3>📝 Want to Add a New Post?</h3>
-      <p>Creating a new blog post is simple. Here's how:</p>
-      
-      <div class="new-post-steps">
-        <div class="step">
-          <div class="step-number">1</div>
-          <h4>Copy Template</h4>
-          <p>Use our blog template as a starting point for your new post.</p>
-        </div>
-        
-        <div class="step">
-          <div class="step-number">2</div>
-          <h4>Write Content</h4>
-          <p>Replace the placeholder text with your thoughts, stories, or reflections.</p>
-        </div>
-        
-        <div class="step">
-          <div class="step-number">3</div>
-          <h4>Add to List</h4>
-          <p>Add your new post to this page and update the sitemap.</p>
-        </div>
-        
-        <div class="step">
-          <div class="step-number">4</div>
-          <h4>Publish</h4>
-          <p>Upload your files and your new post is live!</p>
-        </div>
-      </div>
-      
-      <a href="/blog-template.html" class="template-link" target="_blank">
-        📄 Open Blog Template
-      </a>
-    </div>
-
-    <section class="blog-list fade-in">
-      <h3 style="text-align: center; color: var(--primary-dark); margin-bottom: 30px;">Latest Posts</h3>
-      
-      <article class="blog-post">
-        <a href="blog/why-we-listen.html">
-          <h2>Humanity's Greatest Weapon</h2>
-          <p>To find humanity's greatest weapon, look no further than what's gatekept by the Elite</p>
-        </a>
-      </article>
-
-      <article class="blog-post">
-        <a href="blog/the-picky-activist.html">
-          <h2>The Picky Activist</h2>
-          <p>You can't pick and choose which injustices matter, but you can prioritize your battles</p>
-        </a>
-      </article>
-    </section>
-
-    <nav class="back-link">
-      <a href="/">← Back to Home</a>
-    </nav>
   </main>
+  
   <script src="assets/js/script.js"></script>
+  <script src="assets/js/blog-parser.js"></script>
 </body>
 </html>
 

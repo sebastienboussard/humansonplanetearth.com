@@ -115,6 +115,19 @@ h3 {
   opacity: 0.9;
 }
 
+.redirect-notice {
+  font-size: 1rem;
+  color: var(--primary-color);
+  margin-top: 20px;
+  font-style: italic;
+  opacity: 0.8;
+}
+
+#countdown {
+  font-weight: bold;
+  color: var(--primary-dark);
+}
+
 /* Navigation */
 .links {
   display: flex;

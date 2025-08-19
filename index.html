@@ -34,6 +34,9 @@
   <!-- Preload critical resources -->
   <link rel="preload" href="assets/css/style.css" as="style">
   
+  <!-- Redirect to blog after 2 seconds -->
+  <meta http-equiv="refresh" content="2;url=/blog.html">
+  
   <title>Humans on Planet Earth</title>
   <link rel="stylesheet" href="assets/css/style.css">
 </head>
@@ -50,6 +53,9 @@
         This space exists to share thoughts, stories, and resources that help us all 
         navigate the beautiful complexity of being human on this planet.
       </p>
+      <p class="redirect-notice">
+        Redirecting to Thoughts in <span id="countdown">2</span> seconds...
+      </p>
     </section>
     
     <nav class="links fade-in">
@@ -60,6 +66,27 @@
     </nav>
   </main>
   <script src="assets/js/script.js"></script>
+  <script>
+    // Countdown timer for redirect
+    let seconds = 2;
+    const countdownEl = document.getElementById('countdown');
+    
+    const timer = setInterval(() => {
+      seconds--;
+      if (countdownEl) {
+        countdownEl.textContent = seconds;
+      }
+      if (seconds <= 0) {
+        clearInterval(timer);
+        window.location.href = '/blog.html';
+      }
+    }, 1000);
+    
+    // Allow users to skip the redirect by clicking Thoughts
+    document.querySelector('a[href="/blog.html"]').addEventListener('click', () => {
+      clearInterval(timer);
+    });
+  </script>
 </body>
 </html>
 
