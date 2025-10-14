@@ -34,9 +34,6 @@
   <!-- Preload critical resources -->
   <link rel="preload" href="assets/css/style.css" as="style">
   
-  <!-- Redirect to blog after 2 seconds -->
-  <meta http-equiv="refresh" content="2;url=/blog.html">
-  
   <title>Humans on Planet Earth</title>
   <link rel="stylesheet" href="assets/css/style.css">
 </head>
@@ -53,40 +50,77 @@
         This space exists to share thoughts, stories, and resources that help us all 
         navigate the beautiful complexity of being human on this planet.
       </p>
-      <p class="redirect-notice">
-        Redirecting to Thoughts in <span id="countdown">2</span> seconds...
-      </p>
     </section>
     
-    <nav class="links fade-in">
-      <a href="/blog.html">Thoughts</a>
-      <a href="/humans.html">Humans</a>
-      <a href="/literature.html">Literature</a>
-      <a href="/contact.html">Contact</a>
-    </nav>
+    <section class="explore-section fade-in">
+      <h2 style="text-align: center; color: var(--primary-dark); margin-bottom: 30px; font-size: 1.8rem;">Explore</h2>
+      <nav class="links">
+        <a href="/blog.html" class="nav-card">
+          <h3>Thoughts</h3>
+          <p>Read reflections and stories about the human experience</p>
+        </a>
+        <a href="/literature.html" class="nav-card">
+          <h3>Literature</h3>
+          <p>Discover books and videos that challenge and inspire</p>
+        </a>
+        <a href="/contact.html" class="nav-card">
+          <h3>Contact</h3>
+          <p>Get in touch and join the conversation</p>
+        </a>
+      </nav>
+    </section>
   </main>
   <script src="assets/js/script.js"></script>
-  <script>
-    // Countdown timer for redirect
-    let seconds = 2;
-    const countdownEl = document.getElementById('countdown');
+  <style>
+    .explore-section {
+      margin-top: 50px;
+    }
     
-    const timer = setInterval(() => {
-      seconds--;
-      if (countdownEl) {
-        countdownEl.textContent = seconds;
-      }
-      if (seconds <= 0) {
-        clearInterval(timer);
-        window.location.href = '/blog.html';
-      }
-    }, 1000);
+    .nav-card {
+      display: block;
+      background: var(--background-white);
+      padding: 25px;
+      border-radius: var(--border-radius);
+      text-decoration: none;
+      color: inherit;
+      transition: var(--transition);
+      box-shadow: var(--shadow);
+      border-left: 5px solid var(--primary-color);
+    }
     
-    // Allow users to skip the redirect by clicking Thoughts
-    document.querySelector('a[href="/blog.html"]').addEventListener('click', () => {
-      clearInterval(timer);
-    });
-  </script>
+    .nav-card:hover,
+    .nav-card:focus {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+      outline: none;
+    }
+    
+    .nav-card h3 {
+      color: var(--primary-dark);
+      margin: 0 0 10px 0;
+      font-size: 1.5rem;
+    }
+    
+    .nav-card p {
+      color: var(--text-medium);
+      margin: 0;
+      line-height: 1.6;
+    }
+    
+    .links {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 25px;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+    
+    @media (max-width: 768px) {
+      .links {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
 </body>
 </html>
 
