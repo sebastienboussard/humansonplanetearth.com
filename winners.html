@@ -1,0 +1,851 @@
+---
+layout: default
+title: "Winners Gallery"
+description: "Celebrate the most compelling essays from our monthly challenges. Discover award-winning perspectives on humanity through powerful words."
+permalink: /winners/
+---
+
+<div class="container">
+  <header class="page-header">
+    <h1>Winners Gallery</h1>
+    <p class="page-description">
+      Celebrating the most compelling, thought-provoking essays from our monthly challenges. 
+      These winning pieces represent the pinnacle of insight, creativity, and human connection.
+    </p>
+  </header>
+
+  <!-- Winners Stats -->
+  <section class="winners-stats">
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-number">{{ site.essays | where: "winner", true | size | default: 0 }}</div>
+        <div class="stat-label">Total Winners</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">{{ site.essays | where: "winner", true | map: "word" | uniq | size | default: 0 }}</div>
+        <div class="stat-label">Words Explored</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">{{ site.essays | where: "winner", true | map: "author" | uniq | size | default: 0 }}</div>
+        <div class="stat-label">Winning Authors</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">{{ site.essays | where: "winner", true | first.date | date: "%Y" | default: "2024" }}</div>
+        <div class="stat-label">Since</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Current Winner Spotlight -->
+  {% assign latest_winner = site.essays | where: "winner", true | sort: 'date' | reverse | first %}
+  {% if latest_winner %}
+  <section class="current-winner">
+    <div class="winner-spotlight">
+      <div class="spotlight-badge">
+        <span class="badge-icon">🏆</span>
+        <span class="badge-text">Latest Winner</span>
+      </div>
+      
+      <div class="spotlight-content">
+        <div class="winner-word">{{ latest_winner.word | upcase }}</div>
+        <h2 class="winner-title">
+          <a href="{{ latest_winner.url }}">{{ latest_winner.title }}</a>
+        </h2>
+        <div class="winner-meta">
+          <span class="winner-author">by {{ latest_winner.author }}</span>
+          <span class="winner-date">{{ latest_winner.date | date: "%B %Y" }}</span>
+        </div>
+        <p class="winner-excerpt">
+          {{ latest_winner.excerpt | strip_html | truncate: 200 }}
+        </p>
+        <div class="winner-actions">
+          <a href="{{ latest_winner.url }}" class="btn btn-primary">Read Full Essay</a>
+          <a href="/essays/?filter=word:{{ latest_winner.word | downcase }}" class="btn btn-secondary">
+            View All "{{ latest_winner.word }}" Essays
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- Winners Archive -->
+  <section class="winners-archive">
+    <div class="archive-header">
+      <h2>All Winners</h2>
+      <div class="archive-controls">
+        <select id="year-filter">
+          <option value="">All Years</option>
+          {% assign winner_years = site.essays | where: "winner", true | map: "date" | date: "%Y" | uniq | sort | reverse %}
+          {% for year in winner_years %}
+            <option value="{{ year }}">{{ year }}</option>
+          {% endfor %}
+        </select>
+        
+        <select id="word-filter">
+          <option value="">All Words</option>
+          {% assign winner_words = site.essays | where: "winner", true | map: "word" | uniq | sort %}
+          {% for word in winner_words %}
+            <option value="{{ word | downcase }}">{{ word | upcase }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <div class="winners-timeline">
+      {% assign winners = site.essays | where: "winner", true | sort: 'date' | reverse %}
+      {% for winner in winners %}
+        <article class="winner-entry" 
+                 data-year="{{ winner.date | date: '%Y' }}"
+                 data-word="{{ winner.word | downcase }}">
+          
+          <div class="winner-card">
+            <div class="winner-header">
+              <div class="winner-badge">
+                <span class="trophy-icon">🏆</span>
+                <span class="winner-label">Winner</span>
+              </div>
+              <div class="winner-date-badge">{{ winner.date | date: "%b %Y" }}</div>
+            </div>
+            
+            <div class="winner-main">
+              <div class="winner-word-display">{{ winner.word | upcase }}</div>
+              <h3 class="winner-title">
+                <a href="{{ winner.url }}">{{ winner.title }}</a>
+              </h3>
+              <div class="winner-author">by {{ winner.author }}</div>
+              
+              <p class="winner-excerpt">
+                {{ winner.excerpt | strip_html | truncate: 150 }}
+              </p>
+              
+              <div class="winner-stats">
+                {% assign word_essays = site.essays | where: "word", winner.word %}
+                <div class="stat-item">
+                  <span class="stat-value">{{ word_essays | size }}</span>
+                  <span class="stat-label">total essays</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-value">{{ winner.date | date: "%d" }}</span>
+                  <span class="stat-label">day announced</span>
+                </div>
+              </div>
+            </div>
+            
+            <div class="winner-actions">
+              <a href="{{ winner.url }}" class="read-essay-btn">Read Essay</a>
+              <a href="/essays/?filter=word:{{ winner.word | downcase }}" class="view-all-btn">
+                View All "{{ winner.word }}" Essays
+              </a>
+            </div>
+          </div>
+        </article>
+      {% else %}
+        <div class="no-winners">
+          <div class="no-winners-content">
+            <h3>No Winners Yet</h3>
+            <p>Our first monthly challenge is underway! Check back soon to see our inaugural winner.</p>
+            <div class="no-winners-actions">
+              <a href="/submit/" class="btn btn-primary">Submit an Essay</a>
+              <a href="/essays/" class="btn btn-secondary">Read Current Essays</a>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <!-- Hall of Fame -->
+  {% assign repeat_winners = site.essays | where: "winner", true | group_by: "author" | where_exp: "group", "group.items.size > 1" %}
+  {% if repeat_winners.size > 0 %}
+  <section class="hall-of-fame">
+    <h2>Hall of Fame</h2>
+    <p class="hall-description">Authors who have won multiple monthly challenges</p>
+    
+    <div class="hall-grid">
+      {% for author_group in repeat_winners %}
+        <div class="hall-member">
+          <div class="member-avatar">
+            <span class="member-initial">{{ author_group.name | slice: 0 | upcase }}</span>
+          </div>
+          <div class="member-info">
+            <h3 class="member-name">{{ author_group.name }}</h3>
+            <div class="member-wins">{{ author_group.items.size }} wins</div>
+            <div class="member-words">
+              {% for essay in author_group.items %}
+                <span class="word-badge">{{ essay.word | upcase }}</span>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- Monthly Breakdown -->
+  <section class="monthly-breakdown">
+    <h2>Winners by Month</h2>
+    <div class="breakdown-grid">
+      {% assign winners_by_month = site.essays | where: "winner", true | group_by_exp: "essay", "essay.date | date: '%Y-%m'" | sort: "name" | reverse %}
+      {% for month_group in winners_by_month %}
+        {% assign month_date = month_group.name | append: "-01" | date: "%B %Y" %}
+        <div class="month-card">
+          <h3 class="month-title">{{ month_date }}</h3>
+          {% for winner in month_group.items %}
+            <div class="month-winner">
+              <div class="winner-word-small">{{ winner.word | upcase }}</div>
+              <div class="winner-title-small">
+                <a href="{{ winner.url }}">{{ winner.title }}</a>
+              </div>
+              <div class="winner-author-small">{{ winner.author }}</div>
+            </div>
+          {% endfor %}
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <!-- Call to Action -->
+  <section class="winners-cta">
+    <div class="cta-card">
+      <h2>Join Our Winners</h2>
+      <p>
+        Every month brings a new opportunity to share your unique perspective and potentially 
+        join our gallery of winning essays. Your voice matters, and your story deserves to be heard.
+      </p>
+      <div class="cta-actions">
+        <a href="/submit/" class="btn btn-primary">Submit Your Essay</a>
+        <a href="/about/" class="btn btn-secondary">Learn How It Works</a>
+      </div>
+    </div>
+  </section>
+</div>
+
+<style>
+/* Winners Gallery Styles */
+.page-header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.page-description {
+  font-size: 1.1rem;
+  color: var(--text-medium);
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.winners-stats {
+  margin-bottom: 3rem;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+}
+
+.stat-card {
+  background: var(--background-white);
+  padding: 2rem;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+  text-align: center;
+  transition: var(--transition);
+  border-left: 4px solid var(--secondary-color);
+}
+
+.stat-card:hover {
+  box-shadow: var(--shadow-hover);
+  transform: translateY(-2px);
+}
+
+.stat-number {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: var(--secondary-color);
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.stat-label {
+  color: var(--text-medium);
+  font-weight: 500;
+  text-transform: uppercase;
+  font-size: 0.9rem;
+  letter-spacing: 0.5px;
+}
+
+.current-winner {
+  margin-bottom: 4rem;
+}
+
+.winner-spotlight {
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+  color: white;
+  padding: 3rem;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-hover);
+  position: relative;
+  overflow: hidden;
+}
+
+.winner-spotlight::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 100%;
+  height: 100%;
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="2"/></svg>');
+  opacity: 0.3;
+}
+
+.spotlight-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+  font-weight: bold;
+}
+
+.badge-icon {
+  font-size: 1.5rem;
+}
+
+.winner-word {
+  font-size: 1.2rem;
+  font-weight: bold;
+  opacity: 0.9;
+  margin-bottom: 0.5rem;
+}
+
+.winner-title {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  position: relative;
+  z-index: 1;
+}
+
+.winner-title a {
+  color: white;
+  text-decoration: none;
+}
+
+.winner-title a:hover {
+  text-decoration: underline;
+}
+
+.winner-meta {
+  display: flex;
+  gap: 2rem;
+  margin-bottom: 1.5rem;
+  opacity: 0.9;
+}
+
+.winner-excerpt {
+  font-size: 1.1rem;
+  line-height: 1.7;
+  margin-bottom: 2rem;
+  opacity: 0.95;
+}
+
+.winner-actions {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.winners-archive {
+  margin-bottom: 4rem;
+}
+
+.archive-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 3rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.archive-controls {
+  display: flex;
+  gap: 1rem;
+}
+
+.archive-controls select {
+  padding: 0.5rem;
+  border: 2px solid var(--border-color);
+  border-radius: var(--border-radius);
+  background: white;
+  font-size: 0.9rem;
+  min-width: 120px;
+}
+
+.winners-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.winner-entry {
+  opacity: 1;
+  transition: var(--transition);
+}
+
+.winner-entry.hidden {
+  display: none;
+}
+
+.winner-card {
+  background: var(--background-white);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+  padding: 2rem;
+  transition: var(--transition);
+  border-left: 5px solid var(--secondary-color);
+}
+
+.winner-card:hover {
+  box-shadow: var(--shadow-hover);
+  transform: translateY(-2px);
+}
+
+.winner-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.winner-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--secondary-color);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: var(--border-radius);
+  font-weight: bold;
+  font-size: 0.9rem;
+}
+
+.trophy-icon {
+  font-size: 1.1rem;
+}
+
+.winner-date-badge {
+  background: var(--background-hover);
+  color: var(--text-dark);
+  padding: 0.5rem 1rem;
+  border-radius: var(--border-radius);
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.winner-main {
+  margin-bottom: 2rem;
+}
+
+.winner-word-display {
+  font-size: 1.1rem;
+  color: var(--primary-color);
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+
+.winner-title {
+  font-size: 1.8rem;
+  margin-bottom: 0.5rem;
+}
+
+.winner-title a {
+  color: var(--text-dark);
+  text-decoration: none;
+}
+
+.winner-title a:hover {
+  color: var(--primary-color);
+}
+
+.winner-author {
+  font-style: italic;
+  color: var(--text-medium);
+  margin-bottom: 1rem;
+}
+
+.winner-excerpt {
+  color: var(--text-medium);
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+}
+
+.winner-stats {
+  display: flex;
+  gap: 2rem;
+  margin-bottom: 1rem;
+}
+
+.stat-item {
+  text-align: center;
+}
+
+.stat-value {
+  display: block;
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: var(--primary-color);
+}
+
+.stat-label {
+  font-size: 0.8rem;
+  color: var(--text-medium);
+}
+
+.winner-actions {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.read-essay-btn {
+  background: var(--primary-color);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--border-radius);
+  text-decoration: none;
+  font-weight: 600;
+  transition: var(--transition);
+}
+
+.read-essay-btn:hover {
+  background: var(--primary-dark);
+  text-decoration: none;
+}
+
+.view-all-btn {
+  background: var(--background-hover);
+  color: var(--text-dark);
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--border-radius);
+  text-decoration: none;
+  font-weight: 600;
+  transition: var(--transition);
+  border: 2px solid var(--border-color);
+}
+
+.view-all-btn:hover {
+  background: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+  text-decoration: none;
+}
+
+.hall-of-fame {
+  margin-bottom: 4rem;
+}
+
+.hall-of-fame h2 {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.hall-description {
+  text-align: center;
+  color: var(--text-medium);
+  margin-bottom: 3rem;
+}
+
+.hall-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+}
+
+.hall-member {
+  background: var(--background-white);
+  padding: 2rem;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  transition: var(--transition);
+}
+
+.hall-member:hover {
+  box-shadow: var(--shadow-hover);
+  transform: translateY(-2px);
+}
+
+.member-avatar {
+  width: 60px;
+  height: 60px;
+  background: var(--secondary-color);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.member-name {
+  color: var(--text-dark);
+  margin-bottom: 0.25rem;
+  font-size: 1.2rem;
+}
+
+.member-wins {
+  color: var(--secondary-color);
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+
+.member-words {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.word-badge {
+  background: var(--background-hover);
+  color: var(--text-dark);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.monthly-breakdown {
+  margin-bottom: 4rem;
+}
+
+.monthly-breakdown h2 {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.breakdown-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+}
+
+.month-card {
+  background: var(--background-white);
+  padding: 1.5rem;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+  transition: var(--transition);
+}
+
+.month-card:hover {
+  box-shadow: var(--shadow-hover);
+}
+
+.month-title {
+  color: var(--primary-color);
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
+  text-align: center;
+  border-bottom: 2px solid var(--border-color);
+  padding-bottom: 0.5rem;
+}
+
+.month-winner {
+  margin-bottom: 1rem;
+  padding: 1rem;
+  background: var(--background-light);
+  border-radius: var(--border-radius);
+}
+
+.winner-word-small {
+  font-size: 0.8rem;
+  color: var(--primary-color);
+  font-weight: bold;
+  margin-bottom: 0.25rem;
+}
+
+.winner-title-small {
+  margin-bottom: 0.25rem;
+}
+
+.winner-title-small a {
+  color: var(--text-dark);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.winner-title-small a:hover {
+  color: var(--primary-color);
+}
+
+.winner-author-small {
+  font-size: 0.9rem;
+  color: var(--text-medium);
+  font-style: italic;
+}
+
+.winners-cta {
+  margin-bottom: 2rem;
+}
+
+.cta-card {
+  background: linear-gradient(135deg, var(--secondary-color), #e67e22);
+  color: white;
+  padding: 3rem;
+  border-radius: var(--border-radius);
+  text-align: center;
+  box-shadow: var(--shadow-hover);
+}
+
+.cta-card h2 {
+  color: white;
+  margin-bottom: 1rem;
+}
+
+.cta-card p {
+  font-size: 1.1rem;
+  margin-bottom: 2rem;
+  opacity: 0.95;
+}
+
+.cta-actions {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.no-winners {
+  text-align: center;
+  padding: 4rem 2rem;
+}
+
+.no-winners-content {
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.no-winners h3 {
+  color: var(--text-dark);
+  margin-bottom: 1rem;
+}
+
+.no-winners p {
+  color: var(--text-medium);
+  margin-bottom: 2rem;
+}
+
+.no-winners-actions {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .winner-spotlight {
+    padding: 2rem;
+  }
+  
+  .winner-title {
+    font-size: 2rem;
+  }
+  
+  .winner-meta {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .winner-actions,
+  .cta-actions,
+  .no-winners-actions {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .archive-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .archive-controls {
+    flex-direction: column;
+  }
+  
+  .winner-stats {
+    justify-content: center;
+  }
+  
+  .hall-member {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .breakdown-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .winner-spotlight {
+    padding: 1.5rem;
+  }
+  
+  .winner-title {
+    font-size: 1.75rem;
+  }
+  
+  .winner-card {
+    padding: 1.5rem;
+  }
+  
+  .winner-header {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+  
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+</style>
+
+<script>
+// Winners Gallery JavaScript
+document.addEventListener('DOMContentLoaded', function() {
+  const yearFilter = document.getElementById('year-filter');
+  const wordFilter = document.getElementById('word-filter');
+  const winnerEntries = document.querySelectorAll('.winner-entry');
+  
+  function filterWinners() {
+    const selectedYear = yearFilter.value;
+    const selectedWord = wordFilter.value;
+    
+    winnerEntries.forEach(entry => {
+      const entryYear = entry.dataset.year;
+      const entryWord = entry.dataset.word;
+      
+      const matchesYear = !selectedYear || entryYear === selectedYear;
+      const matchesWord = !selectedWord || entryWord === selectedWord;
+      
+      if (matchesYear && matchesWord) {
+        entry.classList.remove('hidden');
+      } else {
+        entry.classList.add('hidden');
+      }
+    });
+  }
+  
+  yearFilter.addEventListener('change', filterWinners);
+  wordFilter.addEventListener('change', filterWinners);
+});
+</script>

@@ -1,0 +1,50 @@
+# Essay Hub Configuration
+title: "Essay Hub"
+description: "Monthly essay challenges exploring humanity through single words"
+url: "https://humansonplanetearth.com"
+baseurl: ""
+
+# Build settings
+markdown: kramdown
+highlighter: rouge
+permalink: /:categories/:title/
+
+# Collections
+collections:
+  essays:
+    output: true
+    permalink: /essays/:path/
+
+# Plugins
+plugins:
+  - jekyll-feed
+  - jekyll-sitemap
+  - jekyll-seo-tag
+
+# Exclude from processing
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - node_modules
+  - vendor/bundle/
+  - vendor/cache/
+  - vendor/gems/
+  - vendor/ruby/
+  - old_website_backup/
+
+# Site settings
+author: "Essay Hub Community"
+email: "contact@humansonplanetearth.com"
+twitter_username: essayhub
+github_username: essayhub
+
+# Current month settings (update monthly)
+current_month: "November 2024"
+current_word: "RESILIENCE"
+submission_deadline: "November 25, 2024"
+voting_period: "November 26-30, 2024"
+
+# Sass settings
+sass:
+  sass_dir: _sass
+  style: compressed

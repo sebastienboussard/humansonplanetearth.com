@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Help humans live the best human experience. Education is Power. Reflections, questions, and stories from Humans On Planet Earth.">
+  <meta name="keywords" content="humanity, education, philosophy, human experience, hope">
+  <meta name="author" content="Humans on Planet Earth">
+  <meta name="theme-color" content="#8c7b6b">
+  
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://humansonplanetearth.com/">
+  <meta property="og:title" content="Humans on Planet Earth">
+  <meta property="og:description" content="Help humans live the best human experience. Education is Power.">
+  <meta property="og:image" content="https://humansonplanetearth.com/og-image.jpg">
+
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image">
+  <meta property="twitter:url" content="https://humansonplanetearth.com/">
+  <meta property="twitter:title" content="Humans on Planet Earth">
+  <meta property="twitter:description" content="Help humans live the best human experience. Education is Power.">
+  <meta property="twitter:image" content="https://humansonplanetearth.com/og-image.jpg">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+  
+  <!-- Web App Manifest -->
+  <link rel="manifest" href="/config/manifest.json">
+  
+  <!-- Preload critical resources -->
+  <link rel="preload" href="assets/css/style.css" as="style">
+  
+  <title>Humans on Planet Earth</title>
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body class="home">
+  <main class="container">
+    <h1 class="fade-in">Humans on Planet Earth</h1>
+    
+    <section class="hero-quote fade-in">
+      <blockquote class="main-quote">
+        "Let humans have the human experience"
+      </blockquote>
+      <p class="mission-statement">
+        We believe in the power of education, reflection, and authentic human connection. 
+        This space exists to share thoughts, stories, and resources that help us all 
+        navigate the beautiful complexity of being human on this planet.
+      </p>
+    </section>
+    
+    <section class="explore-section fade-in">
+      <h2 style="text-align: center; color: var(--primary-dark); margin-bottom: 30px; font-size: 1.8rem;">Explore</h2>
+      <nav class="links">
+        <a href="/blog.html" class="nav-card">
+          <h3>Thoughts</h3>
+          <p>Read reflections and stories about the human experience</p>
+        </a>
+        <a href="/literature.html" class="nav-card">
+          <h3>Literature</h3>
+          <p>Discover books and videos that challenge and inspire</p>
+        </a>
+        <a href="/contact.html" class="nav-card">
+          <h3>Open Questions</h3>
+          <p>Explore questions about life, humanity, and existence</p>
+        </a>
+      </nav>
+    </section>
+  </main>
+  <script src="assets/js/script.js"></script>
+  <style>
+    .explore-section {
+      margin-top: 50px;
+    }
+    
+    .nav-card {
+      display: block;
+      background: var(--background-white);
+      padding: 25px;
+      border-radius: var(--border-radius);
+      text-decoration: none;
+      color: inherit;
+      transition: var(--transition);
+      box-shadow: var(--shadow);
+      border-left: 5px solid var(--primary-color);
+    }
+    
+    .nav-card:hover,
+    .nav-card:focus {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+      outline: none;
+    }
+    
+    .nav-card h3 {
+      color: var(--primary-dark);
+      margin: 0 0 10px 0;
+      font-size: 1.5rem;
+    }
+    
+    .nav-card p {
+      color: var(--text-medium);
+      margin: 0;
+      line-height: 1.6;
+    }
+    
+    .links {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 25px;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+    
+    @media (max-width: 768px) {
+      .links {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</body>
+</html>
+

@@ -1,0 +1,41 @@
+<header class="site-header">
+  <div class="header-container">
+    <div class="site-branding">
+      <a href="/" class="site-title">{{ site.title }}</a>
+      <p class="site-tagline">{{ site.description }}</p>
+    </div>
+    
+    <nav class="main-nav">
+      <ul class="nav-list">
+        <li><a href="/" {% if page.url == "/" %}class="active"{% endif %}>Home</a></li>
+        <li><a href="/essays/" {% if page.url contains "/essays" %}class="active"{% endif %}>Essays</a></li>
+        <li><a href="/winners/" {% if page.url contains "/winners" %}class="active"{% endif %}>Winners</a></li>
+        <li><a href="/about/" {% if page.url contains "/about" %}class="active"{% endif %}>About</a></li>
+        <li><a href="/submit/" {% if page.url contains "/submit" %}class="active"{% endif %}>Submit</a></li>
+      </ul>
+    </nav>
+    
+    <button class="mobile-menu-toggle" aria-label="Toggle mobile menu">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+  </div>
+  
+  <!-- Current Month Banner -->
+  {% if site.current_word %}
+  <div class="current-month-banner">
+    <div class="banner-container">
+      <div class="current-word">
+        <span class="word-label">Current Word:</span>
+        <span class="word-text">{{ site.current_word }}</span>
+      </div>
+      <div class="deadline">
+        <span class="deadline-label">Deadline:</span>
+        <span class="deadline-date">{{ site.submission_deadline }}</span>
+      </div>
+      <a href="/submit/" class="submit-btn">Submit Essay</a>
+    </div>
+  </div>
+  {% endif %}
+</header>

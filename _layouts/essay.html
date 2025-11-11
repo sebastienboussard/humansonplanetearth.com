@@ -1,0 +1,65 @@
+---
+layout: default
+---
+
+<article class="essay-article">
+  <header class="essay-header">
+    <div class="essay-meta">
+      <span class="essay-word">{{ page.word | upcase }}</span>
+      <span class="essay-date">{{ page.date | date: "%B %Y" }}</span>
+      {% if page.winner %}
+        <span class="winner-badge">🏆 Winner</span>
+      {% endif %}
+    </div>
+    <h1 class="essay-title">{{ page.title }}</h1>
+    <div class="essay-author">
+      by {{ page.author }}
+    </div>
+  </header>
+  
+  <div class="essay-content">
+    {{ content }}
+  </div>
+  
+  <footer class="essay-footer">
+    <div class="essay-actions">
+      <a href="/essays/" class="btn btn-secondary">← Back to Essays</a>
+      {% if page.winner %}
+        <a href="/winners/" class="btn btn-primary">View All Winners</a>
+      {% endif %}
+    </div>
+    
+    <div class="essay-share">
+      <h4>Share this essay:</h4>
+      <div class="share-buttons">
+        <a href="https://twitter.com/intent/tweet?text={{ page.title | uri_escape }}&url={{ site.url }}{{ page.url }}" 
+           target="_blank" class="share-btn twitter">Twitter</a>
+        <a href="https://www.facebook.com/sharer/sharer.php?u={{ site.url }}{{ page.url }}" 
+           target="_blank" class="share-btn facebook">Facebook</a>
+        <a href="mailto:?subject={{ page.title | uri_escape }}&body=Check out this essay: {{ site.url }}{{ page.url }}" 
+           class="share-btn email">Email</a>
+      </div>
+    </div>
+  </footer>
+</article>
+
+{% if site.data.essays %}
+<section class="related-essays">
+  <h3>Other Essays from {{ page.date | date: "%B %Y" }}</h3>
+  <div class="essay-grid">
+    {% assign month_essays = site.essays | where: "word", page.word | where_exp: "essay", "essay.url != page.url" | limit: 3 %}
+    {% for essay in month_essays %}
+      <div class="essay-card">
+        <h4><a href="{{ essay.url }}">{{ essay.title }}</a></h4>
+        <p class="essay-excerpt">{{ essay.excerpt | strip_html | truncate: 100 }}</p>
+        <div class="essay-meta">
+          <span>by {{ essay.author }}</span>
+          {% if essay.winner %}
+            <span class="winner-badge">🏆</span>
+          {% endif %}
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}

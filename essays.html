@@ -1,0 +1,582 @@
+---
+layout: default
+title: "Essays Archive"
+description: "Browse all essays from our monthly writing challenges. Filter by word, author, or date to discover compelling perspectives on the human experience."
+permalink: /essays/
+---
+
+<div class="container">
+  <header class="page-header">
+    <h1>Essays Archive</h1>
+    <p class="page-description">
+      Explore thought-provoking essays from our monthly challenges. Each piece offers a unique perspective 
+      on the human experience through the lens of a single word.
+    </p>
+  </header>
+
+  <!-- Search and Filter Section -->
+  <section class="search-filters">
+    <div class="card">
+      <div class="filter-controls">
+        <div class="search-box">
+          <input type="text" id="essay-search" placeholder="Search essays by title, author, or content..." />
+          <button type="button" id="search-btn" aria-label="Search">🔍</button>
+        </div>
+        
+        <div class="filter-options">
+          <select id="word-filter">
+            <option value="">All Words</option>
+            {% assign unique_words = site.essays | map: 'word' | uniq | sort %}
+            {% for word in unique_words %}
+              <option value="{{ word }}">{{ word | upcase }}</option>
+            {% endfor %}
+          </select>
+          
+          <select id="month-filter">
+            <option value="">All Months</option>
+            {% assign unique_months = site.essays | map: 'date' | date: '%Y-%m' | uniq | sort | reverse %}
+            {% for month in unique_months %}
+              <option value="{{ month }}">{{ month | date: '%B %Y' }}</option>
+            {% endfor %}
+          </select>
+          
+          <select id="sort-filter">
+            <option value="date-desc">Newest First</option>
+            <option value="date-asc">Oldest First</option>
+            <option value="title-asc">Title A-Z</option>
+            <option value="author-asc">Author A-Z</option>
+            <option value="winners-first">Winners First</option>
+          </select>
+          
+          <button type="button" id="clear-filters">Clear Filters</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Essays Count and Stats -->
+  <section class="archive-stats">
+    <div class="stats-row">
+      <div class="stat-item">
+        <span class="stat-number" id="total-essays">{{ site.essays | size }}</span>
+        <span class="stat-label">Total Essays</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-number" id="filtered-count">{{ site.essays | size }}</span>
+        <span class="stat-label">Showing</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-number">{{ unique_words | size }}</span>
+        <span class="stat-label">Words Explored</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-number">{{ site.essays | where: "winner", true | size }}</span>
+        <span class="stat-label">Winners</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Essays Grid -->
+  <section class="essays-section">
+    <div id="essays-grid" class="essay-grid">
+      {% assign sorted_essays = site.essays | sort: 'date' | reverse %}
+      {% for essay in sorted_essays %}
+        <article class="essay-card" 
+                 data-word="{{ essay.word | downcase }}" 
+                 data-author="{{ essay.author | downcase }}" 
+                 data-date="{{ essay.date | date: '%Y-%m' }}"
+                 data-title="{{ essay.title | downcase }}"
+                 data-winner="{{ essay.winner | default: false }}"
+                 data-content="{{ essay.content | strip_html | downcase }}">
+          
+          <div class="essay-meta">
+            <span class="essay-word">{{ essay.word | upcase }}</span>
+            <span class="essay-date">{{ essay.date | date: "%B %Y" }}</span>
+            {% if essay.winner %}
+              <span class="winner-badge">🏆 Winner</span>
+            {% endif %}
+          </div>
+          
+          <h3 class="essay-title">
+            <a href="{{ essay.url }}">{{ essay.title }}</a>
+          </h3>
+          
+          <p class="essay-excerpt">
+            {{ essay.excerpt | strip_html | truncate: 150 }}
+          </p>
+          
+          <div class="essay-footer">
+            <div class="essay-author">by {{ essay.author }}</div>
+            <div class="essay-actions">
+              <a href="{{ essay.url }}" class="read-more">Read More →</a>
+            </div>
+          </div>
+        </article>
+      {% else %}
+        <div class="no-essays">
+          <h3>No Essays Yet</h3>
+          <p>Be the first to contribute to our community!</p>
+          <a href="/submit/" class="btn btn-primary">Submit an Essay</a>
+        </div>
+      {% endfor %}
+    </div>
+    
+    <!-- Loading indicator -->
+    <div id="loading-indicator" class="loading-indicator" style="display: none;">
+      <p>Loading essays...</p>
+    </div>
+    
+    <!-- No results message -->
+    <div id="no-results" class="no-results" style="display: none;">
+      <h3>No essays found</h3>
+      <p>Try adjusting your search criteria or filters.</p>
+      <button type="button" id="reset-search" class="btn btn-secondary">Reset Search</button>
+    </div>
+  </section>
+
+  <!-- Pagination (if needed) -->
+  {% if site.essays.size > 12 %}
+  <section class="pagination-section">
+    <div class="pagination-controls">
+      <button type="button" id="load-more" class="btn btn-secondary">Load More Essays</button>
+    </div>
+  </section>
+  {% endif %}
+</div>
+
+<style>
+/* Archive-specific styles */
+.page-header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.page-description {
+  font-size: 1.1rem;
+  color: var(--text-medium);
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.search-filters {
+  margin-bottom: 2rem;
+}
+
+.filter-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.search-box {
+  display: flex;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.search-box input {
+  flex: 1;
+  padding: 0.75rem;
+  border: 2px solid var(--border-color);
+  border-radius: var(--border-radius);
+  font-size: 1rem;
+  transition: var(--transition);
+}
+
+.search-box input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+.search-box button {
+  padding: 0.75rem 1rem;
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.search-box button:hover {
+  background: var(--primary-dark);
+}
+
+.filter-options {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.filter-options select {
+  padding: 0.5rem;
+  border: 2px solid var(--border-color);
+  border-radius: var(--border-radius);
+  background: white;
+  font-size: 0.9rem;
+  min-width: 150px;
+}
+
+.filter-options select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+#clear-filters {
+  padding: 0.5rem 1rem;
+  background: var(--background-hover);
+  border: 2px solid var(--border-color);
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: var(--transition);
+}
+
+#clear-filters:hover {
+  background: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+}
+
+.archive-stats {
+  margin-bottom: 2rem;
+}
+
+.stats-row {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.stat-item {
+  text-align: center;
+  padding: 1rem;
+  background: var(--background-white);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+  min-width: 120px;
+}
+
+.stat-number {
+  display: block;
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: var(--primary-color);
+}
+
+.stat-label {
+  font-size: 0.9rem;
+  color: var(--text-medium);
+}
+
+.essays-section {
+  margin-bottom: 3rem;
+}
+
+.essay-card {
+  background: var(--background-white);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+  padding: 1.5rem;
+  transition: var(--transition);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.essay-card:hover {
+  box-shadow: var(--shadow-hover);
+  transform: translateY(-2px);
+}
+
+.essay-title {
+  margin: 1rem 0 0.5rem 0;
+  flex-grow: 0;
+}
+
+.essay-title a {
+  color: var(--text-dark);
+  text-decoration: none;
+  font-size: 1.25rem;
+}
+
+.essay-title a:hover {
+  color: var(--primary-color);
+}
+
+.essay-excerpt {
+  color: var(--text-medium);
+  line-height: 1.6;
+  flex-grow: 1;
+  margin-bottom: 1rem;
+}
+
+.essay-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: auto;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.essay-author {
+  font-style: italic;
+  color: var(--text-medium);
+  font-size: 0.9rem;
+}
+
+.read-more {
+  color: var(--primary-color);
+  font-weight: 600;
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.read-more:hover {
+  color: var(--primary-dark);
+}
+
+.loading-indicator,
+.no-results {
+  text-align: center;
+  padding: 3rem;
+  color: var(--text-medium);
+}
+
+.no-results h3 {
+  color: var(--text-dark);
+  margin-bottom: 1rem;
+}
+
+.pagination-section {
+  text-align: center;
+  margin-top: 2rem;
+}
+
+.no-essays {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 3rem;
+  background: var(--background-white);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+}
+
+.no-essays h3 {
+  color: var(--text-dark);
+  margin-bottom: 1rem;
+}
+
+.no-essays p {
+  color: var(--text-medium);
+  margin-bottom: 2rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .filter-controls {
+    gap: 1rem;
+  }
+  
+  .filter-options {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .filter-options select,
+  #clear-filters {
+    width: 100%;
+  }
+  
+  .stats-row {
+    gap: 1rem;
+  }
+  
+  .stat-item {
+    min-width: 100px;
+    padding: 0.75rem;
+  }
+  
+  .essay-footer {
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 480px) {
+  .search-box {
+    flex-direction: column;
+  }
+  
+  .stats-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .essay-card {
+    padding: 1rem;
+  }
+}
+
+/* Animation for filtered results */
+.essay-card.hidden {
+  display: none;
+}
+
+.essay-card.fade-in {
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+</style>
+
+<script>
+// Essays Archive JavaScript
+document.addEventListener('DOMContentLoaded', function() {
+  const searchInput = document.getElementById('essay-search');
+  const wordFilter = document.getElementById('word-filter');
+  const monthFilter = document.getElementById('month-filter');
+  const sortFilter = document.getElementById('sort-filter');
+  const clearFiltersBtn = document.getElementById('clear-filters');
+  const essayCards = document.querySelectorAll('.essay-card');
+  const filteredCountEl = document.getElementById('filtered-count');
+  const noResultsEl = document.getElementById('no-results');
+  const essaysGrid = document.getElementById('essays-grid');
+  
+  let currentFilters = {
+    search: '',
+    word: '',
+    month: '',
+    sort: 'date-desc'
+  };
+  
+  // Filter and search functionality
+  function filterEssays() {
+    let visibleCount = 0;
+    const essays = Array.from(essayCards);
+    
+    // Apply filters
+    const filteredEssays = essays.filter(card => {
+      const matchesSearch = !currentFilters.search || 
+        card.dataset.title.includes(currentFilters.search.toLowerCase()) ||
+        card.dataset.author.includes(currentFilters.search.toLowerCase()) ||
+        card.dataset.content.includes(currentFilters.search.toLowerCase());
+      
+      const matchesWord = !currentFilters.word || 
+        card.dataset.word === currentFilters.word.toLowerCase();
+      
+      const matchesMonth = !currentFilters.month || 
+        card.dataset.date === currentFilters.month;
+      
+      return matchesSearch && matchesWord && matchesMonth;
+    });
+    
+    // Sort essays
+    filteredEssays.sort((a, b) => {
+      switch(currentFilters.sort) {
+        case 'date-asc':
+          return new Date(a.dataset.date) - new Date(b.dataset.date);
+        case 'date-desc':
+          return new Date(b.dataset.date) - new Date(a.dataset.date);
+        case 'title-asc':
+          return a.dataset.title.localeCompare(b.dataset.title);
+        case 'author-asc':
+          return a.dataset.author.localeCompare(b.dataset.author);
+        case 'winners-first':
+          if (a.dataset.winner === 'true' && b.dataset.winner !== 'true') return -1;
+          if (a.dataset.winner !== 'true' && b.dataset.winner === 'true') return 1;
+          return new Date(b.dataset.date) - new Date(a.dataset.date);
+        default:
+          return 0;
+      }
+    });
+    
+    // Hide all essays first
+    essays.forEach(card => {
+      card.classList.add('hidden');
+    });
+    
+    // Show filtered essays
+    filteredEssays.forEach((card, index) => {
+      card.classList.remove('hidden');
+      card.style.order = index;
+      visibleCount++;
+    });
+    
+    // Update count
+    filteredCountEl.textContent = visibleCount;
+    
+    // Show/hide no results message
+    if (visibleCount === 0) {
+      noResultsEl.style.display = 'block';
+      essaysGrid.style.display = 'none';
+    } else {
+      noResultsEl.style.display = 'none';
+      essaysGrid.style.display = 'grid';
+    }
+  }
+  
+  // Event listeners
+  searchInput.addEventListener('input', function() {
+    currentFilters.search = this.value;
+    filterEssays();
+  });
+  
+  wordFilter.addEventListener('change', function() {
+    currentFilters.word = this.value;
+    filterEssays();
+  });
+  
+  monthFilter.addEventListener('change', function() {
+    currentFilters.month = this.value;
+    filterEssays();
+  });
+  
+  sortFilter.addEventListener('change', function() {
+    currentFilters.sort = this.value;
+    filterEssays();
+  });
+  
+  clearFiltersBtn.addEventListener('click', function() {
+    searchInput.value = '';
+    wordFilter.value = '';
+    monthFilter.value = '';
+    sortFilter.value = 'date-desc';
+    
+    currentFilters = {
+      search: '',
+      word: '',
+      month: '',
+      sort: 'date-desc'
+    };
+    
+    filterEssays();
+  });
+  
+  // Reset search button
+  const resetSearchBtn = document.getElementById('reset-search');
+  if (resetSearchBtn) {
+    resetSearchBtn.addEventListener('click', function() {
+      clearFiltersBtn.click();
+    });
+  }
+  
+  // Load more functionality (if implemented)
+  const loadMoreBtn = document.getElementById('load-more');
+  if (loadMoreBtn) {
+    loadMoreBtn.addEventListener('click', function() {
+      // Implement pagination if needed
+      console.log('Load more essays...');
+    });
+  }
+  
+  // Initial filter application
+  filterEssays();
+});
+</script>

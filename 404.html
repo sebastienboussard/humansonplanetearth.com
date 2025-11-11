@@ -1,98 +1,302 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Page not found - Humans on Planet Earth">
-  <meta name="robots" content="noindex, nofollow">
-  <title>Page Not Found – Humans on Planet Earth</title>
-  <link rel="stylesheet" href="assets/css/style.css">
-  <style>
-    .error-container {
-      text-align: center;
-      padding: 60px 20px;
-      max-width: 600px;
-      margin: 0 auto;
-    }
-    
-    .error-code {
-      font-size: 8rem;
-      color: var(--primary-color);
-      margin: 0;
-      font-weight: 300;
-      opacity: 0.7;
-    }
-    
-    .error-message {
-      font-size: 1.5rem;
-      color: var(--text-dark);
-      margin: 20px 0 40px;
-    }
-    
-    .error-description {
-      color: var(--text-medium);
-      margin-bottom: 40px;
-      line-height: 1.6;
-    }
-    
-    .error-links {
-      display: flex;
-      flex-direction: column;
-      gap: 15px;
-      align-items: center;
-    }
-    
-    .error-links a {
-      display: inline-block;
-      padding: 12px 24px;
-      background-color: var(--primary-color);
-      color: white;
-      text-decoration: none;
-      border-radius: var(--border-radius);
-      transition: var(--transition);
-      border: 2px solid transparent;
-    }
-    
-    .error-links a:hover,
-    .error-links a:focus {
-      background-color: var(--primary-dark);
-      transform: translateY(-2px);
-      box-shadow: var(--shadow);
-      outline: none;
-    }
-    
-    .error-links a.secondary {
-      background-color: transparent;
-      color: var(--primary-dark);
-      border-color: var(--primary-color);
-    }
-    
-    .error-links a.secondary:hover,
-    .error-links a.secondary:focus {
-      background-color: var(--primary-color);
-      color: white;
-    }
-  </style>
-</head>
-<body class="blog">
-  <header class="sticky-header fade-in">
-    <h1>Humans on Planet Earth</h1>
-  </header>
+---
+layout: default
+title: "Page Not Found"
+description: "The page you're looking for doesn't exist. Explore our essays or return to the homepage."
+permalink: /404.html
+---
 
-  <main class="error-container">
-    <h1 class="error-code fade-in">404</h1>
-    <h2 class="error-message fade-in">Page Not Found</h2>
-    <p class="error-description fade-in">
-      The page you're looking for doesn't exist. Perhaps it was moved, deleted, or you entered the wrong URL.
-    </p>
-    
-    <nav class="error-links fade-in">
-      <a href="/">← Back to Home</a>
-      <a href="/blog.html" class="secondary">Browse Thoughts</a>
-      <a href="/literature.html" class="secondary">Explore Literature</a>
-    </nav>
-  </main>
+<div class="container">
+  <div class="error-page">
+    <div class="error-content">
+      <div class="error-number">404</div>
+      <h1>Page Not Found</h1>
+      <p class="error-message">
+        The page you're looking for seems to have wandered off into the digital wilderness. 
+        But don't worry—there are plenty of other paths to explore.
+      </p>
+      
+      <div class="error-suggestions">
+        <h2>Here are some suggestions:</h2>
+        <div class="suggestions-grid">
+          <a href="/" class="suggestion-card">
+            <div class="suggestion-icon">🏠</div>
+            <h3>Go Home</h3>
+            <p>Return to our homepage and start fresh</p>
+          </a>
+          
+          <a href="/essays/" class="suggestion-card">
+            <div class="suggestion-icon">📚</div>
+            <h3>Browse Essays</h3>
+            <p>Explore our collection of thought-provoking essays</p>
+          </a>
+          
+          <a href="/winners/" class="suggestion-card">
+            <div class="suggestion-icon">🏆</div>
+            <h3>Winners Gallery</h3>
+            <p>Discover our award-winning essays</p>
+          </a>
+          
+          <a href="/submit/" class="suggestion-card">
+            <div class="suggestion-icon">✍️</div>
+            <h3>Submit Essay</h3>
+            <p>Share your perspective on this month's word</p>
+          </a>
+        </div>
+      </div>
+      
+      <div class="search-section">
+        <h3>Or search for what you need:</h3>
+        <div class="search-box">
+          <input type="text" id="site-search" placeholder="Search essays, authors, or words...">
+          <button type="button" onclick="performSiteSearch()">Search</button>
+        </div>
+      </div>
+      
+      <div class="help-section">
+        <p>Still can't find what you're looking for?</p>
+        <a href="/about/#faq" class="btn btn-secondary">Check our FAQ</a>
+        <span class="help-divider">or</span>
+        <a href="mailto:{{ site.email }}" class="btn btn-primary">Contact Us</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.error-page {
+  text-align: center;
+  padding: 4rem 0;
+  min-height: 60vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.error-content {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.error-number {
+  font-size: 8rem;
+  font-weight: bold;
+  color: var(--primary-color);
+  line-height: 1;
+  margin-bottom: 1rem;
+  font-family: var(--font-primary);
+}
+
+.error-page h1 {
+  font-size: 2.5rem;
+  color: var(--text-dark);
+  margin-bottom: 1rem;
+}
+
+.error-message {
+  font-size: 1.2rem;
+  color: var(--text-medium);
+  margin-bottom: 3rem;
+  line-height: 1.6;
+}
+
+.error-suggestions {
+  margin-bottom: 3rem;
+}
+
+.error-suggestions h2 {
+  font-size: 1.5rem;
+  color: var(--text-dark);
+  margin-bottom: 2rem;
+}
+
+.suggestions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.suggestion-card {
+  background: var(--background-white);
+  padding: 2rem;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+  text-decoration: none;
+  color: inherit;
+  transition: var(--transition);
+  border-left: 4px solid var(--primary-color);
+}
+
+.suggestion-card:hover {
+  box-shadow: var(--shadow-hover);
+  transform: translateY(-2px);
+  text-decoration: none;
+}
+
+.suggestion-icon {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  display: block;
+}
+
+.suggestion-card h3 {
+  color: var(--primary-color);
+  margin-bottom: 0.5rem;
+  font-size: 1.2rem;
+}
+
+.suggestion-card p {
+  color: var(--text-medium);
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.search-section {
+  margin-bottom: 3rem;
+}
+
+.search-section h3 {
+  color: var(--text-dark);
+  margin-bottom: 1rem;
+  font-size: 1.2rem;
+}
+
+.search-box {
+  display: flex;
+  max-width: 400px;
+  margin: 0 auto;
+  gap: 0.5rem;
+}
+
+.search-box input {
+  flex: 1;
+  padding: 0.75rem;
+  border: 2px solid var(--border-color);
+  border-radius: var(--border-radius);
+  font-size: 1rem;
+}
+
+.search-box input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+.search-box button {
+  padding: 0.75rem 1.5rem;
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  font-weight: 600;
+  transition: var(--transition);
+}
+
+.search-box button:hover {
+  background: var(--primary-dark);
+}
+
+.help-section {
+  padding: 2rem;
+  background: var(--background-light);
+  border-radius: var(--border-radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.help-section p {
+  margin: 0;
+  color: var(--text-medium);
+}
+
+.help-divider {
+  color: var(--text-light);
+  font-style: italic;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .error-number {
+    font-size: 6rem;
+  }
   
-  <script src="assets/js/script.js"></script>
-</body>
-</html> 
+  .error-page h1 {
+    font-size: 2rem;
+  }
+  
+  .error-message {
+    font-size: 1.1rem;
+  }
+  
+  .suggestions-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .search-box {
+    flex-direction: column;
+  }
+  
+  .help-section {
+    flex-direction: column;
+    text-align: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .error-page {
+    padding: 2rem 0;
+  }
+  
+  .error-number {
+    font-size: 4rem;
+  }
+  
+  .suggestion-card {
+    padding: 1.5rem;
+  }
+  
+  .suggestion-icon {
+    font-size: 2rem;
+  }
+}
+</style>
+
+<script>
+function performSiteSearch() {
+  const searchInput = document.getElementById('site-search');
+  const query = searchInput.value.trim();
+  
+  if (query) {
+    // Redirect to essays page with search parameter
+    window.location.href = `/essays/?search=${encodeURIComponent(query)}`;
+  }
+}
+
+// Allow Enter key to trigger search
+document.getElementById('site-search').addEventListener('keypress', function(e) {
+  if (e.key === 'Enter') {
+    performSiteSearch();
+  }
+});
+
+// Add some personality with random encouraging messages
+const encouragingMessages = [
+  "Every great essay starts with a single word—maybe yours will be next!",
+  "The best stories are often found when we're not looking for them.",
+  "Consider this a detour on your journey to discovering amazing writing.",
+  "Sometimes getting lost leads us to exactly where we need to be.",
+  "This page may be missing, but your next favorite essay is just a click away."
+];
+
+// Randomly update the error message
+document.addEventListener('DOMContentLoaded', function() {
+  const errorMessage = document.querySelector('.error-message');
+  if (Math.random() > 0.7) { // 30% chance to show encouraging message
+    const randomMessage = encouragingMessages[Math.floor(Math.random() * encouragingMessages.length)];
+    errorMessage.innerHTML = randomMessage + '<br><br>' + errorMessage.innerHTML;
+  }
+});
+</script>

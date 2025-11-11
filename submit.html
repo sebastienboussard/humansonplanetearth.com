@@ -1,0 +1,808 @@
+---
+layout: default
+title: "Submit Your Essay"
+description: "Submit your essay for our monthly writing challenge. Share your unique perspective on this month's word and join our community of writers."
+permalink: /submit/
+---
+
+<div class="container">
+  <header class="page-header">
+    <h1>Submit Your Essay</h1>
+    <p class="page-description">
+      Share your unique perspective on <strong>{{ site.current_word }}</strong> and join our community 
+      of writers exploring the human experience.
+    </p>
+  </header>
+
+  <!-- Current Challenge Info -->
+  <section class="challenge-info">
+    <div class="challenge-card">
+      <div class="challenge-header">
+        <h2>{{ site.current_month }} Challenge</h2>
+        <div class="challenge-word">{{ site.current_word }}</div>
+      </div>
+      
+      <div class="challenge-details">
+        <div class="detail-row">
+          <div class="detail-item">
+            <span class="detail-label">Submission Deadline:</span>
+            <span class="detail-value">{{ site.submission_deadline }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Voting Period:</span>
+            <span class="detail-value">{{ site.voting_period }}</span>
+          </div>
+        </div>
+        
+        <div class="challenge-prompt">
+          <h3>Your Challenge</h3>
+          <p>
+            Write a compelling essay exploring the word <strong>"{{ site.current_word }}"</strong>. 
+            How has this concept shaped your life, relationships, or understanding of the world? 
+            What insights can you share about its meaning and significance?
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Submission Form -->
+  <section class="submission-form-section">
+    <div class="form-container">
+      <h2>Submit Your Essay</h2>
+      <p class="form-description">
+        Ready to share your perspective? Fill out the form below to submit your essay for consideration.
+      </p>
+      
+      <!-- Google Form Embed -->
+      <div class="google-form-container">
+        <iframe src="https://docs.google.com/forms/d/e/1FAIpQLSf_EXAMPLE_FORM_ID/viewform?embedded=true" 
+                width="100%" 
+                height="1200" 
+                frameborder="0" 
+                marginheight="0" 
+                marginwidth="0"
+                title="Essay Submission Form">
+          Loading form...
+        </iframe>
+      </div>
+      
+      <!-- Alternative Form (if Google Form not available) -->
+      <div class="alternative-form" style="display: none;">
+        <form class="essay-form" id="essay-submission-form">
+          <div class="form-group">
+            <label for="author-name">Author Name/Pseudonym *</label>
+            <input type="text" id="author-name" name="author" required 
+                   placeholder="Enter your name or pen name">
+            <small class="form-help">This is how you'll be credited if your essay is published</small>
+          </div>
+          
+          <div class="form-group">
+            <label for="essay-title">Essay Title *</label>
+            <input type="text" id="essay-title" name="title" required 
+                   placeholder="Enter your essay title">
+          </div>
+          
+          <div class="form-group">
+            <label for="author-email">Email Address *</label>
+            <input type="email" id="author-email" name="email" required 
+                   placeholder="your.email@example.com">
+            <small class="form-help">For communication about your submission (not published)</small>
+          </div>
+          
+          <div class="form-group">
+            <label for="current-word">Current Month's Word</label>
+            <input type="text" id="current-word" name="word" 
+                   value="{{ site.current_word }}" readonly>
+          </div>
+          
+          <div class="form-group">
+            <label for="essay-file">Essay File *</label>
+            <input type="file" id="essay-file" name="essay" required 
+                   accept=".pdf,.docx,.doc">
+            <small class="form-help">Upload your essay as PDF, DOCX, or DOC (max 5MB)</small>
+          </div>
+          
+          <div class="form-group checkbox-group">
+            <label class="checkbox-label">
+              <input type="checkbox" id="word-count-confirm" name="wordCountConfirm" required>
+              <span class="checkmark"></span>
+              I confirm this essay is 1 page or less (approximately 500 words maximum)
+            </label>
+          </div>
+          
+          <div class="form-group checkbox-group">
+            <label class="checkbox-label">
+              <input type="checkbox" id="original-work" name="originalWork" required>
+              <span class="checkmark"></span>
+              I confirm this is my original, unpublished work
+            </label>
+          </div>
+          
+          <div class="form-group checkbox-group">
+            <label class="checkbox-label">
+              <input type="checkbox" id="guidelines-agree" name="guidelinesAgree" required>
+              <span class="checkmark"></span>
+              I have read and agree to the <a href="/about/#guidelines" target="_blank">submission guidelines</a>
+            </label>
+          </div>
+          
+          <button type="submit" class="submit-btn">Submit Essay</button>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- Submission Guidelines Reminder -->
+  <section class="guidelines-reminder">
+    <h2>Quick Reminder: Submission Guidelines</h2>
+    <div class="guidelines-grid">
+      <div class="guideline-item">
+        <div class="guideline-icon">📏</div>
+        <h3>Length</h3>
+        <p>Maximum 1 page (~500 words)</p>
+      </div>
+      
+      <div class="guideline-item">
+        <div class="guideline-icon">🎯</div>
+        <h3>Theme</h3>
+        <p>Must explore "{{ site.current_word }}"</p>
+      </div>
+      
+      <div class="guideline-item">
+        <div class="guideline-icon">✍️</div>
+        <h3>Originality</h3>
+        <p>Original, unpublished work only</p>
+      </div>
+      
+      <div class="guideline-item">
+        <div class="guideline-icon">📅</div>
+        <h3>Deadline</h3>
+        <p>{{ site.submission_deadline }}</p>
+      </div>
+      
+      <div class="guideline-item">
+        <div class="guideline-icon">📝</div>
+        <h3>Format</h3>
+        <p>PDF, DOCX, or DOC files</p>
+      </div>
+      
+      <div class="guideline-item">
+        <div class="guideline-icon">🤝</div>
+        <h3>Respect</h3>
+        <p>Respectful, constructive content</p>
+      </div>
+    </div>
+    
+    <div class="guidelines-link">
+      <a href="/about/" class="btn btn-secondary">Read Full Guidelines</a>
+    </div>
+  </section>
+
+  <!-- Tips for Writers -->
+  <section class="writing-tips">
+    <div class="tips-container">
+      <h2>Writing Tips for Success</h2>
+      <div class="tips-grid">
+        <div class="tip-card">
+          <h3>🎯 Focus Your Perspective</h3>
+          <p>Don't try to cover everything about the word. Choose one specific angle, memory, or insight that resonates with you personally.</p>
+        </div>
+        
+        <div class="tip-card">
+          <h3>📖 Tell a Story</h3>
+          <p>The most compelling essays often include personal anecdotes or concrete examples that illustrate abstract concepts.</p>
+        </div>
+        
+        <div class="tip-card">
+          <h3>🔍 Go Deeper</h3>
+          <p>Move beyond dictionary definitions. What does this word mean in your lived experience? How has it evolved for you?</p>
+        </div>
+        
+        <div class="tip-card">
+          <h3>✨ Show, Don't Tell</h3>
+          <p>Instead of stating "courage is important," describe a moment when you witnessed or experienced courage in action.</p>
+        </div>
+        
+        <div class="tip-card">
+          <h3>🌍 Connect to Universal Themes</h3>
+          <p>While your experience is unique, try to connect it to broader human experiences that readers can relate to.</p>
+        </div>
+        
+        <div class="tip-card">
+          <h3>✏️ Edit Ruthlessly</h3>
+          <p>With only 500 words, every sentence matters. Cut unnecessary words and make each phrase count.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- What Happens Next -->
+  <section class="next-steps">
+    <div class="card">
+      <h2>What Happens After You Submit?</h2>
+      <div class="steps-timeline">
+        <div class="step">
+          <div class="step-number">1</div>
+          <div class="step-content">
+            <h3>Confirmation</h3>
+            <p>You'll receive an email confirmation that your essay was received.</p>
+          </div>
+        </div>
+        
+        <div class="step">
+          <div class="step-number">2</div>
+          <div class="step-content">
+            <h3>Review Process</h3>
+            <p>Our editorial team reviews your essay for guidelines compliance and quality.</p>
+          </div>
+        </div>
+        
+        <div class="step">
+          <div class="step-number">3</div>
+          <div class="step-content">
+            <h3>Publication</h3>
+            <p>Accepted essays are published on our website within 2-3 business days.</p>
+          </div>
+        </div>
+        
+        <div class="step">
+          <div class="step-number">4</div>
+          <div class="step-content">
+            <h3>Community Voting</h3>
+            <p>From {{ site.voting_period }}, the community votes for their favorite essay.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Alternative Submission Methods -->
+  <section class="alternative-submission">
+    <div class="card">
+      <h2>Having Trouble with the Form?</h2>
+      <p>If you're experiencing technical difficulties with the submission form, you can also submit your essay via email:</p>
+      
+      <div class="email-submission">
+        <h3>Email Submission</h3>
+        <p><strong>Send to:</strong> <a href="mailto:{{ site.email }}">{{ site.email }}</a></p>
+        <p><strong>Subject Line:</strong> Essay Submission - {{ site.current_word }} - [Your Name]</p>
+        
+        <div class="email-requirements">
+          <h4>Include in your email:</h4>
+          <ul>
+            <li>Your name/pseudonym</li>
+            <li>Essay title</li>
+            <li>Confirmation that your essay is 1 page or less</li>
+            <li>Confirmation that it's your original work</li>
+            <li>Your essay attached as PDF, DOCX, or DOC</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<style>
+/* Submit Page Styles */
+.page-header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.page-description {
+  font-size: 1.1rem;
+  color: var(--text-medium);
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.challenge-info {
+  margin-bottom: 3rem;
+}
+
+.challenge-card {
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+  color: white;
+  padding: 3rem;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-hover);
+}
+
+.challenge-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.challenge-header h2 {
+  color: white;
+  margin-bottom: 1rem;
+  font-size: 1.5rem;
+}
+
+.challenge-word {
+  font-size: 3rem;
+  font-weight: bold;
+  font-family: var(--font-primary);
+}
+
+.challenge-details {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: center;
+  gap: 3rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.detail-item {
+  text-align: center;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 1rem 2rem;
+  border-radius: var(--border-radius);
+}
+
+.detail-label {
+  display: block;
+  font-size: 0.9rem;
+  opacity: 0.9;
+  margin-bottom: 0.25rem;
+}
+
+.detail-value {
+  display: block;
+  font-weight: bold;
+  font-size: 1.1rem;
+}
+
+.challenge-prompt {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 2rem;
+  border-radius: var(--border-radius);
+  text-align: center;
+}
+
+.challenge-prompt h3 {
+  color: white;
+  margin-bottom: 1rem;
+}
+
+.challenge-prompt p {
+  font-size: 1.1rem;
+  line-height: 1.6;
+  opacity: 0.95;
+}
+
+.submission-form-section {
+  margin-bottom: 4rem;
+}
+
+.form-container {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.form-container h2 {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.form-description {
+  text-align: center;
+  color: var(--text-medium);
+  margin-bottom: 3rem;
+  font-size: 1.1rem;
+}
+
+.google-form-container {
+  background: var(--background-white);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  margin-bottom: 2rem;
+}
+
+.google-form-container iframe {
+  width: 100%;
+  min-height: 1200px;
+  border: none;
+}
+
+.alternative-form {
+  background: var(--background-white);
+  padding: 3rem;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+}
+
+.essay-form {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.form-group {
+  margin-bottom: 2rem;
+}
+
+.form-group label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: var(--text-dark);
+}
+
+.form-group input[type="text"],
+.form-group input[type="email"],
+.form-group input[type="file"] {
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px solid var(--border-color);
+  border-radius: var(--border-radius);
+  font-size: 1rem;
+  transition: var(--transition);
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+.form-group input[readonly] {
+  background: var(--background-light);
+  color: var(--text-medium);
+}
+
+.form-help {
+  display: block;
+  font-size: 0.9rem;
+  color: var(--text-medium);
+  margin-top: 0.25rem;
+}
+
+.checkbox-group {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  cursor: pointer;
+  line-height: 1.5;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: auto;
+  margin: 0;
+}
+
+.submit-btn {
+  width: 100%;
+  background: var(--primary-color);
+  color: white;
+  padding: 1rem 2rem;
+  border: none;
+  border-radius: var(--border-radius);
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.submit-btn:hover {
+  background: var(--primary-dark);
+  transform: translateY(-2px);
+}
+
+.guidelines-reminder {
+  margin-bottom: 4rem;
+}
+
+.guidelines-reminder h2 {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.guidelines-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.guideline-item {
+  background: var(--background-white);
+  padding: 1.5rem;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+  text-align: center;
+  transition: var(--transition);
+}
+
+.guideline-item:hover {
+  box-shadow: var(--shadow-hover);
+  transform: translateY(-2px);
+}
+
+.guideline-icon {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+  display: block;
+}
+
+.guideline-item h3 {
+  color: var(--primary-color);
+  margin-bottom: 0.5rem;
+  font-size: 1.1rem;
+}
+
+.guideline-item p {
+  color: var(--text-medium);
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.guidelines-link {
+  text-align: center;
+}
+
+.writing-tips {
+  margin-bottom: 4rem;
+}
+
+.tips-container {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.writing-tips h2 {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.tips-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+}
+
+.tip-card {
+  background: var(--background-white);
+  padding: 2rem;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+  transition: var(--transition);
+  border-left: 4px solid var(--secondary-color);
+}
+
+.tip-card:hover {
+  box-shadow: var(--shadow-hover);
+  transform: translateY(-2px);
+}
+
+.tip-card h3 {
+  color: var(--primary-color);
+  margin-bottom: 1rem;
+  font-size: 1.2rem;
+}
+
+.tip-card p {
+  color: var(--text-medium);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.next-steps {
+  margin-bottom: 4rem;
+}
+
+.steps-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  max-width: 600px;
+  margin: 2rem auto 0;
+}
+
+.step {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.5rem;
+}
+
+.step-number {
+  width: 40px;
+  height: 40px;
+  background: var(--primary-color);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.step-content h3 {
+  color: var(--primary-color);
+  margin-bottom: 0.5rem;
+}
+
+.step-content p {
+  color: var(--text-medium);
+  margin: 0;
+}
+
+.alternative-submission {
+  margin-bottom: 2rem;
+}
+
+.email-submission {
+  background: var(--background-light);
+  padding: 2rem;
+  border-radius: var(--border-radius);
+  margin-top: 2rem;
+}
+
+.email-submission h3 {
+  color: var(--primary-color);
+  margin-bottom: 1rem;
+}
+
+.email-requirements {
+  margin-top: 2rem;
+}
+
+.email-requirements h4 {
+  color: var(--text-dark);
+  margin-bottom: 1rem;
+}
+
+.email-requirements ul {
+  padding-left: 1.5rem;
+}
+
+.email-requirements li {
+  margin-bottom: 0.5rem;
+  color: var(--text-medium);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .challenge-card {
+    padding: 2rem;
+  }
+  
+  .challenge-word {
+    font-size: 2.5rem;
+  }
+  
+  .detail-row {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .detail-item {
+    padding: 0.75rem 1.5rem;
+  }
+  
+  .challenge-prompt {
+    padding: 1.5rem;
+  }
+  
+  .alternative-form {
+    padding: 2rem;
+  }
+  
+  .guidelines-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .tips-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .steps-timeline {
+    gap: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .challenge-card {
+    padding: 1.5rem;
+  }
+  
+  .challenge-word {
+    font-size: 2rem;
+  }
+  
+  .alternative-form {
+    padding: 1.5rem;
+  }
+  
+  .guidelines-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .guideline-item,
+  .tip-card {
+    padding: 1.5rem;
+  }
+  
+  .email-submission {
+    padding: 1.5rem;
+  }
+}
+</style>
+
+<script>
+// Submit page JavaScript
+document.addEventListener('DOMContentLoaded', function() {
+  const form = document.getElementById('essay-submission-form');
+  
+  if (form) {
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      // Basic form validation
+      const requiredFields = form.querySelectorAll('[required]');
+      let isValid = true;
+      
+      requiredFields.forEach(field => {
+        if (!field.value.trim()) {
+          isValid = false;
+          field.style.borderColor = '#e74c3c';
+        } else {
+          field.style.borderColor = var(--border-color);
+        }
+      });
+      
+      if (!isValid) {
+        alert('Please fill in all required fields.');
+        return;
+      }
+      
+      // File size validation
+      const fileInput = document.getElementById('essay-file');
+      if (fileInput.files[0] && fileInput.files[0].size > 5 * 1024 * 1024) {
+        alert('File size must be less than 5MB.');
+        return;
+      }
+      
+      // Show success message (replace with actual submission logic)
+      alert('Thank you for your submission! You will receive a confirmation email shortly.');
+      form.reset();
+    });
+  }
+  
+  // File input validation
+  const fileInput = document.getElementById('essay-file');
+  if (fileInput) {
+    fileInput.addEventListener('change', function() {
+      const file = this.files[0];
+      if (file) {
+        const allowedTypes = ['.pdf', '.docx', '.doc'];
+        const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
+        
+        if (!allowedTypes.includes(fileExtension)) {
+          alert('Please upload a PDF, DOCX, or DOC file.');
+          this.value = '';
+          return;
+        }
+        
+        if (file.size > 5 * 1024 * 1024) {
+          alert('File size must be less than 5MB.');
+          this.value = '';
+          return;
+        }
+      }
+    });
+  }
+});
+</script>

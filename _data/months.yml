@@ -1,0 +1,75 @@
+# Monthly Challenge Data
+# This file tracks all monthly challenges and their words
+
+2024:
+  - month: "January"
+    word: "BEGINNING"
+    submissions: 12
+    winner: "The First Step"
+    winner_author: "Maria Santos"
+    
+  - month: "February" 
+    word: "CONNECTION"
+    submissions: 18
+    winner: "Invisible Threads"
+    winner_author: "David Kim"
+    
+  - month: "March"
+    word: "GROWTH"
+    submissions: 15
+    winner: "Seasons of Change"
+    winner_author: "Jennifer Walsh"
+    
+  - month: "April"
+    word: "COURAGE"
+    submissions: 22
+    winner: "The Quiet Brave"
+    winner_author: "Ahmed Hassan"
+    
+  - month: "May"
+    word: "MEMORY"
+    submissions: 19
+    winner: "Fragments of Time"
+    winner_author: "Lisa Chen"
+    
+  - month: "June"
+    word: "FREEDOM"
+    submissions: 25
+    winner: "Unbound"
+    winner_author: "Carlos Rivera"
+    
+  - month: "July"
+    word: "JOURNEY"
+    submissions: 21
+    winner: "Miles to Go"
+    winner_author: "Sarah Johnson"
+    
+  - month: "August"
+    word: "STRENGTH"
+    submissions: 17
+    winner: "Inner Fortress"
+    winner_author: "Michael Brown"
+    
+  - month: "September"
+    word: "WISDOM"
+    submissions: 20
+    winner: "Lessons Learned"
+    winner_author: "Elena Rodriguez"
+    
+  - month: "October"
+    word: "HOPE"
+    submissions: 24
+    winner: "Lighthouse in the Storm"
+    winner_author: "Elena Vasquez"
+    
+  - month: "November"
+    word: "RESILIENCE"
+    submissions: 16
+    winner: "The Quiet Strength Within"
+    winner_author: "Sarah Chen"
+    
+  - month: "December"
+    word: "GRATITUDE"
+    submissions: 0  # Current month
+    winner: null
+    winner_author: null

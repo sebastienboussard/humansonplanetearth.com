@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://humansonplanetearth.com/sitemap.xml
+
+# Disallow backup directory
+Disallow: /old_website_backup/

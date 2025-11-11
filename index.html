@@ -1,126 +1,430 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Help humans live the best human experience. Education is Power. Reflections, questions, and stories from Humans On Planet Earth.">
-  <meta name="keywords" content="humanity, education, philosophy, human experience, hope">
-  <meta name="author" content="Humans on Planet Earth">
-  <meta name="theme-color" content="#8c7b6b">
-  
-  <!-- Open Graph / Facebook -->
-  <meta property="og:type" content="website">
-  <meta property="og:url" content="https://humansonplanetearth.com/">
-  <meta property="og:title" content="Humans on Planet Earth">
-  <meta property="og:description" content="Help humans live the best human experience. Education is Power.">
-  <meta property="og:image" content="https://humansonplanetearth.com/og-image.jpg">
+---
+layout: default
+title: "Essay Hub - Monthly Writing Challenges"
+description: "Join our monthly essay writing challenges. Explore humanity through single words. Submit, read, and vote on thought-provoking essays."
+---
 
-  <!-- Twitter -->
-  <meta property="twitter:card" content="summary_large_image">
-  <meta property="twitter:url" content="https://humansonplanetearth.com/">
-  <meta property="twitter:title" content="Humans on Planet Earth">
-  <meta property="twitter:description" content="Help humans live the best human experience. Education is Power.">
-  <meta property="twitter:image" content="https://humansonplanetearth.com/og-image.jpg">
-
-  <!-- Favicon -->
-  <link rel="icon" type="image/x-icon" href="/favicon.ico">
-  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
-  
-  <!-- Web App Manifest -->
-  <link rel="manifest" href="/config/manifest.json">
-  
-  <!-- Preload critical resources -->
-  <link rel="preload" href="assets/css/style.css" as="style">
-  
-  <title>Humans on Planet Earth</title>
-  <link rel="stylesheet" href="assets/css/style.css">
-</head>
-<body class="home">
-  <main class="container">
-    <h1 class="fade-in">Humans on Planet Earth</h1>
-    
-    <section class="hero-quote fade-in">
-      <blockquote class="main-quote">
-        "Let humans have the human experience"
-      </blockquote>
-      <p class="mission-statement">
-        We believe in the power of education, reflection, and authentic human connection. 
-        This space exists to share thoughts, stories, and resources that help us all 
-        navigate the beautiful complexity of being human on this planet.
+<div class="container">
+  <!-- Hero Section -->
+  <section class="hero-section">
+    <div class="card">
+      <h1>Welcome to Essay Hub</h1>
+      <p class="hero-description">
+        Every month, we explore the depths of human experience through a single word. 
+        Writers from around the world submit essays, and our community votes for the most compelling piece.
       </p>
-    </section>
-    
-    <section class="explore-section fade-in">
-      <h2 style="text-align: center; color: var(--primary-dark); margin-bottom: 30px; font-size: 1.8rem;">Explore</h2>
-      <nav class="links">
-        <a href="/blog.html" class="nav-card">
-          <h3>Thoughts</h3>
-          <p>Read reflections and stories about the human experience</p>
-        </a>
-        <a href="/literature.html" class="nav-card">
-          <h3>Literature</h3>
-          <p>Discover books and videos that challenge and inspire</p>
-        </a>
-        <a href="/contact.html" class="nav-card">
-          <h3>Open Questions</h3>
-          <p>Explore questions about life, humanity, and existence</p>
-        </a>
-      </nav>
-    </section>
-  </main>
-  <script src="assets/js/script.js"></script>
-  <style>
-    .explore-section {
-      margin-top: 50px;
-    }
-    
-    .nav-card {
-      display: block;
-      background: var(--background-white);
-      padding: 25px;
-      border-radius: var(--border-radius);
-      text-decoration: none;
-      color: inherit;
-      transition: var(--transition);
-      box-shadow: var(--shadow);
-      border-left: 5px solid var(--primary-color);
-    }
-    
-    .nav-card:hover,
-    .nav-card:focus {
-      transform: translateY(-5px);
-      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-      outline: none;
-    }
-    
-    .nav-card h3 {
-      color: var(--primary-dark);
-      margin: 0 0 10px 0;
-      font-size: 1.5rem;
-    }
-    
-    .nav-card p {
-      color: var(--text-medium);
-      margin: 0;
-      line-height: 1.6;
-    }
-    
-    .links {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 25px;
-      max-width: 1000px;
-      margin: 0 auto;
-    }
-    
-    @media (max-width: 768px) {
-      .links {
-        grid-template-columns: 1fr;
-      }
-    }
-  </style>
-</body>
-</html>
+      
+      <div class="current-challenge">
+        <h2>This Month's Challenge</h2>
+        <div class="challenge-word">{{ site.current_word }}</div>
+        <p class="challenge-description">
+          What does <strong>{{ site.current_word | downcase }}</strong> mean to you? 
+          How has it shaped your life, your relationships, or your understanding of the world?
+        </p>
+        
+        <div class="challenge-details">
+          <div class="detail-item">
+            <strong>Deadline:</strong> {{ site.submission_deadline }}
+          </div>
+          <div class="detail-item">
+            <strong>Voting Period:</strong> {{ site.voting_period }}
+          </div>
+          <div class="detail-item">
+            <strong>Length:</strong> 1 page maximum (~500 words)
+          </div>
+        </div>
+        
+        <div class="hero-actions">
+          <a href="/submit/" class="btn btn-primary">Submit Your Essay</a>
+          <a href="/essays/" class="btn btn-secondary">Read Current Essays</a>
+        </div>
+      </div>
+    </div>
+  </section>
 
+  <!-- Stats Section -->
+  <section class="stats-section">
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-number">{{ site.essays | size | default: 0 }}</div>
+        <div class="stat-label">Essays Published</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">{{ site.data.months | size | default: 12 }}</div>
+        <div class="stat-label">Monthly Challenges</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">{{ site.essays | where: "winner", true | size | default: 0 }}</div>
+        <div class="stat-label">Winners Selected</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">500+</div>
+        <div class="stat-label">Community Members</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Recent Essays Section -->
+  <section class="recent-essays">
+    <h2>Recent Essays</h2>
+    <div class="essay-grid">
+      {% assign recent_essays = site.essays | sort: 'date' | reverse | limit: 6 %}
+      {% for essay in recent_essays %}
+        <div class="essay-card">
+          <div class="essay-meta">
+            <span class="essay-word">{{ essay.word | upcase }}</span>
+            <span class="essay-date">{{ essay.date | date: "%B %Y" }}</span>
+            {% if essay.winner %}
+              <span class="winner-badge">🏆 Winner</span>
+            {% endif %}
+          </div>
+          <h3><a href="{{ essay.url }}">{{ essay.title }}</a></h3>
+          <p class="essay-excerpt">{{ essay.excerpt | strip_html | truncate: 120 }}</p>
+          <div class="essay-author">by {{ essay.author }}</div>
+        </div>
+      {% else %}
+        <div class="no-essays">
+          <p>No essays published yet. <a href="/submit/">Be the first to submit!</a></p>
+        </div>
+      {% endfor %}
+    </div>
+    
+    {% if site.essays.size > 6 %}
+      <div class="view-more">
+        <a href="/essays/" class="btn btn-secondary">View All Essays</a>
+      </div>
+    {% endif %}
+  </section>
+
+  <!-- How It Works Section -->
+  <section class="how-it-works">
+    <h2>How It Works</h2>
+    <div class="steps-grid">
+      <div class="step-card">
+        <div class="step-number">1</div>
+        <h3>Monthly Word</h3>
+        <p>Each month, we announce a new word that serves as the theme for all essay submissions.</p>
+      </div>
+      <div class="step-card">
+        <div class="step-number">2</div>
+        <h3>Submit Essays</h3>
+        <p>Writers have until the 25th to submit their essays exploring the monthly word (max 1 page).</p>
+      </div>
+      <div class="step-card">
+        <div class="step-number">3</div>
+        <h3>Community Voting</h3>
+        <p>From the 26th-30th, our community votes for the most compelling and thought-provoking essay.</p>
+      </div>
+      <div class="step-card">
+        <div class="step-number">4</div>
+        <h3>Winner Announced</h3>
+        <p>The winning essay is featured in our Winners Gallery and the author receives recognition.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Featured Winners Section -->
+  {% assign featured_winners = site.essays | where: "winner", true | sort: 'date' | reverse | limit: 3 %}
+  {% if featured_winners.size > 0 %}
+  <section class="featured-winners">
+    <h2>Featured Winners</h2>
+    <div class="winners-grid">
+      {% for winner in featured_winners %}
+        <div class="winner-card">
+          <div class="winner-badge">🏆 Winner</div>
+          <div class="winner-word">{{ winner.word | upcase }}</div>
+          <h3><a href="{{ winner.url }}">{{ winner.title }}</a></h3>
+          <p class="winner-excerpt">{{ winner.excerpt | strip_html | truncate: 100 }}</p>
+          <div class="winner-author">by {{ winner.author }}</div>
+          <div class="winner-date">{{ winner.date | date: "%B %Y" }}</div>
+        </div>
+      {% endfor %}
+    </div>
+    <div class="view-more">
+      <a href="/winners/" class="btn btn-secondary">View All Winners</a>
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- Call to Action -->
+  <section class="cta-section">
+    <div class="card cta-card">
+      <h2>Ready to Share Your Voice?</h2>
+      <p>
+        Join our community of writers exploring the human experience. 
+        Every essay adds a unique perspective to our collective understanding.
+      </p>
+      <div class="cta-actions">
+        <a href="/submit/" class="btn btn-primary">Submit Your Essay</a>
+        <a href="/about/" class="btn btn-secondary">Learn More</a>
+      </div>
+    </div>
+  </section>
+</div>
+
+<style>
+/* Homepage-specific styles */
+.hero-section {
+  margin-bottom: 3rem;
+}
+
+.hero-description {
+  font-size: 1.2rem;
+  color: var(--text-medium);
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.current-challenge {
+  text-align: center;
+  margin-top: 2rem;
+}
+
+.challenge-word {
+  font-size: 3rem;
+  font-weight: bold;
+  color: var(--primary-color);
+  margin: 1rem 0;
+  font-family: var(--font-primary);
+}
+
+.challenge-description {
+  font-size: 1.1rem;
+  color: var(--text-medium);
+  margin-bottom: 2rem;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.challenge-details {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.detail-item {
+  background: var(--background-hover);
+  padding: 0.75rem 1rem;
+  border-radius: var(--border-radius);
+  font-size: 0.9rem;
+}
+
+.hero-actions {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.stats-section {
+  margin-bottom: 3rem;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+}
+
+.stat-card {
+  background: var(--background-white);
+  padding: 2rem;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+  text-align: center;
+  transition: var(--transition);
+}
+
+.stat-card:hover {
+  box-shadow: var(--shadow-hover);
+  transform: translateY(-2px);
+}
+
+.stat-number {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: var(--primary-color);
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.stat-label {
+  color: var(--text-medium);
+  font-weight: 500;
+}
+
+.recent-essays,
+.how-it-works,
+.featured-winners {
+  margin-bottom: 3rem;
+}
+
+.recent-essays h2,
+.how-it-works h2,
+.featured-winners h2 {
+  text-align: center;
+  margin-bottom: 2rem;
+  color: var(--text-dark);
+}
+
+.steps-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 2rem;
+}
+
+.step-card {
+  background: var(--background-white);
+  padding: 2rem;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+  text-align: center;
+  transition: var(--transition);
+}
+
+.step-card:hover {
+  box-shadow: var(--shadow-hover);
+  transform: translateY(-2px);
+}
+
+.step-number {
+  width: 60px;
+  height: 60px;
+  background: var(--primary-color);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin: 0 auto 1rem;
+}
+
+.winners-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+}
+
+.winner-card {
+  background: var(--background-white);
+  padding: 2rem;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+  transition: var(--transition);
+  border-left: 5px solid var(--secondary-color);
+}
+
+.winner-card:hover {
+  box-shadow: var(--shadow-hover);
+  transform: translateY(-2px);
+}
+
+.winner-word {
+  font-size: 0.9rem;
+  color: var(--primary-color);
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+
+.winner-excerpt {
+  color: var(--text-medium);
+  margin: 1rem 0;
+}
+
+.winner-author {
+  font-style: italic;
+  color: var(--text-medium);
+  font-size: 0.9rem;
+}
+
+.winner-date {
+  font-size: 0.8rem;
+  color: var(--text-light);
+  margin-top: 0.5rem;
+}
+
+.view-more {
+  text-align: center;
+  margin-top: 2rem;
+}
+
+.cta-section {
+  margin-bottom: 2rem;
+}
+
+.cta-card {
+  text-align: center;
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+  color: white;
+}
+
+.cta-card h2 {
+  color: white;
+  margin-bottom: 1rem;
+}
+
+.cta-card p {
+  font-size: 1.1rem;
+  margin-bottom: 2rem;
+  opacity: 0.9;
+}
+
+.cta-actions {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.no-essays {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 3rem;
+  color: var(--text-medium);
+  font-style: italic;
+}
+
+@media (max-width: 768px) {
+  .challenge-word {
+    font-size: 2.5rem;
+  }
+  
+  .challenge-details {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .hero-actions,
+  .cta-actions {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .steps-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .stat-card {
+    padding: 1.5rem;
+  }
+  
+  .stat-number {
+    font-size: 2rem;
+  }
+}
+</style>
