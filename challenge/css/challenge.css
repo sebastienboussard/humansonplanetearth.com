@@ -1,0 +1,636 @@
+/* Monthly Writing Challenge - Styles */
+
+/* ==================== BASE STYLES ==================== */
+
+.challenge-page {
+    background-color: var(--background-light);
+    min-height: 100vh;
+}
+
+.challenge-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 30px 20px;
+}
+
+/* ==================== HEADER ==================== */
+
+.challenge-header {
+    text-align: center;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.challenge-header h1 {
+    font-size: 2.5rem;
+    color: var(--primary-dark);
+    margin-bottom: 5px;
+}
+
+.challenge-month {
+    color: var(--text-medium);
+    font-size: 1.1rem;
+    margin-bottom: 15px;
+}
+
+.user-section {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.user-greeting {
+    color: var(--text-dark);
+}
+
+.admin-link {
+    color: var(--primary-color);
+    text-decoration: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    background-color: var(--background-hover);
+}
+
+.admin-link:hover {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+/* ==================== PHASE INDICATOR ==================== */
+
+.phase-indicator {
+    text-align: center;
+    padding: 20px;
+    border-radius: var(--border-radius);
+    margin-bottom: 30px;
+}
+
+.phase-writing {
+    background: linear-gradient(135deg, #a8e6cf 0%, #dcedc1 100%);
+    border: 2px solid #27ae60;
+}
+
+.phase-voting {
+    background: linear-gradient(135deg, #a8d8ea 0%, #cce5ff 100%);
+    border: 2px solid #3498db;
+}
+
+.phase-results {
+    background: linear-gradient(135deg, #ffd93d 0%, #ffe066 100%);
+    border: 2px solid #f39c12;
+}
+
+.phase-badge {
+    display: inline-block;
+    padding: 8px 20px;
+    background-color: rgba(255, 255, 255, 0.9);
+    border-radius: 20px;
+    font-weight: bold;
+    font-size: 1.2rem;
+    color: var(--primary-dark);
+    margin-bottom: 10px;
+}
+
+.phase-description {
+    color: var(--text-dark);
+    margin: 0;
+}
+
+/* ==================== WORD OF THE MONTH ==================== */
+
+.word-of-month {
+    text-align: center;
+    padding: 40px;
+    background-color: var(--background-white);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    margin-bottom: 30px;
+}
+
+.word-label {
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-size: 0.9rem;
+    color: var(--primary-color);
+    display: block;
+    margin-bottom: 10px;
+}
+
+.the-word {
+    font-size: 3.5rem;
+    color: var(--primary-dark);
+    font-style: italic;
+    font-weight: 300;
+    margin: 0 0 15px 0;
+    letter-spacing: -1px;
+}
+
+.word-instruction {
+    color: var(--text-medium);
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+/* ==================== ACTION SECTIONS ==================== */
+
+.action-section {
+    margin-bottom: 40px;
+}
+
+.auth-prompt,
+.submitted-notice,
+.voted-notice,
+.voting-instructions {
+    text-align: center;
+    padding: 30px;
+    background-color: var(--background-white);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+}
+
+.auth-prompt h3,
+.submitted-notice h3,
+.voted-notice h3,
+.voting-instructions h3 {
+    color: var(--primary-dark);
+    margin-bottom: 10px;
+}
+
+.submitted-notice {
+    border-left: 5px solid #27ae60;
+}
+
+.voted-notice {
+    border-left: 5px solid #3498db;
+}
+
+.voting-note {
+    font-size: 0.9rem;
+    color: var(--text-medium);
+    font-style: italic;
+}
+
+/* ==================== SUBMISSION FORM ==================== */
+
+.submission-form {
+    background-color: var(--background-white);
+    padding: 30px;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+}
+
+.submission-form h3 {
+    color: var(--primary-dark);
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--primary-dark);
+    font-weight: 500;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 1rem;
+    font-family: inherit;
+    background-color: white;
+    transition: border-color 0.3s ease;
+    box-sizing: border-box;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+.form-group textarea {
+    min-height: 200px;
+    resize: vertical;
+    line-height: 1.6;
+}
+
+.char-count {
+    text-align: right;
+    font-size: 0.85rem;
+    color: var(--text-medium);
+    margin-top: 5px;
+}
+
+/* ==================== GALLERY ==================== */
+
+.gallery-section {
+    margin-bottom: 40px;
+}
+
+.gallery-section h3 {
+    text-align: center;
+    color: var(--primary-dark);
+    margin-bottom: 25px;
+    font-size: 1.5rem;
+}
+
+.empty-gallery {
+    text-align: center;
+    padding: 40px;
+    background-color: var(--background-white);
+    border-radius: var(--border-radius);
+    color: var(--text-medium);
+}
+
+.submissions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 25px;
+}
+
+.submission-card {
+    background-color: var(--background-white);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    padding: 25px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    position: relative;
+}
+
+.submission-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.submission-card.winner {
+    border: 3px solid #f39c12;
+    background: linear-gradient(135deg, #fffbf0 0%, var(--background-white) 100%);
+}
+
+.winner-badge {
+    position: absolute;
+    top: -10px;
+    right: 15px;
+    background-color: #f39c12;
+    color: white;
+    padding: 5px 12px;
+    border-radius: 15px;
+    font-size: 0.85rem;
+    font-weight: bold;
+}
+
+.submission-title {
+    color: var(--primary-dark);
+    font-size: 1.2rem;
+    margin: 0 0 8px 0;
+}
+
+.submission-author {
+    color: var(--primary-color);
+    font-style: italic;
+    margin: 0 0 15px 0;
+    font-size: 0.95rem;
+}
+
+.submission-content {
+    color: var(--text-dark);
+    line-height: 1.6;
+    margin-bottom: 20px;
+    max-height: 150px;
+    overflow: hidden;
+    position: relative;
+}
+
+.submission-content::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 30px;
+    background: linear-gradient(transparent, var(--background-white));
+}
+
+.submission-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding-top: 15px;
+    border-top: 1px solid var(--border-color);
+}
+
+.vote-count {
+    color: var(--text-medium);
+    font-size: 0.9rem;
+}
+
+/* ==================== WINNER SECTION ==================== */
+
+.winner-section {
+    text-align: center;
+    margin-bottom: 40px;
+    padding: 40px;
+    background: linear-gradient(135deg, #fff9e6 0%, var(--background-white) 100%);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    border: 3px solid #f39c12;
+}
+
+.winner-section h2 {
+    color: #f39c12;
+    margin-bottom: 25px;
+}
+
+.winner-showcase {
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+.winner-title {
+    color: var(--primary-dark);
+    font-size: 1.8rem;
+    font-style: italic;
+    margin-bottom: 10px;
+}
+
+.winner-author {
+    color: var(--primary-color);
+    font-style: italic;
+    margin-bottom: 20px;
+}
+
+.winner-content {
+    text-align: left;
+    line-height: 1.8;
+    color: var(--text-dark);
+    background-color: rgba(255, 255, 255, 0.7);
+    padding: 25px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.winner-votes {
+    color: var(--text-medium);
+    font-style: italic;
+}
+
+/* ==================== BUTTONS ==================== */
+
+.btn {
+    display: inline-block;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    text-align: center;
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: var(--primary-dark);
+    transform: translateY(-2px);
+}
+
+.btn-secondary {
+    background-color: transparent;
+    color: var(--primary-dark);
+    border: 2px solid var(--primary-color);
+}
+
+.btn-secondary:hover {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.btn-vote {
+    background-color: #27ae60;
+    color: white;
+}
+
+.btn-vote:hover {
+    background-color: #219a52;
+}
+
+.btn-small {
+    padding: 8px 16px;
+    font-size: 0.9rem;
+}
+
+.btn-large {
+    padding: 15px 30px;
+    font-size: 1.1rem;
+    width: 100%;
+}
+
+.btn-block {
+    display: block;
+    width: 100%;
+}
+
+/* ==================== MODALS ==================== */
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    padding: 20px;
+}
+
+.modal {
+    background-color: var(--background-white);
+    border-radius: var(--border-radius);
+    padding: 30px;
+    width: 100%;
+    max-width: 450px;
+    position: relative;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal-large {
+    max-width: 700px;
+}
+
+.modal-close {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--text-medium);
+}
+
+.modal-close:hover {
+    color: var(--primary-dark);
+}
+
+.modal h2 {
+    color: var(--primary-dark);
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.modal-footer {
+    text-align: center;
+    margin-top: 20px;
+    color: var(--text-medium);
+}
+
+.modal-footer a {
+    color: var(--primary-color);
+}
+
+.full-submission-content {
+    line-height: 1.8;
+    color: var(--text-dark);
+}
+
+.full-submission-content p {
+    margin-bottom: 1em;
+}
+
+.submission-meta {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid var(--border-color);
+    color: var(--text-medium);
+    font-size: 0.9rem;
+}
+
+/* ==================== NOTIFICATIONS ==================== */
+
+.notification {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    padding: 15px 20px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    z-index: 1001;
+    animation: slideIn 0.3s ease;
+    max-width: 400px;
+}
+
+.notification-success {
+    background-color: #27ae60;
+    color: white;
+}
+
+.notification-error {
+    background-color: #e74c3c;
+    color: white;
+}
+
+.notification-info {
+    background-color: #3498db;
+    color: white;
+}
+
+.notification button {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.2rem;
+    cursor: pointer;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* ==================== FOOTER ==================== */
+
+.challenge-footer {
+    background-color: var(--background-white);
+    border-top: 2px solid var(--border-color);
+    padding: 30px 20px;
+    text-align: center;
+    margin-top: 50px;
+}
+
+.footer-content {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.footer-content p {
+    color: var(--text-medium);
+    font-style: italic;
+    margin-bottom: 15px;
+}
+
+/* ==================== RESPONSIVE ==================== */
+
+@media (max-width: 768px) {
+    .challenge-header h1 {
+        font-size: 2rem;
+    }
+    
+    .the-word {
+        font-size: 2.5rem;
+    }
+    
+    .word-of-month {
+        padding: 25px;
+    }
+    
+    .submissions-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .submission-footer {
+        flex-direction: column;
+    }
+    
+    .user-section {
+        flex-direction: column;
+    }
+    
+    .notification {
+        left: 20px;
+        right: 20px;
+        bottom: 20px;
+    }
+}

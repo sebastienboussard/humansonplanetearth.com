@@ -25,6 +25,12 @@
     <priority>0.6</priority>
   </url>
   <url>
+    <loc>https://humansonplanetearth.com/challenge/</loc>
+    <lastmod>2025-02-28</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://humansonplanetearth.com/blog/why-we-listen.html</loc>
     <lastmod>2025-01-27</lastmod>
     <changefreq>monthly</changefreq>
