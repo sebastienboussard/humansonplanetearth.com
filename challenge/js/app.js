@@ -3,25 +3,14 @@
  * 
  * This module handles:
  * - State-based UI rendering
- * - User authentication flow
- * - Submission handling
- * - Voting functionality
+ * - Anonymous submissions (no account required)
+ * - Anonymous voting
  * - Gallery display
  */
 
 class ChallengeApp {
     constructor() {
         this.db = db; // Global database instance
-        this.currentView = 'main';
-        
-        // Bind methods
-        this.init = this.init.bind(this);
-        this.render = this.render.bind(this);
-        this.handleLogin = this.handleLogin.bind(this);
-        this.handleRegister = this.handleRegister.bind(this);
-        this.handleLogout = this.handleLogout.bind(this);
-        this.handleSubmit = this.handleSubmit.bind(this);
-        this.handleVote = this.handleVote.bind(this);
     }
 
     init() {
@@ -33,40 +22,33 @@ class ChallengeApp {
 
     render() {
         const config = this.db.getConfig();
-        const user = this.db.getCurrentUser();
         const container = document.getElementById('challenge-app');
         
         if (!container) return;
 
         container.innerHTML = `
-            ${this.renderHeader(config, user)}
+            ${this.renderAdminLink()}
             ${this.renderPhaseIndicator(config)}
             ${this.renderWordOfMonth(config)}
-            ${this.renderMainContent(config, user)}
-            ${this.renderGallery(config, user)}
+            ${this.renderMainContent(config)}
+            ${this.renderGallery(config)}
             ${this.renderWinner(config)}
         `;
         
         this.setupEventListeners();
     }
 
-    renderHeader(config, user) {
-        return `
-            <div class="challenge-header">
-                <h1>Monthly Writing Challenge</h1>
-                <p class="challenge-month">${config.challengeMonth}</p>
-                <div class="user-section">
-                    ${user ? `
-                        <span class="user-greeting">Welcome, <strong>${user.username}</strong></span>
-                        ${user.isAdmin ? '<a href="/challenge/admin.html" class="admin-link">⚙️ Admin</a>' : ''}
-                        <button class="btn btn-secondary btn-small" onclick="app.handleLogout()">Logout</button>
-                    ` : `
-                        <button class="btn btn-primary btn-small" onclick="app.showLoginModal()">Login</button>
-                        <button class="btn btn-secondary btn-small" onclick="app.showRegisterModal()">Register</button>
-                    `}
+    renderAdminLink() {
+        const user = this.db.getCurrentUser();
+        if (user && user.isAdmin) {
+            return `
+                <div class="admin-bar">
+                    <a href="/challenge/admin.html" class="admin-link">⚙️ Admin Dashboard</a>
+                    <button class="btn btn-small btn-secondary" onclick="app.handleLogout()">Logout</button>
                 </div>
-            </div>
-        `;
+            `;
+        }
+        return '';
     }
 
     renderPhaseIndicator(config) {
@@ -104,53 +86,33 @@ class ChallengeApp {
         `;
     }
 
-    renderMainContent(config, user) {
+    renderMainContent(config) {
         // Writing Phase - Show submission form
         if (config.isWritingActive) {
-            return this.renderSubmissionForm(user);
+            return this.renderSubmissionForm();
         }
         
         // Voting Phase - Instructions
         if (config.isVotingActive) {
-            return this.renderVotingInstructions(user);
+            return this.renderVotingInstructions();
         }
         
         // Results Phase
         return '';
     }
 
-    renderSubmissionForm(user) {
-        if (!user) {
-            return `
-                <div class="action-section">
-                    <div class="auth-prompt">
-                        <h3>Want to participate?</h3>
-                        <p>Login or create an account to submit your writing.</p>
-                        <button class="btn btn-primary" onclick="app.showLoginModal()">Login to Submit</button>
-                    </div>
-                </div>
-            `;
-        }
-        
-        const config = this.db.getConfig();
-        const hasSubmitted = this.db.hasUserSubmittedForWord(user.id, config.currentWord);
-        
-        if (hasSubmitted) {
-            return `
-                <div class="action-section">
-                    <div class="submitted-notice">
-                        <h3>✅ You've Already Submitted!</h3>
-                        <p>Your piece has been received. You can see it in the gallery below.</p>
-                        <p>Come back during the voting phase to vote for your favorite!</p>
-                    </div>
-                </div>
-            `;
-        }
-        
+    renderSubmissionForm() {
         return `
             <div class="action-section">
                 <form id="submission-form" class="submission-form" onsubmit="app.handleSubmit(event)">
                     <h3>📝 Submit Your Writing</h3>
+                    <p class="form-subtitle">No account needed. Share your words anonymously.</p>
+                    
+                    <div class="form-group">
+                        <label for="submission-name">Display Name <span class="optional">(optional)</span></label>
+                        <input type="text" id="submission-name" name="displayName" 
+                               placeholder="Anonymous" maxlength="50">
+                    </div>
                     <div class="form-group">
                         <label for="submission-title">Title</label>
                         <input type="text" id="submission-title" name="title" required 
@@ -171,20 +133,8 @@ class ChallengeApp {
         `;
     }
 
-    renderVotingInstructions(user) {
-        if (!user) {
-            return `
-                <div class="action-section">
-                    <div class="auth-prompt">
-                        <h3>Ready to Vote?</h3>
-                        <p>Login or create an account to cast your vote.</p>
-                        <button class="btn btn-primary" onclick="app.showLoginModal()">Login to Vote</button>
-                    </div>
-                </div>
-            `;
-        }
-        
-        const hasVoted = this.db.hasUserVotedThisRound(user.id);
+    renderVotingInstructions() {
+        const hasVoted = this.db.hasVotedThisRound();
         
         if (hasVoted) {
             return `
@@ -208,7 +158,7 @@ class ChallengeApp {
         `;
     }
 
-    renderGallery(config, user) {
+    renderGallery(config) {
         const submissions = this.db.getSubmissionsForCurrentWord();
         
         if (submissions.length === 0) {
@@ -223,21 +173,20 @@ class ChallengeApp {
             `;
         }
         
-        const hasVoted = user ? this.db.hasUserVotedThisRound(user.id) : false;
+        const hasVoted = this.db.hasVotedThisRound();
         
         return `
             <div class="gallery-section">
                 <h3>📚 Submissions Gallery (${submissions.length})</h3>
                 <div class="submissions-grid">
-                    ${submissions.map(sub => this.renderSubmissionCard(sub, config, user, hasVoted)).join('')}
+                    ${submissions.map(sub => this.renderSubmissionCard(sub, config, hasVoted)).join('')}
                 </div>
             </div>
         `;
     }
 
-    renderSubmissionCard(submission, config, user, hasVoted) {
-        const isOwnSubmission = user && user.id === submission.userId;
-        const showVoteButton = config.isVotingActive && user && !hasVoted && !isOwnSubmission;
+    renderSubmissionCard(submission, config, hasVoted) {
+        const showVoteButton = config.isVotingActive && !hasVoted;
         const truncatedContent = submission.content.length > 300 
             ? submission.content.substring(0, 300) + '...' 
             : submission.content;
@@ -246,7 +195,7 @@ class ChallengeApp {
             <article class="submission-card ${submission.isWinner ? 'winner' : ''}">
                 ${submission.isWinner ? '<div class="winner-badge">🏆 Winner</div>' : ''}
                 <h4 class="submission-title">${this.escapeHtml(submission.title)}</h4>
-                <p class="submission-author">by ${this.escapeHtml(submission.username)}</p>
+                <p class="submission-author">by ${this.escapeHtml(submission.displayName || 'Anonymous')}</p>
                 <div class="submission-content">
                     <p>${this.escapeHtml(truncatedContent)}</p>
                 </div>
@@ -277,7 +226,7 @@ class ChallengeApp {
                 <h2>🏆 This Month's Winner</h2>
                 <div class="winner-showcase">
                     <h3 class="winner-title">"${this.escapeHtml(winner.title)}"</h3>
-                    <p class="winner-author">by ${this.escapeHtml(winner.username)}</p>
+                    <p class="winner-author">by ${this.escapeHtml(winner.displayName || 'Anonymous')}</p>
                     <div class="winner-content">
                         ${this.escapeHtml(winner.content).split('\n').map(p => `<p>${p}</p>`).join('')}
                     </div>
@@ -288,66 +237,6 @@ class ChallengeApp {
     }
 
     // ==================== MODALS ====================
-
-    showLoginModal() {
-        const modal = document.createElement('div');
-        modal.className = 'modal-overlay';
-        modal.id = 'auth-modal';
-        modal.innerHTML = `
-            <div class="modal">
-                <button class="modal-close" onclick="app.closeModal()">&times;</button>
-                <h2>Login</h2>
-                <form id="login-form" onsubmit="app.handleLogin(event)">
-                    <div class="form-group">
-                        <label for="login-email">Email</label>
-                        <input type="email" id="login-email" name="email" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="login-password">Password</label>
-                        <input type="password" id="login-password" name="password" required>
-                    </div>
-                    <button type="submit" class="btn btn-primary btn-block">Login</button>
-                </form>
-                <p class="modal-footer">
-                    Don't have an account? 
-                    <a href="#" onclick="app.closeModal(); app.showRegisterModal();">Register</a>
-                </p>
-            </div>
-        `;
-        document.body.appendChild(modal);
-    }
-
-    showRegisterModal() {
-        const modal = document.createElement('div');
-        modal.className = 'modal-overlay';
-        modal.id = 'auth-modal';
-        modal.innerHTML = `
-            <div class="modal">
-                <button class="modal-close" onclick="app.closeModal()">&times;</button>
-                <h2>Create Account</h2>
-                <form id="register-form" onsubmit="app.handleRegister(event)">
-                    <div class="form-group">
-                        <label for="reg-username">Display Name</label>
-                        <input type="text" id="reg-username" name="username" required minlength="2" maxlength="50">
-                    </div>
-                    <div class="form-group">
-                        <label for="reg-email">Email</label>
-                        <input type="email" id="reg-email" name="email" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="reg-password">Password</label>
-                        <input type="password" id="reg-password" name="password" required minlength="6">
-                    </div>
-                    <button type="submit" class="btn btn-primary btn-block">Create Account</button>
-                </form>
-                <p class="modal-footer">
-                    Already have an account? 
-                    <a href="#" onclick="app.closeModal(); app.showLoginModal();">Login</a>
-                </p>
-            </div>
-        `;
-        document.body.appendChild(modal);
-    }
 
     showFullSubmission(submissionId) {
         const submission = this.db.getSubmissionById(submissionId);
@@ -360,7 +249,7 @@ class ChallengeApp {
             <div class="modal modal-large">
                 <button class="modal-close" onclick="app.closeModal()">&times;</button>
                 <h2>${this.escapeHtml(submission.title)}</h2>
-                <p class="submission-author">by ${this.escapeHtml(submission.username)}</p>
+                <p class="submission-author">by ${this.escapeHtml(submission.displayName || 'Anonymous')}</p>
                 <div class="full-submission-content">
                     ${this.escapeHtml(submission.content).split('\n').map(p => `<p>${p}</p>`).join('')}
                 </div>
@@ -406,37 +295,27 @@ class ChallengeApp {
         });
     }
 
-    handleLogin(event) {
+    handleSubmit(event) {
         event.preventDefault();
         const form = event.target;
-        const email = form.email.value;
-        const password = form.password.value;
+        const displayName = form.displayName.value.trim();
+        const title = form.title.value.trim();
+        const content = form.content.value.trim();
         
-        const user = this.db.authenticateUser(email, password);
-        
-        if (user) {
-            this.db.setCurrentUser(user);
-            this.closeModal();
+        try {
+            this.db.createSubmission(displayName, title, content);
             this.render();
-            this.showNotification('Welcome back, ' + user.username + '!', 'success');
-        } else {
-            this.showNotification('Invalid email or password', 'error');
+            this.showNotification('Your submission has been received! Thank you for sharing.', 'success');
+        } catch (error) {
+            this.showNotification(error.message, 'error');
         }
     }
 
-    handleRegister(event) {
-        event.preventDefault();
-        const form = event.target;
-        const username = form.username.value;
-        const email = form.email.value;
-        const password = form.password.value;
-        
+    handleVote(submissionId) {
         try {
-            const user = this.db.createUser(username, email, password);
-            this.db.setCurrentUser(user);
-            this.closeModal();
+            this.db.voteForSubmission(submissionId);
             this.render();
-            this.showNotification('Account created! Welcome, ' + user.username + '!', 'success');
+            this.showNotification('Vote recorded! Thank you for participating.', 'success');
         } catch (error) {
             this.showNotification(error.message, 'error');
         }
@@ -446,44 +325,6 @@ class ChallengeApp {
         this.db.logout();
         this.render();
         this.showNotification('Logged out successfully', 'success');
-    }
-
-    handleSubmit(event) {
-        event.preventDefault();
-        const form = event.target;
-        const title = form.title.value.trim();
-        const content = form.content.value.trim();
-        const user = this.db.getCurrentUser();
-        
-        if (!user) {
-            this.showNotification('Please login to submit', 'error');
-            return;
-        }
-        
-        try {
-            this.db.createSubmission(user.id, user.username, title, content);
-            this.render();
-            this.showNotification('Your submission has been received!', 'success');
-        } catch (error) {
-            this.showNotification(error.message, 'error');
-        }
-    }
-
-    handleVote(submissionId) {
-        const user = this.db.getCurrentUser();
-        
-        if (!user) {
-            this.showNotification('Please login to vote', 'error');
-            return;
-        }
-        
-        try {
-            this.db.voteForSubmission(user.id, submissionId);
-            this.render();
-            this.showNotification('Vote recorded! Thank you for participating.', 'success');
-        } catch (error) {
-            this.showNotification(error.message, 'error');
-        }
     }
 
     // ==================== UTILITIES ====================

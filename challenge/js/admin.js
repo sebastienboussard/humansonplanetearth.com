@@ -6,6 +6,7 @@
  * - Setting the Monthly Word
  * - Viewing vote tallies
  * - Declaring winners
+ * - Deleting submissions
  * - Archiving and resetting challenges
  */
 
@@ -20,7 +21,7 @@ class AdminDashboard {
         const user = this.db.getCurrentUser();
         
         if (!user) {
-            this.showLoginRequired();
+            this.showLoginForm();
             return;
         }
         
@@ -32,15 +33,48 @@ class AdminDashboard {
         this.render();
     }
 
-    showLoginRequired() {
+    showLoginForm() {
         const container = document.getElementById('admin-app');
         container.innerHTML = `
             <div class="admin-message">
-                <h2>🔐 Login Required</h2>
-                <p>You must be logged in as an administrator to access this page.</p>
-                <a href="/challenge/" class="btn btn-primary">Go to Challenge</a>
+                <h2>🔐 Admin Login</h2>
+                <form id="admin-login-form" class="admin-login-form" onsubmit="admin.handleLogin(event)">
+                    <div class="form-group">
+                        <label for="admin-email">Email</label>
+                        <input type="email" id="admin-email" name="email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="admin-password">Password</label>
+                        <input type="password" id="admin-password" name="password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">Login</button>
+                </form>
+                <p style="margin-top: 1rem; text-align: center;">
+                    <a href="/challenge/" class="back-link">← Back to Challenge</a>
+                </p>
             </div>
         `;
+    }
+
+    handleLogin(event) {
+        event.preventDefault();
+        const form = event.target;
+        const email = form.email.value;
+        const password = form.password.value;
+        
+        const user = this.db.authenticateUser(email, password);
+        
+        if (user) {
+            if (user.isAdmin) {
+                this.db.setCurrentUser(user);
+                this.render();
+                this.showNotification('Welcome, ' + user.username + '!', 'success');
+            } else {
+                this.showNotification('This account does not have admin privileges', 'error');
+            }
+        } else {
+            this.showNotification('Invalid email or password', 'error');
+        }
     }
 
     showAccessDenied() {
@@ -68,11 +102,10 @@ class AdminDashboard {
 
             ${this.renderPhaseControls(config)}
             ${this.renderWordControls(config)}
-            ${this.renderVoteTally()}
+            ${this.renderSubmissionsManagement()}
             ${this.renderWinnerControls()}
             ${this.renderResetControls()}
             ${this.renderArchives()}
-            ${this.renderUserManagement()}
         `;
     }
 
@@ -159,12 +192,12 @@ class AdminDashboard {
         `;
     }
 
-    renderVoteTally() {
+    renderSubmissionsManagement() {
         const tally = this.db.getVoteTally();
         
         return `
             <section class="admin-section">
-                <h3>🗳️ Vote Tally</h3>
+                <h3>📄 Submissions Management</h3>
                 ${tally.length === 0 ? `
                     <p class="no-data">No submissions for the current word yet.</p>
                 ` : `
@@ -183,15 +216,18 @@ class AdminDashboard {
                                 <tr class="${sub.isWinner ? 'winner-row' : ''}">
                                     <td>${index + 1}</td>
                                     <td>${this.escapeHtml(sub.title)}</td>
-                                    <td>${this.escapeHtml(sub.username)}</td>
+                                    <td>${this.escapeHtml(sub.displayName || 'Anonymous')}</td>
                                     <td><strong>${sub.votes}</strong></td>
-                                    <td>
+                                    <td class="action-buttons">
                                         ${sub.isWinner ? 
                                             '<span class="winner-tag">🏆 Winner</span>' :
-                                            `<button class="btn btn-small" onclick="admin.declareWinner('${sub.id}')">
+                                            `<button class="btn btn-small btn-primary" onclick="admin.declareWinner('${sub.id}')">
                                                 Declare Winner
                                             </button>`
                                         }
+                                        <button class="btn btn-small btn-danger" onclick="admin.deleteSubmission('${sub.id}', '${this.escapeHtml(sub.title).replace(/'/g, "\\'")}')">
+                                            🗑️ Delete
+                                        </button>
                                     </td>
                                 </tr>
                             `).join('')}
@@ -217,7 +253,7 @@ class AdminDashboard {
                         <p>Current Winner:</p>
                         <div class="winner-card">
                             <h4>"${this.escapeHtml(winner.title)}"</h4>
-                            <p>by ${this.escapeHtml(winner.username)}</p>
+                            <p>by ${this.escapeHtml(winner.displayName || 'Anonymous')}</p>
                             <p class="votes">${winner.votes} votes</p>
                         </div>
                         <button class="btn btn-secondary" onclick="admin.clearWinner()">
@@ -225,7 +261,7 @@ class AdminDashboard {
                         </button>
                     </div>
                 ` : `
-                    <p>No winner declared yet. Use the vote tally above to declare a winner.</p>
+                    <p>No winner declared yet. Use the submissions table above to declare a winner.</p>
                 `}
                 
                 <div class="auto-winner">
@@ -293,44 +329,13 @@ class AdminDashboard {
                                 <tr>
                                     <td>${arch.month}</td>
                                     <td>"${this.escapeHtml(arch.word)}"</td>
-                                    <td>${arch.winnerUsername} - "${this.escapeHtml(arch.winnerTitle || 'N/A')}"</td>
+                                    <td>${arch.winnerName} - "${this.escapeHtml(arch.winnerTitle || 'N/A')}"</td>
                                     <td>${arch.totalSubmissions}</td>
                                 </tr>
                             `).join('')}
                         </tbody>
                     </table>
                 `}
-            </section>
-        `;
-    }
-
-    renderUserManagement() {
-        const users = this.db.getUsers() || [];
-        
-        return `
-            <section class="admin-section">
-                <h3>👥 Registered Users</h3>
-                <table class="users-table">
-                    <thead>
-                        <tr>
-                            <th>Username</th>
-                            <th>Email</th>
-                            <th>Admin</th>
-                            <th>Joined</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${users.map(user => `
-                            <tr>
-                                <td>${this.escapeHtml(user.username)}</td>
-                                <td>${this.escapeHtml(user.email)}</td>
-                                <td>${user.isAdmin ? '✅' : '—'}</td>
-                                <td>${new Date(user.createdAt).toLocaleDateString()}</td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
-                <p class="user-count">Total Users: <strong>${users.length}</strong></p>
             </section>
         `;
     }
@@ -379,6 +384,14 @@ class AdminDashboard {
         }
     }
 
+    deleteSubmission(submissionId, title) {
+        if (confirm(`Delete "${title}"? This cannot be undone.`)) {
+            this.db.deleteSubmission(submissionId);
+            this.render();
+            this.showNotification('Submission deleted', 'success');
+        }
+    }
+
     declareWinner(submissionId) {
         if (confirm('Declare this submission as the winner?')) {
             this.db.declareWinner(submissionId);
@@ -395,7 +408,7 @@ class AdminDashboard {
         }
         
         const topVoted = tally[0];
-        if (confirm(`Declare "${topVoted.title}" by ${topVoted.username} (${topVoted.votes} votes) as winner?`)) {
+        if (confirm(`Declare "${topVoted.title}" by ${topVoted.displayName || 'Anonymous'} (${topVoted.votes} votes) as winner?`)) {
             this.db.declareWinner(topVoted.id);
             this.render();
             this.showNotification('Winner declared!', 'success');
@@ -429,7 +442,6 @@ class AdminDashboard {
     exportData() {
         const data = {
             config: this.db.getConfig(),
-            users: this.db.getUsers(),
             submissions: this.db.getSubmissions(),
             archives: this.db.getArchives(),
             exportedAt: new Date().toISOString()
@@ -450,7 +462,7 @@ class AdminDashboard {
         if (!confirm('⚠️ This will DELETE ALL DATA. Are you absolutely sure?')) {
             return;
         }
-        if (!confirm('This is your last chance to cancel. All users, submissions, and archives will be lost.')) {
+        if (!confirm('This is your last chance to cancel. All submissions and archives will be lost.')) {
             return;
         }
         

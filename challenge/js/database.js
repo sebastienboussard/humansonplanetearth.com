@@ -26,13 +26,12 @@
  * 
  * Submissions: [{
  *   id: string,                    // Unique submission ID
- *   userId: string,                // Author's user ID
- *   username: string,              // Author's display name
+ *   displayName: string,           // Optional author display name (anonymous if not provided)
  *   word: string,                  // The monthly word this was submitted for
  *   title: string,                 // Submission title
  *   content: string,               // The written content
  *   votes: number,                 // Vote count
- *   votedBy: [string],             // Array of user IDs who voted
+ *   voterIds: [string],            // Array of anonymous voter IDs (stored in localStorage)
  *   submittedAt: timestamp,        // Submission time
  *   isWinner: boolean              // Winner flag
  * }]
@@ -41,7 +40,7 @@
  *   word: string,                  // The challenge word
  *   month: string,                 // Challenge month
  *   winnerId: string,              // Winning submission ID
- *   winnerUsername: string,        // Winner's username
+ *   winnerName: string,            // Winner's display name
  *   winnerTitle: string,           // Winning piece title
  *   totalSubmissions: number,      // Total submissions that month
  *   archivedAt: timestamp          // Archive time
@@ -55,7 +54,8 @@ class ChallengeDatabase {
             USERS: 'challenge_users',
             SUBMISSIONS: 'challenge_submissions',
             ARCHIVES: 'challenge_archives',
-            CURRENT_USER: 'challenge_current_user'
+            CURRENT_USER: 'challenge_current_user',
+            VOTER_ID: 'challenge_voter_id'
         };
         
         this.initializeDatabase();
@@ -93,6 +93,11 @@ class ChallengeDatabase {
         if (!this.getArchives()) {
             this.saveArchives([]);
         }
+        
+        // Generate or retrieve anonymous voter ID
+        if (!this.getVoterId()) {
+            this.setVoterId(this.generateId());
+        }
     }
 
     // ==================== CONFIG METHODS ====================
@@ -114,7 +119,7 @@ class ChallengeDatabase {
         return this.setConfig(updated);
     }
 
-    // ==================== USER METHODS ====================
+    // ==================== USER METHODS (Admin only) ====================
     
     getUsers() {
         const data = localStorage.getItem(this.KEYS.USERS);
@@ -133,28 +138,6 @@ class ChallengeDatabase {
     getUserByEmail(email) {
         const users = this.getUsers() || [];
         return users.find(u => u.email.toLowerCase() === email.toLowerCase());
-    }
-    
-    createUser(username, email, password) {
-        const users = this.getUsers() || [];
-        
-        // Check if email already exists
-        if (this.getUserByEmail(email)) {
-            throw new Error('Email already registered');
-        }
-        
-        const newUser = {
-            id: this.generateId(),
-            username,
-            email: email.toLowerCase(),
-            passwordHash: this.hashPassword(password),
-            isAdmin: false,
-            createdAt: Date.now()
-        };
-        
-        users.push(newUser);
-        this.saveUsers(users);
-        return newUser;
     }
     
     authenticateUser(email, password) {
@@ -188,6 +171,15 @@ class ChallengeDatabase {
     logout() {
         this.setCurrentUser(null);
     }
+    
+    // Anonymous voter ID (for tracking votes without accounts)
+    getVoterId() {
+        return localStorage.getItem(this.KEYS.VOTER_ID);
+    }
+    
+    setVoterId(id) {
+        localStorage.setItem(this.KEYS.VOTER_ID, id);
+    }
 
     // ==================== SUBMISSION METHODS ====================
     
@@ -211,19 +203,10 @@ class ChallengeDatabase {
         return submissions.find(s => s.id === id);
     }
     
-    hasUserSubmittedForWord(userId, word) {
-        const submissions = this.getSubmissions() || [];
-        return submissions.some(s => s.userId === userId && s.word === word);
-    }
-    
-    createSubmission(userId, username, title, content) {
+    // Anonymous submission - no user account required
+    createSubmission(displayName, title, content) {
         const config = this.getConfig();
         const submissions = this.getSubmissions() || [];
-        
-        // Check if user already submitted for this word
-        if (this.hasUserSubmittedForWord(userId, config.currentWord)) {
-            throw new Error('You have already submitted for this word');
-        }
         
         // Check if writing is active
         if (!config.isWritingActive) {
@@ -232,13 +215,12 @@ class ChallengeDatabase {
         
         const newSubmission = {
             id: this.generateId(),
-            userId,
-            username,
+            displayName: displayName.trim() || 'Anonymous',
             word: config.currentWord,
             title,
             content,
             votes: 0,
-            votedBy: [],
+            voterIds: [],
             submittedAt: Date.now(),
             isWinner: false
         };
@@ -247,23 +229,34 @@ class ChallengeDatabase {
         this.saveSubmissions(submissions);
         return newSubmission;
     }
+    
+    // Admin: Delete a submission
+    deleteSubmission(submissionId) {
+        const submissions = this.getSubmissions() || [];
+        const filtered = submissions.filter(s => s.id !== submissionId);
+        this.saveSubmissions(filtered);
+        return true;
+    }
 
     // ==================== VOTING METHODS ====================
     
-    hasUserVotedForSubmission(userId, submissionId) {
+    hasVotedForSubmission(submissionId) {
+        const voterId = this.getVoterId();
         const submission = this.getSubmissionById(submissionId);
-        return submission && submission.votedBy.includes(userId);
+        return submission && submission.voterIds.includes(voterId);
     }
     
-    hasUserVotedThisRound(userId) {
+    hasVotedThisRound() {
+        const voterId = this.getVoterId();
         const config = this.getConfig();
         const submissions = this.getSubmissions() || [];
         const currentSubmissions = submissions.filter(s => s.word === config.currentWord);
-        return currentSubmissions.some(s => s.votedBy.includes(userId));
+        return currentSubmissions.some(s => s.voterIds.includes(voterId));
     }
     
-    voteForSubmission(userId, submissionId) {
+    voteForSubmission(submissionId) {
         const config = this.getConfig();
+        const voterId = this.getVoterId();
         const submissions = this.getSubmissions() || [];
         
         // Check if voting is active
@@ -271,8 +264,8 @@ class ChallengeDatabase {
             throw new Error('Voting phase is not active');
         }
         
-        // Check if user already voted this round
-        if (this.hasUserVotedThisRound(userId)) {
+        // Check if already voted this round
+        if (this.hasVotedThisRound()) {
             throw new Error('You have already cast your vote this round');
         }
         
@@ -281,13 +274,8 @@ class ChallengeDatabase {
             throw new Error('Submission not found');
         }
         
-        // Prevent voting for own submission
-        if (submissions[submissionIndex].userId === userId) {
-            throw new Error('You cannot vote for your own submission');
-        }
-        
         submissions[submissionIndex].votes += 1;
-        submissions[submissionIndex].votedBy.push(userId);
+        submissions[submissionIndex].voterIds.push(voterId);
         
         this.saveSubmissions(submissions);
         return submissions[submissionIndex];
@@ -372,7 +360,7 @@ class ChallengeDatabase {
             word: config.currentWord,
             month: config.challengeMonth,
             winnerId: winner ? winner.id : null,
-            winnerUsername: winner ? winner.username : 'No winner',
+            winnerName: winner ? winner.displayName : 'No winner',
             winnerTitle: winner ? winner.title : 'N/A',
             totalSubmissions: currentSubmissions.length,
             archivedAt: Date.now()
