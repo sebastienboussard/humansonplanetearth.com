@@ -1,6 +1,14 @@
 import { createClient } from "@supabase/supabase-js";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY!;
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Public client — safe to use in browser and server components
+export const supabase = createClient(supabaseUrl, supabaseKey);
+
+// Admin client — server-side only, bypasses RLS
+// Only import this in API routes, never in client components
+export function getAdminClient() {
+  const secretKey = process.env.SUPABASE_SECRET_KEY!;
+  return createClient(supabaseUrl, secretKey);
+}
