@@ -1,0 +1,20 @@
+@import "tailwindcss";
+
+:root {
+  --parchment: #F5F0E8;
+  --parchment-dark: #EDE5D8;
+  --forest: #2C3E2D;
+  --forest-light: #3D5C3E;
+  --terracotta: #C4783C;
+  --terracotta-light: #D4905A;
+  --ink: #1A1A1A;
+  --muted: #7A6A55;
+  --card: #FDFAF4;
+  --border: #DDD5C4;
+}
+
+body {
+  background-color: var(--parchment);
+  color: var(--ink);
+  font-family: Georgia, "Times New Roman", serif;
+}
