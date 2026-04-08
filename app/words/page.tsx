@@ -2,10 +2,10 @@ import Link from "next/link";
 import { getAllWords, getMonthName } from "@/lib/words";
 
 export const metadata = {
-  title: "Archive — Humans on Planet Earth",
+  title: "Words — Humans on Planet Earth",
 };
 
-export default function ArchivePage() {
+export default function WordsPage() {
   const words = getAllWords();
 
   return (
@@ -14,7 +14,7 @@ export default function ArchivePage() {
         className="text-4xl font-normal mb-2"
         style={{ color: "var(--forest)" }}
       >
-        Archive
+        Words
       </h1>
       <p
         className="text-sm mb-12"

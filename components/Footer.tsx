@@ -16,7 +16,7 @@ export default function Footer() {
         </p>
         <nav className="flex gap-5 text-xs" style={{ fontFamily: "system-ui, sans-serif" }}>
           <Link href="/about" className="hover:underline">About</Link>
-          <Link href="/archive" className="hover:underline">Archive</Link>
+          <Link href="/words" className="hover:underline">Words</Link>
           <Link href="/submit" className="hover:underline">Submit</Link>
           <Link href="/donate" className="hover:underline">Donate</Link>
         </nav>

@@ -1,24 +1,20 @@
 import { notFound } from "next/navigation";
-import { getWordBySlug } from "@/lib/words";
 import { getAdminClient } from "@/lib/supabase";
 import Comments from "@/components/Comments";
 
-export default async function PaperPage({
+export default async function LongFormPaperPage({
   params,
 }: {
-  params: Promise<{ word: string; paperId: string }>;
+  params: Promise<{ paperId: string }>;
 }) {
-  const { word, paperId } = await params;
-  const entry = getWordBySlug(word);
-
-  if (!entry) notFound();
-
+  const { paperId } = await params;
   const admin = getAdminClient();
 
   const { data: paper } = await admin
     .from("papers")
-    .select("id, word_id, pdf_url, submitted_at, status")
+    .select("id, title, pdf_url, submitted_at, status")
     .eq("id", paperId)
+    .eq("type", "long-form")
     .eq("status", "approved")
     .single();
 
@@ -26,7 +22,17 @@ export default async function PaperPage({
 
   const { data: signed } = await admin.storage
     .from("papers")
-    .createSignedUrl(paper.pdf_url, 60 * 60); // 1 hour
+    .createSignedUrl(paper.pdf_url, 60 * 60);
+
+  // Long-form papers have no word_id — use paper id as a stable comment anchor
+  // by fetching the word_id from a dedicated "long-form" word row, or skip word-level comments.
+  // We use a workaround: store comments with a synthetic word lookup via the paper itself.
+  // For now, comments are scoped to the paper via a shared long-form word row.
+  const { data: longFormWord } = await admin
+    .from("words")
+    .select("id")
+    .eq("word", "__long-form__")
+    .maybeSingle();
 
   return (
     <div className="max-w-4xl mx-auto px-6 py-16">
@@ -34,11 +40,15 @@ export default async function PaperPage({
         className="text-xs uppercase tracking-widest mb-4"
         style={{ fontFamily: "system-ui, sans-serif", color: "var(--muted)" }}
       >
-        <a href={`/words/${entry.word}`} style={{ color: "var(--muted)" }}>
-          {entry.word}
-        </a>{" "}
-        / paper
+        <a href="/long-form" style={{ color: "var(--muted)" }}>Long-Form</a> / paper
       </p>
+
+      <h1
+        className="text-4xl font-normal mb-3 leading-tight"
+        style={{ color: "var(--forest)" }}
+      >
+        {paper.title}
+      </h1>
 
       <p
         className="text-sm mb-8"
@@ -57,7 +67,7 @@ export default async function PaperPage({
           src={signed.signedUrl}
           className="w-full rounded-sm"
           style={{ height: "80vh", border: "1px solid var(--border)" }}
-          title="Paper"
+          title={paper.title ?? "Paper"}
         />
       ) : (
         <div
@@ -70,8 +80,13 @@ export default async function PaperPage({
         </div>
       )}
 
-      {paper.word_id && (
-        <Comments wordId={paper.word_id} paperId={paper.id} />
+      {longFormWord && (
+        <Comments
+          wordId={longFormWord.id}
+          paperId={paper.id}
+          title="Discussion"
+          placeholder="Write a comment…"
+        />
       )}
     </div>
   );
@@ -80,10 +95,19 @@ export default async function PaperPage({
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ word: string; paperId: string }>;
+  params: Promise<{ paperId: string }>;
 }) {
-  const { word } = await params;
+  const { paperId } = await params;
+  const admin = getAdminClient();
+  const { data: paper } = await admin
+    .from("papers")
+    .select("title")
+    .eq("id", paperId)
+    .single();
+
   return {
-    title: `Paper — ${word} — Humans on Planet Earth`,
+    title: paper?.title
+      ? `${paper.title} — Humans on Planet Earth`
+      : "Long-Form Paper — Humans on Planet Earth",
   };
 }

@@ -2,22 +2,19 @@ import { NextRequest, NextResponse } from "next/server";
 import { PDFDocument } from "pdf-lib";
 import { getAdminClient } from "@/lib/supabase";
 
-const MAX_SIZE = 2 * 1024 * 1024; // 2 MB
+const MAX_SIZE = 10 * 1024 * 1024; // 10MB
 
 export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData();
     const pdf = formData.get("pdf") as File | null;
+    const title = (formData.get("title") as string | null)?.trim();
     const email = (formData.get("email") as string | null)?.trim().toLowerCase();
-    const word = (formData.get("word") as string | null)?.trim().toLowerCase();
     const honeypot = formData.get("_trap") as string | null;
 
-    // Bot check
-    if (honeypot) {
-      return NextResponse.json({ ok: true }); // silently discard
-    }
+    if (honeypot) return NextResponse.json({ ok: true });
 
-    if (!pdf || !email || !word) {
+    if (!pdf || !title || !email) {
       return NextResponse.json({ error: "Missing required fields." }, { status: 400 });
     }
 
@@ -26,50 +23,21 @@ export async function POST(req: NextRequest) {
     }
 
     if (pdf.size > MAX_SIZE) {
-      return NextResponse.json({ error: "File must be under 2 MB." }, { status: 400 });
+      return NextResponse.json({ error: "File must be under 10 MB." }, { status: 400 });
     }
 
-    // Page count check
+    // Validate it's actually a PDF
     const buffer = Buffer.from(await pdf.arrayBuffer());
-    const pdfDoc = await PDFDocument.load(buffer);
-    const pageCount = pdfDoc.getPageCount();
-    if (pageCount > 1) {
-      return NextResponse.json(
-        { error: `Your PDF is ${pageCount} pages. Maximum is 1 page.` },
-        { status: 400 }
-      );
+    try {
+      await PDFDocument.load(buffer);
+    } catch {
+      return NextResponse.json({ error: "Invalid PDF file." }, { status: 400 });
     }
 
     const admin = getAdminClient();
 
-    // Look up the word row
-    const { data: wordRow, error: wordErr } = await admin
-      .from("words")
-      .select("id")
-      .eq("word", word)
-      .single();
-
-    if (wordErr || !wordRow) {
-      return NextResponse.json({ error: "Word not found." }, { status: 404 });
-    }
-
-    // Check for duplicate submission
-    const { data: existing } = await admin
-      .from("papers")
-      .select("id")
-      .eq("email", email)
-      .eq("word_id", wordRow.id)
-      .maybeSingle();
-
-    if (existing) {
-      return NextResponse.json(
-        { error: "You have already submitted a paper for this word." },
-        { status: 409 }
-      );
-    }
-
     // Upload PDF to Supabase Storage
-    const filename = `${wordRow.id}/${Date.now()}.pdf`;
+    const filename = `long-form/${Date.now()}.pdf`;
     const { error: uploadErr } = await admin.storage
       .from("papers")
       .upload(filename, buffer, { contentType: "application/pdf", upsert: false });
@@ -81,8 +49,9 @@ export async function POST(req: NextRequest) {
 
     // Insert paper row
     const { error: insertErr } = await admin.from("papers").insert({
-      word_id: wordRow.id,
-      type: "word",
+      word_id: null,
+      type: "long-form",
+      title,
       pdf_url: filename,
       email,
       status: "pending",
@@ -95,7 +64,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ ok: true });
   } catch (err) {
-    console.error("Submit route error:", err);
+    console.error("Long-form submit error:", err);
     return NextResponse.json({ error: "Server error. Please try again." }, { status: 500 });
   }
 }

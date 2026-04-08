@@ -1,6 +1,8 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getWordBySlug, getMonthName, getDaysRemaining, formatDeadline } from "@/lib/words";
+import { getAdminClient } from "@/lib/supabase";
+import Comments from "@/components/Comments";
 
 export default async function WordPage({
   params,
@@ -15,8 +17,34 @@ export default async function WordPage({
   const daysLeft = getDaysRemaining(entry.deadline);
   const isOpen = daysLeft > 0;
 
-  // TODO: fetch approved papers from Supabase
-  const papers: { id: string; submitted_at: string }[] = [];
+  const admin = getAdminClient();
+
+  const { data: wordRow } = await admin
+    .from("words")
+    .select("id")
+    .eq("word", entry.word)
+    .single();
+
+  // Fetch approved papers and generate signed URLs for inline preview
+  const rawPapers = wordRow
+    ? (
+        await admin
+          .from("papers")
+          .select("id, pdf_url, submitted_at")
+          .eq("word_id", wordRow.id)
+          .eq("status", "approved")
+          .order("submitted_at", { ascending: true })
+      ).data ?? []
+    : [];
+
+  const papers = await Promise.all(
+    rawPapers.map(async (p, i) => {
+      const { data: signed } = await admin.storage
+        .from("papers")
+        .createSignedUrl(p.pdf_url, 60 * 60);
+      return { ...p, signedUrl: signed?.signedUrl ?? null, index: i + 1 };
+    })
+  );
 
   return (
     <div className="max-w-4xl mx-auto px-6 py-16">
@@ -67,7 +95,7 @@ export default async function WordPage({
         </p>
       )}
 
-      <hr style={{ borderColor: "var(--border)" }} className="mb-10" />
+      <hr style={{ borderColor: "var(--border)" }} className="mb-12" />
 
       {/* Papers */}
       {papers.length === 0 ? (
@@ -83,54 +111,81 @@ export default async function WordPage({
           )}
         </div>
       ) : (
-        <ul className="space-y-4">
-          {papers.map((paper, i) => (
-            <li key={paper.id}>
-              <Link
-                href={`/words/${entry.word}/${paper.id}`}
-                className="block p-5 rounded-sm group hover:border-current transition-colors"
-                style={{
-                  backgroundColor: "var(--card)",
-                  border: "1px solid var(--border)",
-                }}
-              >
+        <div className="space-y-16">
+          {papers.map((paper) => (
+            <section key={paper.id}>
+              {/* Paper header */}
+              <div className="flex items-baseline justify-between mb-4 flex-wrap gap-2">
                 <p
-                  className="text-base group-hover:underline underline-offset-4"
-                  style={{ color: "var(--forest)" }}
-                >
-                  Paper {i + 1}
-                </p>
-                <p
-                  className="text-xs mt-1"
+                  className="text-sm"
                   style={{ fontFamily: "system-ui, sans-serif", color: "var(--muted)" }}
                 >
                   Human On Planet Earth ·{" "}
                   {new Date(paper.submitted_at).toLocaleDateString("en-US", {
-                    month: "short",
+                    month: "long",
                     day: "numeric",
                     year: "numeric",
                   })}
                 </p>
-              </Link>
-            </li>
+                <Link
+                  href={`/words/${entry.word}/${paper.id}`}
+                  className="text-sm underline underline-offset-4 shrink-0"
+                  style={{ color: "var(--terracotta)", fontFamily: "system-ui, sans-serif" }}
+                >
+                  Full page →
+                </Link>
+              </div>
+
+              {/* Inline PDF preview */}
+              {paper.signedUrl ? (
+                <iframe
+                  src={paper.signedUrl}
+                  className="w-full rounded-sm"
+                  style={{ height: "70vh", border: "1px solid var(--border)" }}
+                  title={`Paper ${paper.index}`}
+                />
+              ) : (
+                <div
+                  className="py-16 text-center rounded-sm"
+                  style={{ backgroundColor: "var(--card)", border: "1px solid var(--border)" }}
+                >
+                  <p className="text-sm" style={{ color: "var(--muted)", fontFamily: "system-ui, sans-serif" }}>
+                    Unable to load preview.{" "}
+                    <Link
+                      href={`/words/${entry.word}/${paper.id}`}
+                      className="underline underline-offset-4"
+                      style={{ color: "var(--terracotta)" }}
+                    >
+                      View full page →
+                    </Link>
+                  </p>
+                </div>
+              )}
+
+              {/* Paper-specific comments */}
+              {wordRow && (
+                <Comments
+                  wordId={wordRow.id}
+                  paperId={paper.id}
+                  title="Discuss this paper"
+                  placeholder="Write a comment about this paper…"
+                />
+              )}
+
+              <hr style={{ borderColor: "var(--border)" }} className="mt-16" />
+            </section>
           ))}
-        </ul>
+        </div>
       )}
 
-      {/* General comments placeholder */}
-      <div className="mt-16">
-        <h2 className="text-xl font-normal mb-6" style={{ color: "var(--forest)" }}>
-          Discussion
-        </h2>
-        <div
-          className="py-10 text-center rounded-sm"
-          style={{ backgroundColor: "var(--card)", border: "1px solid var(--border)" }}
-        >
-          <p className="text-sm italic" style={{ color: "var(--muted)", fontFamily: "system-ui, sans-serif" }}>
-            Comments are coming soon.
-          </p>
-        </div>
-      </div>
+      {/* General word discussion */}
+      {wordRow && (
+        <Comments
+          wordId={wordRow.id}
+          title="General discussion"
+          placeholder={`Write a comment about "${entry.word}"…`}
+        />
+      )}
     </div>
   );
 }
