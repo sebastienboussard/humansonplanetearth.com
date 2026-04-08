@@ -4,5 +4,29 @@
     "month": 4,
     "year": 2026,
     "deadline": "2026-04-30"
+  },
+  {
+    "word": "connect",
+    "month": 3,
+    "year": 2026,
+    "deadline": "2026-03-31"
+  },
+  {
+    "word": "selfless",
+    "month": 2,
+    "year": 2026,
+    "deadline": "2026-02-28"
+  },
+  {
+    "word": "freedom",
+    "month": 1,
+    "year": 2026,
+    "deadline": "2026-01-31"
+  },
+  {
+    "word": "deserve",
+    "month": 12,
+    "year": 2025,
+    "deadline": "2025-12-31"
   }
 ]

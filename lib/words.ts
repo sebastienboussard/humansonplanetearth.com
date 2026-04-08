@@ -1,6 +1,7 @@
-import wordsData from "@/data/words.json";
+import { supabase } from "@/lib/supabase";
 
 export type WordEntry = {
+  id: string;
   word: string;
   month: number;
   year: number;
@@ -12,24 +13,33 @@ const MONTH_NAMES = [
   "July", "August", "September", "October", "November", "December",
 ];
 
-export function getAllWords(): WordEntry[] {
-  return [...wordsData].sort((a, b) => {
-    if (a.year !== b.year) return b.year - a.year;
-    return b.month - a.month;
-  });
+export async function getAllWords(): Promise<WordEntry[]> {
+  const { data } = await supabase
+    .from("words")
+    .select("id, word, month, year, deadline")
+    .order("year", { ascending: false })
+    .order("month", { ascending: false });
+  return (data ?? []) as WordEntry[];
 }
 
-export function getCurrentWord(): WordEntry | null {
+export async function getCurrentWord(): Promise<WordEntry | null> {
   const now = new Date();
-  return (
-    wordsData.find(
-      (w) => w.month === now.getMonth() + 1 && w.year === now.getFullYear()
-    ) ?? null
-  );
+  const { data } = await supabase
+    .from("words")
+    .select("id, word, month, year, deadline")
+    .eq("month", now.getMonth() + 1)
+    .eq("year", now.getFullYear())
+    .maybeSingle();
+  return (data as WordEntry | null) ?? null;
 }
 
-export function getWordBySlug(slug: string): WordEntry | null {
-  return wordsData.find((w) => w.word.toLowerCase() === slug.toLowerCase()) ?? null;
+export async function getWordBySlug(slug: string): Promise<WordEntry | null> {
+  const { data } = await supabase
+    .from("words")
+    .select("id, word, month, year, deadline")
+    .ilike("word", slug)
+    .maybeSingle();
+  return (data as WordEntry | null) ?? null;
 }
 
 export function getMonthName(month: number): string {

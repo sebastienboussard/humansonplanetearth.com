@@ -5,8 +5,8 @@ export const metadata = {
   title: "Submit — Humans on Planet Earth",
 };
 
-export default function SubmitPage() {
-  const current = getCurrentWord();
+export default async function SubmitPage() {
+  const current = await getCurrentWord();
   const isOpen = current ? getDaysRemaining(current.deadline) > 0 : false;
 
   return (

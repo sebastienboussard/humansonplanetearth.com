@@ -9,7 +9,7 @@ export default async function PaperPage({
   params: Promise<{ word: string; paperId: string }>;
 }) {
   const { word, paperId } = await params;
-  const entry = getWordBySlug(word);
+  const entry = await getWordBySlug(word);
 
   if (!entry) notFound();
 

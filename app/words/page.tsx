@@ -5,8 +5,8 @@ export const metadata = {
   title: "Words — Humans on Planet Earth",
 };
 
-export default function WordsPage() {
-  const words = getAllWords();
+export default async function WordsPage() {
+  const words = await getAllWords();
 
   return (
     <div className="max-w-4xl mx-auto px-6 py-16">

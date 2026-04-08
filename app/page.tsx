@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { getCurrentWord, getMonthName, formatDeadline, getDaysRemaining } from "@/lib/words";
 
-export default function HomePage() {
-  const current = getCurrentWord();
+export default async function HomePage() {
+  const current = await getCurrentWord();
 
   return (
     <div className="max-w-4xl mx-auto px-6 py-16">

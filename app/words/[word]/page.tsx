@@ -10,7 +10,7 @@ export default async function WordPage({
   params: Promise<{ word: string }>;
 }) {
   const { word } = await params;
-  const entry = getWordBySlug(word);
+  const entry = await getWordBySlug(word);
 
   if (!entry) notFound();
 
@@ -19,23 +19,15 @@ export default async function WordPage({
 
   const admin = getAdminClient();
 
-  const { data: wordRow } = await admin
-    .from("words")
-    .select("id")
-    .eq("word", entry.word)
-    .single();
-
   // Fetch approved papers and generate signed URLs for inline preview
-  const rawPapers = wordRow
-    ? (
-        await admin
-          .from("papers")
-          .select("id, pdf_url, submitted_at")
-          .eq("word_id", wordRow.id)
-          .eq("status", "approved")
-          .order("submitted_at", { ascending: true })
-      ).data ?? []
-    : [];
+  const rawPapers = (
+    await admin
+      .from("papers")
+      .select("id, pdf_url, submitted_at")
+      .eq("word_id", entry.id)
+      .eq("status", "approved")
+      .order("submitted_at", { ascending: true })
+  ).data ?? [];
 
   const papers = await Promise.all(
     rawPapers.map(async (p, i) => {
@@ -163,14 +155,12 @@ export default async function WordPage({
               )}
 
               {/* Paper-specific comments */}
-              {wordRow && (
-                <Comments
-                  wordId={wordRow.id}
-                  paperId={paper.id}
-                  title="Discuss this paper"
-                  placeholder="Write a comment about this paper…"
-                />
-              )}
+              <Comments
+                wordId={entry.id}
+                paperId={paper.id}
+                title="Discuss this paper"
+                placeholder="Write a comment about this paper…"
+              />
 
               <hr style={{ borderColor: "var(--border)" }} className="mt-16" />
             </section>
@@ -179,13 +169,11 @@ export default async function WordPage({
       )}
 
       {/* General word discussion */}
-      {wordRow && (
-        <Comments
-          wordId={wordRow.id}
-          title="General discussion"
-          placeholder={`Write a comment about "${entry.word}"…`}
-        />
-      )}
+      <Comments
+        wordId={entry.id}
+        title="General discussion"
+        placeholder={`Write a comment about "${entry.word}"…`}
+      />
     </div>
   );
 }
@@ -196,7 +184,7 @@ export async function generateMetadata({
   params: Promise<{ word: string }>;
 }) {
   const { word } = await params;
-  const entry = getWordBySlug(word);
+  const entry = await getWordBySlug(word);
   if (!entry) return {};
   return {
     title: `${entry.word} — Humans on Planet Earth`,
