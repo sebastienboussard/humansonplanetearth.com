@@ -28,10 +28,10 @@ export default async function WordsPage() {
       ) : (
         <ul className="divide-y" style={{ borderColor: "var(--border)" }}>
           {words.map((entry) => (
-            <li key={`${entry.year}-${entry.month}`} className="flex items-baseline justify-between py-5">
+            <li key={`${entry.year}-${entry.month}`}>
               <Link
                 href={`/words/${entry.word}`}
-                className="group"
+                className="flex items-baseline justify-between py-5 group"
               >
                 <span
                   className="text-2xl font-normal group-hover:underline underline-offset-4"
@@ -39,22 +39,13 @@ export default async function WordsPage() {
                 >
                   {entry.word}
                 </span>
-              </Link>
-              <div className="flex items-baseline gap-6">
                 <span
                   className="text-sm"
                   style={{ fontFamily: "system-ui, sans-serif", color: "var(--muted)" }}
                 >
                   {getMonthName(entry.month)} {entry.year}
                 </span>
-                <Link
-                  href={`/submit/${entry.word}`}
-                  className="text-xs hover:underline underline-offset-4"
-                  style={{ fontFamily: "system-ui, sans-serif", color: "var(--muted)" }}
-                >
-                  Submit
-                </Link>
-              </div>
+              </Link>
             </li>
           ))}
         </ul>

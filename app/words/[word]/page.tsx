@@ -56,19 +56,17 @@ export default async function WordPage({
           {entry.word}
         </h1>
 
-        {isOpen && (
-          <Link
-            href="/submit"
-            className="text-sm px-6 py-2 text-white shrink-0"
-            style={{
-              backgroundColor: "var(--terracotta)",
-              fontFamily: "system-ui, sans-serif",
-              letterSpacing: "0.04em",
-            }}
-          >
-            Submit a paper
-          </Link>
-        )}
+        <Link
+          href={isOpen ? "/submit" : `/submit/${entry.word}`}
+          className="text-sm px-6 py-2 text-white shrink-0"
+          style={{
+            backgroundColor: "var(--terracotta)",
+            fontFamily: "system-ui, sans-serif",
+            letterSpacing: "0.04em",
+          }}
+        >
+          Submit a paper
+        </Link>
       </div>
 
       {isOpen ? (
@@ -93,14 +91,12 @@ export default async function WordPage({
       {papers.length === 0 ? (
         <div className="py-16 text-center" style={{ color: "var(--muted)", fontFamily: "system-ui, sans-serif" }}>
           <p className="text-base mb-1">No papers published yet.</p>
-          {isOpen && (
-            <p className="text-sm italic">
-              Be the first.{" "}
-              <Link href="/submit" style={{ color: "var(--terracotta)" }} className="underline underline-offset-4">
-                Submit one →
-              </Link>
-            </p>
-          )}
+          <p className="text-sm italic">
+            Be the first.{" "}
+            <Link href={isOpen ? "/submit" : `/submit/${entry.word}`} style={{ color: "var(--terracotta)" }} className="underline underline-offset-4">
+              Submit one →
+            </Link>
+          </p>
         </div>
       ) : (
         <div className="space-y-16">
