@@ -17,6 +17,7 @@ export async function getAllWords(): Promise<WordEntry[]> {
   const { data } = await supabase
     .from("words")
     .select("id, word, month, year, deadline")
+    .neq("word", "__long-form__")
     .order("year", { ascending: false })
     .order("month", { ascending: false });
   return (data ?? []) as WordEntry[];
