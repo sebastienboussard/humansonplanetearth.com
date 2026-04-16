@@ -78,10 +78,11 @@ export default async function WordPage({
         </p>
       ) : (
         <p
-          className="text-sm mb-10 italic"
+          className="text-sm mb-10"
           style={{ fontFamily: "system-ui, sans-serif", color: "var(--muted)" }}
         >
-          Submissions closed · {formatDeadline(entry.deadline)}
+          Deadline passed · {formatDeadline(entry.deadline)}
+          <span className="italic"> — but it&apos;s never too late to submit for fun.</span>
         </p>
       )}
 
