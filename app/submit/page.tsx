@@ -1,7 +1,7 @@
 import { getCurrentWord, getDaysRemaining } from "@/lib/words";
 import SubmitForm from "./SubmitForm";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 export const metadata = {
   title: "Submit — Humans on Planet Earth",

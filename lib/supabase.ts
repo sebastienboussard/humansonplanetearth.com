@@ -8,7 +8,10 @@ export const supabase = createClient(supabaseUrl, supabaseKey);
 
 // Admin client — server-side only, bypasses RLS
 // Only import this in API routes, never in client components
+let adminClient: ReturnType<typeof createClient> | null = null;
 export function getAdminClient() {
-  const secretKey = process.env.SUPABASE_SECRET_KEY!;
-  return createClient(supabaseUrl, secretKey);
+  if (!adminClient) {
+    adminClient = createClient(supabaseUrl, process.env.SUPABASE_SECRET_KEY!);
+  }
+  return adminClient;
 }

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { getCurrentWord, getMonthName, formatDeadline, getDaysRemaining } from "@/lib/words";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600;
 
 export default async function HomePage() {
   const current = await getCurrentWord();

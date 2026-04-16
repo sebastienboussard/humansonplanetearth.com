@@ -36,6 +36,22 @@ export async function POST(req: NextRequest) {
 
     const admin = getAdminClient();
 
+    // Check for existing long-form submission from this email
+    const { data: existing } = await admin
+      .from("papers")
+      .select("id")
+      .eq("type", "long-form")
+      .eq("email", email)
+      .in("status", ["pending", "approved"])
+      .maybeSingle();
+
+    if (existing) {
+      return NextResponse.json(
+        { error: "A long-form paper from this email is already pending or published." },
+        { status: 409 }
+      );
+    }
+
     // Upload PDF to Supabase Storage
     const filename = `long-form/${Date.now()}.pdf`;
     const { error: uploadErr } = await admin.storage

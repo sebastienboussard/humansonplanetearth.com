@@ -1,8 +1,21 @@
 import { notFound } from "next/navigation";
+import { cache } from "react";
 import { getAdminClient } from "@/lib/supabase";
 import Comments from "@/components/Comments";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 1800;
+
+const getPaper = cache(async (paperId: string) => {
+  const admin = getAdminClient();
+  const { data } = await admin
+    .from("papers")
+    .select("id, title, pdf_url, submitted_at, status")
+    .eq("id", paperId)
+    .eq("type", "long-form")
+    .eq("status", "approved")
+    .single();
+  return data;
+});
 
 export default async function LongFormPaperPage({
   params,
@@ -10,26 +23,16 @@ export default async function LongFormPaperPage({
   params: Promise<{ paperId: string }>;
 }) {
   const { paperId } = await params;
-  const admin = getAdminClient();
-
-  const { data: paper } = await admin
-    .from("papers")
-    .select("id, title, pdf_url, submitted_at, status")
-    .eq("id", paperId)
-    .eq("type", "long-form")
-    .eq("status", "approved")
-    .single();
+  const paper = await getPaper(paperId);
 
   if (!paper) notFound();
 
+  const admin = getAdminClient();
+
   const { data: signed } = await admin.storage
     .from("papers")
-    .createSignedUrl(paper.pdf_url, 60 * 60);
+    .createSignedUrl(paper.pdf_url, 60 * 60 * 2);
 
-  // Long-form papers have no word_id — use paper id as a stable comment anchor
-  // by fetching the word_id from a dedicated "long-form" word row, or skip word-level comments.
-  // We use a workaround: store comments with a synthetic word lookup via the paper itself.
-  // For now, comments are scoped to the paper via a shared long-form word row.
   const { data: longFormWord } = await admin
     .from("words")
     .select("id")
@@ -100,13 +103,7 @@ export async function generateMetadata({
   params: Promise<{ paperId: string }>;
 }) {
   const { paperId } = await params;
-  const admin = getAdminClient();
-  const { data: paper } = await admin
-    .from("papers")
-    .select("title")
-    .eq("id", paperId)
-    .single();
-
+  const paper = await getPaper(paperId);
   return {
     title: paper?.title
       ? `${paper.title} — Humans on Planet Earth`

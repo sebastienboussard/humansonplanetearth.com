@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { getAdminClient } from "@/lib/supabase";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 export const metadata = {
   title: "Long-Form — Humans on Planet Earth",

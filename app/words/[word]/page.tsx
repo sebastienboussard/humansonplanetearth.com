@@ -4,7 +4,7 @@ import { getWordBySlug, getMonthName, getDaysRemaining, formatDeadline } from "@
 import { getAdminClient } from "@/lib/supabase";
 import Comments from "@/components/Comments";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 export default async function WordPage({
   params,
@@ -21,24 +21,14 @@ export default async function WordPage({
 
   const admin = getAdminClient();
 
-  // Fetch approved papers and generate signed URLs for inline preview
-  const rawPapers = (
+  const papers = (
     await admin
       .from("papers")
-      .select("id, pdf_url, submitted_at")
+      .select("id, submitted_at")
       .eq("word_id", entry.id)
       .eq("status", "approved")
       .order("submitted_at", { ascending: true })
   ).data ?? [];
-
-  const papers = await Promise.all(
-    rawPapers.map(async (p, i) => {
-      const { data: signed } = await admin.storage
-        .from("papers")
-        .createSignedUrl(p.pdf_url, 60 * 60);
-      return { ...p, signedUrl: signed?.signedUrl ?? null, index: i + 1 };
-    })
-  );
 
   return (
     <div className="max-w-4xl mx-auto px-6 py-16">
@@ -103,10 +93,9 @@ export default async function WordPage({
         </div>
       ) : (
         <div className="space-y-16">
-          {papers.map((paper) => (
+          {papers.map((paper, i) => (
             <section key={paper.id}>
-              {/* Paper header */}
-              <div className="flex items-baseline justify-between mb-4 flex-wrap gap-2">
+              <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
                 <p
                   className="text-sm"
                   style={{ fontFamily: "system-ui, sans-serif", color: "var(--muted)" }}
@@ -118,42 +107,27 @@ export default async function WordPage({
                     year: "numeric",
                   })}
                 </p>
-                <Link
-                  href={`/words/${entry.word}/${paper.id}`}
-                  className="text-sm underline underline-offset-4 shrink-0"
-                  style={{ color: "var(--terracotta)", fontFamily: "system-ui, sans-serif" }}
-                >
-                  Full page →
-                </Link>
               </div>
 
-              {/* Inline PDF preview */}
-              {paper.signedUrl ? (
-                <iframe
-                  src={paper.signedUrl}
-                  className="w-full rounded-sm"
-                  style={{ height: "70vh", border: "1px solid var(--border)" }}
-                  title={`Paper ${paper.index}`}
-                />
-              ) : (
-                <div
-                  className="py-16 text-center rounded-sm"
-                  style={{ backgroundColor: "var(--card)", border: "1px solid var(--border)" }}
+              <Link
+                href={`/words/${entry.word}/${paper.id}`}
+                className="flex items-center justify-between px-6 py-8 rounded-sm group"
+                style={{ backgroundColor: "var(--card)", border: "1px solid var(--border)" }}
+              >
+                <span
+                  className="text-lg font-normal"
+                  style={{ color: "var(--forest)" }}
                 >
-                  <p className="text-sm" style={{ color: "var(--muted)", fontFamily: "system-ui, sans-serif" }}>
-                    Unable to load preview.{" "}
-                    <Link
-                      href={`/words/${entry.word}/${paper.id}`}
-                      className="underline underline-offset-4"
-                      style={{ color: "var(--terracotta)" }}
-                    >
-                      View full page →
-                    </Link>
-                  </p>
-                </div>
-              )}
+                  Paper {i + 1}
+                </span>
+                <span
+                  className="text-sm group-hover:underline underline-offset-4"
+                  style={{ color: "var(--terracotta)", fontFamily: "system-ui, sans-serif" }}
+                >
+                  Read →
+                </span>
+              </Link>
 
-              {/* Paper-specific comments */}
               <Comments
                 wordId={entry.id}
                 paperId={paper.id}

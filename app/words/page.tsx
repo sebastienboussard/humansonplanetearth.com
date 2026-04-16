@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { getAllWords, getMonthName } from "@/lib/words";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600;
 
 export const metadata = {
   title: "Words — Humans on Planet Earth",

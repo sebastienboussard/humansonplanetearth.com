@@ -48,6 +48,7 @@ export default function SubmitForm({ word }: { word: string }) {
     body.append("pdf", file);
     body.append("email", email);
     body.append("word", word);
+    body.append("_trap", honeypot);
 
     try {
       const res = await fetch("/api/submit", { method: "POST", body });

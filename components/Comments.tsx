@@ -134,6 +134,7 @@ export default function Comments({
 }) {
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(false);
   const [replyTo, setReplyTo] = useState<string | null>(null);
 
   useEffect(() => {
@@ -145,7 +146,10 @@ export default function Comments({
         setComments(d.comments ?? []);
         setLoading(false);
       })
-      .catch(() => setLoading(false));
+      .catch(() => {
+        setFetchError(true);
+        setLoading(false);
+      });
   }, [wordId, paperId]);
 
   async function postComment(body: string, parentCommentId?: string) {
@@ -176,6 +180,10 @@ export default function Comments({
       {loading ? (
         <p className="text-sm italic" style={{ color: "var(--muted)", fontFamily: "system-ui, sans-serif" }}>
           Loading…
+        </p>
+      ) : fetchError ? (
+        <p className="text-sm italic mb-8" style={{ color: "var(--muted)", fontFamily: "system-ui, sans-serif" }}>
+          Couldn't load comments. Please refresh to try again.
         </p>
       ) : threaded.length === 0 ? (
         <p className="text-sm italic mb-8" style={{ color: "var(--muted)", fontFamily: "system-ui, sans-serif" }}>

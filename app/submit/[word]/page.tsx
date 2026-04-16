@@ -1,7 +1,7 @@
 import { getWordBySlug, getMonthName } from "@/lib/words";
 import SubmitForm from "../SubmitForm";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600;
 
 export const metadata = {
   title: "Submit — Humans on Planet Earth",

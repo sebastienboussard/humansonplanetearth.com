@@ -3,7 +3,7 @@ import { getWordBySlug } from "@/lib/words";
 import { getAdminClient } from "@/lib/supabase";
 import Comments from "@/components/Comments";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 1800;
 
 export default async function PaperPage({
   params,
@@ -28,7 +28,7 @@ export default async function PaperPage({
 
   const { data: signed } = await admin.storage
     .from("papers")
-    .createSignedUrl(paper.pdf_url, 60 * 60); // 1 hour
+    .createSignedUrl(paper.pdf_url, 60 * 60 * 2);
 
   return (
     <div className="max-w-4xl mx-auto px-6 py-16">
