@@ -4,6 +4,8 @@ import { getWordBySlug, getMonthName, getDaysRemaining, formatDeadline } from "@
 import { getAdminClient } from "@/lib/supabase";
 import Comments from "@/components/Comments";
 
+export const dynamic = "force-dynamic";
+
 export default async function WordPage({
   params,
 }: {

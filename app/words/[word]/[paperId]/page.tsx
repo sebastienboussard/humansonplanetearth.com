@@ -3,6 +3,8 @@ import { getWordBySlug } from "@/lib/words";
 import { getAdminClient } from "@/lib/supabase";
 import Comments from "@/components/Comments";
 
+export const dynamic = "force-dynamic";
+
 export default async function PaperPage({
   params,
 }: {
