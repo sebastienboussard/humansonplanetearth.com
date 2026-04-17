@@ -50,7 +50,7 @@ export default async function LongFormPage() {
         </div>
       ) : (
         <ul className="divide-y" style={{ borderColor: "var(--border)" }}>
-          {papers.map((paper) => (
+          {papers.map((paper: any) => (
             <li key={paper.id}>
               <Link
                 href={`/long-form/${paper.id}`}

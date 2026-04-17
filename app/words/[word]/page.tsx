@@ -93,7 +93,7 @@ export default async function WordPage({
         </div>
       ) : (
         <div className="space-y-16">
-          {papers.map((paper, i) => (
+          {papers.map((paper: any, i: number) => (
             <section key={paper.id}>
               <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
                 <p

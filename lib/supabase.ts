@@ -13,5 +13,6 @@ export function getAdminClient() {
   if (!adminClient) {
     adminClient = createClient(supabaseUrl, process.env.SUPABASE_SECRET_KEY!);
   }
-  return adminClient;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return adminClient as any;
 }

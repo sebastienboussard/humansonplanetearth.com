@@ -28,8 +28,7 @@ export async function GET(req: NextRequest) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   const enriched = await Promise.all(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ((papers ?? []) as any[]).map(async (p) => {
+    (papers ?? []).map(async (p: any) => {
       const { data: signed } = await admin.storage
         .from("papers")
         .createSignedUrl(p.pdf_url, 60 * 60 * 2);
@@ -51,8 +50,7 @@ export async function PATCH(req: NextRequest) {
   }
 
   const admin = getAdminClient();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await admin.from("papers").update({ status } as any).eq("id", id);
+  const { error } = await admin.from("papers").update({ status }).eq("id", id);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
