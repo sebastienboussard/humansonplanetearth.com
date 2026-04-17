@@ -28,7 +28,8 @@ export async function GET(req: NextRequest) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   const enriched = await Promise.all(
-    (papers ?? []).map(async (p) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ((papers ?? []) as any[]).map(async (p) => {
       const { data: signed } = await admin.storage
         .from("papers")
         .createSignedUrl(p.pdf_url, 60 * 60 * 2);
