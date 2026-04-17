@@ -51,7 +51,8 @@ export async function PATCH(req: NextRequest) {
   }
 
   const admin = getAdminClient();
-  const { error } = await admin.from("papers").update({ status }).eq("id", id);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await admin.from("papers").update({ status } as any).eq("id", id);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
