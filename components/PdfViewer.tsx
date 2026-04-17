@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function PdfViewer({
   src,
@@ -17,6 +17,15 @@ export default function PdfViewer({
 }) {
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState(false);
+
+  // iframe onError doesn't fire for HTTP errors (404, etc.) — preflight check catches them
+  useEffect(() => {
+    let cancelled = false;
+    fetch(src, { method: "HEAD" })
+      .then((r) => { if (!cancelled && !r.ok) setError(true); })
+      .catch(() => { if (!cancelled) setError(true); });
+    return () => { cancelled = true; };
+  }, [src]);
 
   const iframeSrc = `${src}#toolbar=1&view=FitH&zoom=page-width`;
 
