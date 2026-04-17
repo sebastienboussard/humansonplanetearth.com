@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getWordBySlug, getMonthName, getDaysRemaining, formatDeadline } from "@/lib/words";
 import { getAdminClient } from "@/lib/supabase";
 import Comments from "@/components/Comments";
+import PdfViewer from "@/components/PdfViewer";
 
 export const revalidate = 60;
 
@@ -24,11 +25,16 @@ export default async function WordPage({
   const papers = (
     await admin
       .from("papers")
-      .select("id, submitted_at")
+      .select("id, submitted_at, pdf_url")
       .eq("word_id", entry.id)
       .eq("status", "approved")
       .order("submitted_at", { ascending: true })
   ).data ?? [];
+
+  const papersWithUrls = papers.map((paper: any) => ({
+    ...paper,
+    publicUrl: admin.storage.from("papers").getPublicUrl(paper.pdf_url).data.publicUrl,
+  }));
 
   return (
     <div className="max-w-4xl mx-auto px-6 py-16">
@@ -93,40 +99,45 @@ export default async function WordPage({
         </div>
       ) : (
         <div className="space-y-16">
-          {papers.map((paper: any, i: number) => (
+          {papersWithUrls.map((paper: any, i: number) => (
             <section key={paper.id}>
-              <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-                <p
-                  className="text-sm"
-                  style={{ fontFamily: "system-ui, sans-serif", color: "var(--muted)" }}
-                >
-                  Human On Planet Earth ·{" "}
-                  {new Date(paper.submitted_at).toLocaleDateString("en-US", {
-                    month: "long",
-                    day: "numeric",
-                    year: "numeric",
-                  })}
-                </p>
-              </div>
-
-              <Link
-                href={`/words/${entry.word}/${paper.id}`}
-                className="flex items-center justify-between px-6 py-8 rounded-sm group"
-                style={{ backgroundColor: "var(--card)", border: "1px solid var(--border)" }}
+              <p
+                className="text-sm mb-4"
+                style={{ fontFamily: "system-ui, sans-serif", color: "var(--muted)" }}
               >
-                <span
-                  className="text-lg font-normal"
-                  style={{ color: "var(--forest)" }}
+                Human On Planet Earth ·{" "}
+                {new Date(paper.submitted_at).toLocaleDateString("en-US", {
+                  month: "long",
+                  day: "numeric",
+                  year: "numeric",
+                })}
+              </p>
+
+              {paper.publicUrl ? (
+                <PdfViewer
+                  src={paper.publicUrl}
+                  title={`Paper ${i + 1}`}
+                  height="75vh"
+                  paperNumber={i + 1}
+                  paperHref={`/words/${entry.word}/${paper.id}`}
+                />
+              ) : (
+                <div
+                  className="py-20 text-center rounded-sm"
+                  style={{ backgroundColor: "var(--card)", border: "1px solid var(--border)" }}
                 >
-                  Paper {i + 1}
-                </span>
-                <span
-                  className="text-sm group-hover:underline underline-offset-4"
-                  style={{ color: "var(--terracotta)", fontFamily: "system-ui, sans-serif" }}
-                >
-                  Read →
-                </span>
-              </Link>
+                  <p className="text-sm italic" style={{ color: "var(--muted)", fontFamily: "system-ui, sans-serif" }}>
+                    Unable to load paper.{" "}
+                    <Link
+                      href={`/words/${entry.word}/${paper.id}`}
+                      style={{ color: "var(--terracotta)" }}
+                      className="underline underline-offset-4"
+                    >
+                      Try the full page →
+                    </Link>
+                  </p>
+                </div>
+              )}
 
               <Comments
                 wordId={entry.id}

@@ -27,14 +27,10 @@ export async function GET(req: NextRequest) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  const enriched = await Promise.all(
-    (papers ?? []).map(async (p: any) => {
-      const { data: signed } = await admin.storage
-        .from("papers")
-        .createSignedUrl(p.pdf_url, 60 * 60 * 2);
-      return { ...p, signed_url: signed?.signedUrl ?? null };
-    })
-  );
+  const enriched = (papers ?? []).map((p: any) => ({
+    ...p,
+    signed_url: admin.storage.from("papers").getPublicUrl(p.pdf_url).data.publicUrl,
+  }));
 
   return NextResponse.json({ papers: enriched });
 }

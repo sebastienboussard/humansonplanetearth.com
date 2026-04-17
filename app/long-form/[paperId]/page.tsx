@@ -30,9 +30,9 @@ export default async function LongFormPaperPage({
 
   const admin = getAdminClient();
 
-  const { data: signed } = await admin.storage
+  const { data: { publicUrl } } = admin.storage
     .from("papers")
-    .createSignedUrl(paper.pdf_url, 60 * 60 * 2);
+    .getPublicUrl(paper.pdf_url);
 
   const { data: longFormWord } = await admin
     .from("words")
@@ -68,8 +68,8 @@ export default async function LongFormPaperPage({
         })}
       </p>
 
-      {signed?.signedUrl ? (
-        <PdfViewer src={signed.signedUrl} title={paper.title ?? "Paper"} />
+      {publicUrl ? (
+        <PdfViewer src={publicUrl} title={paper.title ?? "Paper"} />
       ) : (
         <div
           className="py-32 text-center rounded-sm"

@@ -27,9 +27,9 @@ export default async function PaperPage({
 
   if (!paper) notFound();
 
-  const { data: signed } = await admin.storage
+  const { data: { publicUrl } } = admin.storage
     .from("papers")
-    .createSignedUrl(paper.pdf_url, 60 * 60 * 2);
+    .getPublicUrl(paper.pdf_url);
 
   return (
     <div className="max-w-4xl mx-auto px-6 py-16">
@@ -55,8 +55,8 @@ export default async function PaperPage({
         })}
       </p>
 
-      {signed?.signedUrl ? (
-        <PdfViewer src={signed.signedUrl} title="Paper" />
+      {publicUrl ? (
+        <PdfViewer src={publicUrl} title="Paper" />
       ) : (
         <div
           className="py-32 text-center rounded-sm"
