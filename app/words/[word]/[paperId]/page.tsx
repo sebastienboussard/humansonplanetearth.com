@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { getWordBySlug } from "@/lib/words";
 import { getAdminClient } from "@/lib/supabase";
 import Comments from "@/components/Comments";
+import PdfViewer from "@/components/PdfViewer";
 
 export const revalidate = 1800;
 
@@ -55,12 +56,7 @@ export default async function PaperPage({
       </p>
 
       {signed?.signedUrl ? (
-        <iframe
-          src={signed.signedUrl}
-          className="w-full rounded-sm"
-          style={{ height: "80vh", border: "1px solid var(--border)" }}
-          title="Paper"
-        />
+        <PdfViewer src={signed.signedUrl} title="Paper" />
       ) : (
         <div
           className="py-32 text-center rounded-sm"

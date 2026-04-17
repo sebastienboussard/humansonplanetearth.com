@@ -27,12 +27,11 @@ export async function GET(req: NextRequest) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  // Generate signed URLs (valid 1 hour)
   const enriched = await Promise.all(
     (papers ?? []).map(async (p) => {
       const { data: signed } = await admin.storage
         .from("papers")
-        .createSignedUrl(p.pdf_url, 3600);
+        .createSignedUrl(p.pdf_url, 60 * 60 * 2);
       return { ...p, signed_url: signed?.signedUrl ?? null };
     })
   );

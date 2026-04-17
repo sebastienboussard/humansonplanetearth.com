@@ -50,6 +50,7 @@ export default function LongFormSubmitForm() {
     body.append("pdf", file);
     body.append("title", title.trim());
     body.append("email", email);
+    body.append("_trap", honeypot);
 
     try {
       const res = await fetch("/api/submit/long-form", { method: "POST", body });
