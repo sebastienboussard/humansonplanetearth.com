@@ -3,7 +3,7 @@ import Link from "next/link";
 import { getWordBySlug, getMonthName, getDaysRemaining, formatDeadline } from "@/lib/words";
 import { getAdminClient } from "@/lib/supabase";
 import Comments from "@/components/Comments";
-import PdfViewer from "@/components/PdfViewer";
+import PaperCarousel from "@/components/PaperCarousel";
 
 export const revalidate = 60;
 
@@ -98,58 +98,11 @@ export default async function WordPage({
           </p>
         </div>
       ) : (
-        <div className="space-y-16">
-          {papersWithUrls.map((paper: any, i: number) => (
-            <section key={paper.id}>
-              <p
-                className="text-sm mb-4"
-                style={{ fontFamily: "system-ui, sans-serif", color: "var(--muted)" }}
-              >
-                Human On Planet Earth ·{" "}
-                {new Date(paper.submitted_at).toLocaleDateString("en-US", {
-                  month: "long",
-                  day: "numeric",
-                  year: "numeric",
-                })}
-              </p>
-
-              {paper.publicUrl ? (
-                <PdfViewer
-                  src={paper.publicUrl}
-                  title={`Paper ${i + 1}`}
-                  height="75vh"
-                  paperNumber={i + 1}
-                  paperHref={`/words/${entry.word}/${paper.id}`}
-                />
-              ) : (
-                <div
-                  className="py-20 text-center rounded-sm"
-                  style={{ backgroundColor: "var(--card)", border: "1px solid var(--border)" }}
-                >
-                  <p className="text-sm italic" style={{ color: "var(--muted)", fontFamily: "system-ui, sans-serif" }}>
-                    Unable to load paper.{" "}
-                    <Link
-                      href={`/words/${entry.word}/${paper.id}`}
-                      style={{ color: "var(--terracotta)" }}
-                      className="underline underline-offset-4"
-                    >
-                      Try the full page →
-                    </Link>
-                  </p>
-                </div>
-              )}
-
-              <Comments
-                wordId={entry.id}
-                paperId={paper.id}
-                title="Discuss this paper"
-                placeholder="Write a comment about this paper…"
-              />
-
-              <hr style={{ borderColor: "var(--border)" }} className="mt-16" />
-            </section>
-          ))}
-        </div>
+        <PaperCarousel
+          papers={papersWithUrls}
+          wordId={entry.id}
+          wordSlug={entry.word}
+        />
       )}
 
       {/* General word discussion */}
