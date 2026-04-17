@@ -13,6 +13,11 @@ export const metadata: Metadata = {
     siteName: "Humans on Planet Earth",
     type: "website",
   },
+  alternates: {
+    types: {
+      "application/rss+xml": "https://humansonplanetearth.com/rss.xml",
+    },
+  },
 };
 
 export default function RootLayout({
