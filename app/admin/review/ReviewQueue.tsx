@@ -21,7 +21,10 @@ export default function ReviewQueue() {
     setLoading(true);
     const res = await fetch("/api/admin/review");
     const data = await res.json();
-    setPapers(data.papers ?? []);
+    const sorted = (data.papers ?? []).sort((a: Paper, b: Paper) =>
+      (a.words?.word ?? a.title ?? "").localeCompare(b.words?.word ?? b.title ?? "")
+    );
+    setPapers(sorted);
     setLoading(false);
   }
 

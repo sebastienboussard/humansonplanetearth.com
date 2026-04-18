@@ -19,7 +19,13 @@ export default function PublishedPapers() {
   useEffect(() => {
     fetch("/api/admin/review?status=approved")
       .then((r) => r.json())
-      .then((d) => { setPapers(d.papers ?? []); setLoading(false); });
+      .then((d) => {
+        const sorted = (d.papers ?? []).sort((a: Paper, b: Paper) =>
+          (a.words?.word ?? a.title ?? "").localeCompare(b.words?.word ?? b.title ?? "")
+        );
+        setPapers(sorted);
+        setLoading(false);
+      });
   }, []);
 
   async function remove(id: string) {
