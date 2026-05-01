@@ -25,13 +25,24 @@ export async function getAllWords(): Promise<WordEntry[]> {
 
 export async function getCurrentWord(): Promise<WordEntry | null> {
   const now = new Date();
-  const { data } = await supabase
+  // Try to find a word for the current month first
+  const { data: current } = await supabase
     .from("words")
     .select("id, word, month, year, deadline")
     .eq("month", now.getMonth() + 1)
     .eq("year", now.getFullYear())
     .maybeSingle();
-  return (data as WordEntry | null) ?? null;
+  if (current) return current as WordEntry;
+
+  // Fall back to the most recent word until a new one is chosen
+  const { data: latest } = await supabase
+    .from("words")
+    .select("id, word, month, year, deadline")
+    .order("year", { ascending: false })
+    .order("month", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  return (latest as WordEntry | null) ?? null;
 }
 
 export async function getWordBySlug(slug: string): Promise<WordEntry | null> {
