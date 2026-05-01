@@ -122,14 +122,7 @@ function Countdown({ deadline }: { deadline: string }) {
   const formatted = formatDeadline(deadline);
 
   if (days === 0) {
-    return (
-      <p
-        className="text-sm italic mt-2"
-        style={{ fontFamily: "system-ui, sans-serif", color: "var(--terracotta)" }}
-      >
-        Submissions closed.
-      </p>
-    );
+    return null;
   }
 
   return (
