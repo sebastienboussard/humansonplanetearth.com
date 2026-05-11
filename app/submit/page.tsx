@@ -1,4 +1,4 @@
-import { getCurrentWord, getDaysRemaining } from "@/lib/words";
+import { getCurrentWord } from "@/lib/words";
 import SubmitForm from "./SubmitForm";
 
 export const revalidate = 60;
@@ -9,7 +9,6 @@ export const metadata = {
 
 export default async function SubmitPage() {
   const current = await getCurrentWord();
-  const isOpen = current ? getDaysRemaining(current.deadline) > 0 : false;
 
   return (
     <div className="max-w-2xl mx-auto px-6 py-16">
@@ -30,9 +29,6 @@ export default async function SubmitPage() {
         >
           This month&apos;s word:{" "}
           <span style={{ color: "var(--forest)", fontWeight: 600 }}>{current.word}</span>
-          {!isOpen && (
-            <span style={{ color: "var(--terracotta)" }}> · Submissions closed</span>
-          )}
         </p>
       ) : (
         <p
@@ -43,7 +39,7 @@ export default async function SubmitPage() {
         </p>
       )}
 
-      {current && isOpen ? (
+      {current ? (
         <SubmitForm word={current.word} />
       ) : (
         <div
@@ -51,7 +47,7 @@ export default async function SubmitPage() {
           style={{ backgroundColor: "var(--card)", border: "1px solid var(--border)" }}
         >
           <p className="text-base mb-1" style={{ color: "var(--muted)", fontFamily: "system-ui, sans-serif" }}>
-            {current ? "Submissions for this month are closed." : "No active word right now."}
+            No active word right now.
           </p>
           <p className="text-sm italic" style={{ color: "var(--muted)" }}>
             Come back next month.

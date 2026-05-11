@@ -54,7 +54,7 @@ export default async function WordPage({
         </h1>
 
         <Link
-          href="/submit"
+          href={`/submit/${entry.word}`}
           className="text-sm px-6 py-2 text-white shrink-0"
           style={{
             backgroundColor: "var(--terracotta)",
@@ -83,7 +83,7 @@ export default async function WordPage({
           <p className="text-base mb-1">No papers published yet.</p>
           <p className="text-sm italic">
             Be the first.{" "}
-            <Link href="/submit" style={{ color: "var(--terracotta)" }} className="underline underline-offset-4">
+            <Link href={`/submit/${entry.word}`} style={{ color: "var(--terracotta)" }} className="underline underline-offset-4">
               Submit one →
             </Link>
           </p>
