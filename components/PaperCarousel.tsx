@@ -75,7 +75,6 @@ export default function PaperCarousel({
             <PdfViewer
               src={paper.publicUrl}
               title={`Paper ${i + 1}`}
-              height="75vh"
               paperNumber={i + 1}
               paperHref={`/words/${wordSlug}/${paper.id}`}
             />

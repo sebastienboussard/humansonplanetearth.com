@@ -1,41 +1,57 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { Document, Page, pdfjs } from "react-pdf";
+import "react-pdf/dist/Page/AnnotationLayer.css";
+import "react-pdf/dist/Page/TextLayer.css";
+
+pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+  "pdfjs-dist/build/pdf.worker.min.mjs",
+  import.meta.url
+).toString();
 
 export default function PdfViewer({
   src,
   title,
-  height = "80vh",
   paperNumber,
   paperHref,
 }: {
   src: string;
   title: string;
-  height?: string;
+  height?: string; // kept for backwards compat, unused
   paperNumber?: number;
   paperHref?: string;
 }) {
-  const [loaded, setLoaded] = useState(false);
+  const [numPages, setNumPages] = useState<number | null>(null);
   const [error, setError] = useState(false);
+  const [containerWidth, setContainerWidth] = useState<number>(0);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  // iframe onError doesn't fire for HTTP errors (404, etc.) — preflight check catches them
   useEffect(() => {
-    let cancelled = false;
-    fetch(src, { method: "HEAD" })
-      .then((r) => { if (!cancelled && !r.ok) setError(true); })
-      .catch(() => { if (!cancelled) setError(true); });
-    return () => { cancelled = true; };
-  }, [src]);
+    const el = containerRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver(([entry]) => {
+      setContainerWidth(entry.contentRect.width);
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
-  const iframeSrc = `${src}#toolbar=1&view=FitH&zoom=page-width`;
+  const onLoadSuccess = useCallback(({ numPages }: { numPages: number }) => {
+    setNumPages(numPages);
+  }, []);
+
+  const onLoadError = useCallback(() => {
+    setError(true);
+  }, []);
+
+  // A4 aspect ratio skeleton height while width is being measured
+  const skeletonHeight = containerWidth ? Math.round(containerWidth * 1.414) : 800;
 
   return (
-    <div className="w-full">
+    <div className="w-full" style={{ fontFamily: "system-ui, sans-serif" }}>
       {(paperNumber !== undefined || paperHref) && (
-        <div
-          className="flex items-center justify-between mb-2 flex-wrap gap-2"
-          style={{ fontFamily: "system-ui, sans-serif" }}
-        >
+        <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
           {paperNumber !== undefined && (
             <span className="text-sm" style={{ color: "var(--muted)" }}>
               Paper {paperNumber}
@@ -63,58 +79,51 @@ export default function PdfViewer({
         </div>
       )}
 
-      {/* Mobile: plain link */}
-      <a
-        href={src}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="flex md:hidden items-center justify-center rounded-sm text-sm underline underline-offset-4"
-        style={{
-          backgroundColor: "var(--card)",
-          border: "1px solid var(--border)",
-          color: "var(--terracotta)",
-          fontFamily: "system-ui, sans-serif",
-          height,
-        }}
-      >
-        View PDF →
-      </a>
-
-      {/* Desktop: iframe */}
-      {error ? (
-        <div
-          className="hidden md:flex items-center justify-center rounded-sm"
-          style={{ height, backgroundColor: "var(--card)", border: "1px solid var(--border)" }}
-        >
-          <p style={{ color: "var(--muted)", fontFamily: "system-ui, sans-serif" }}>
-            Unable to load paper. Please try refreshing.
-          </p>
-        </div>
-      ) : (
-        <div className="relative w-full rounded-sm hidden md:block" style={{ height }}>
-          {!loaded && (
-            <div
-              className="absolute inset-0 flex items-center justify-center rounded-sm"
-              style={{ backgroundColor: "var(--card)", border: "1px solid var(--border)" }}
-            >
-              <p
-                className="text-sm italic"
-                style={{ color: "var(--muted)", fontFamily: "system-ui, sans-serif" }}
-              >
-                Loading…
-              </p>
-            </div>
-          )}
-          <iframe
-            src={iframeSrc}
-            title={title}
-            className="w-full h-full rounded-sm"
-            style={{ border: "1px solid var(--border)", display: loaded ? "block" : "none" }}
-            onLoad={() => setLoaded(true)}
-            onError={() => setError(true)}
-          />
-        </div>
-      )}
+      <div ref={containerRef} className="w-full">
+        {error ? (
+          <div
+            className="flex items-center justify-center rounded-sm"
+            style={{
+              height: 400,
+              backgroundColor: "var(--card)",
+              border: "1px solid var(--border)",
+            }}
+          >
+            <p className="text-sm" style={{ color: "var(--muted)" }}>
+              Unable to load paper. Please try refreshing.
+            </p>
+          </div>
+        ) : (
+          <Document
+            file={src}
+            onLoadSuccess={onLoadSuccess}
+            onLoadError={onLoadError}
+            loading={
+              <div
+                className="rounded-sm animate-pulse"
+                style={{
+                  height: skeletonHeight,
+                  backgroundColor: "var(--card)",
+                  border: "1px solid var(--border)",
+                }}
+              />
+            }
+          >
+            {numPages !== null &&
+              containerWidth > 0 &&
+              Array.from({ length: numPages }, (_, i) => (
+                <Page
+                  key={i + 1}
+                  pageNumber={i + 1}
+                  width={containerWidth}
+                  renderTextLayer={false}
+                  renderAnnotationLayer={false}
+                  className="mb-2 last:mb-0"
+                />
+              ))}
+          </Document>
+        )}
+      </div>
     </div>
   );
 }
