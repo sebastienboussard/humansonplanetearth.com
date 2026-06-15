@@ -16,15 +16,13 @@ export default function AboutPage() {
 
       <div className="space-y-6 text-base leading-relaxed" style={{ color: "var(--ink)" }}>
         <p>
-          Each month, a word is chosen. The word is an invitation — not a prompt, not a
-          constraint. You decide what it means to you.
+          Humanity's greatest joy is to think creatively. The Word Of Them Month is your invitation to explore your own mind. 
         </p>
         <p>
-          Write up to one page. It can be a reflection, a memory, a question, a fragment of
-          an argument, a poem. The only rule is that it fits on one page as a PDF.
+          There is only one restriction, it has to fit on one page as a pdf
         </p>
         <p>
-          Submit it here. Every submission is published anonymously, credited as{" "}
+          Every submission is published anonymously, credited as{" "}
           <em>Human On Planet Earth</em>. No names. No credentials. No institution.
           Just a human, writing.
         </p>
