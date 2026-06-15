@@ -30,7 +30,7 @@ npm run dev
 Three tables are required:
 
 - `words` — `id`, `word`, `month`, `year`, `deadline`
-- `papers` — `id`, `word_id`, `type`, `title`, `pdf_url`, `email`, `status`, `submitted_at`
+- `papers` — `id`, `word_id`, `type`, `title`, `pdf_url`, `status`, `submitted_at`
 - `comments` — `id`, `word_id`, `paper_id`, `parent_comment_id`, `body`, `created_at`
 
 One Storage bucket named `papers` for PDF uploads.

@@ -60,7 +60,6 @@ export default function AboutPage() {
             </Link>{" "}
             page and upload your PDF.
           </li>
-          <li>Provide your email (never shown publicly — used only to prevent flooding).</li>
           <li>Your paper will be reviewed and published anonymously.</li>
         </ol>
       </div>

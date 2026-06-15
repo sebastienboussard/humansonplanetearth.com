@@ -7,7 +7,6 @@ type Status = "idle" | "submitting" | "success" | "error";
 export default function LongFormSubmitForm() {
   const [file, setFile] = useState<File | null>(null);
   const [title, setTitle] = useState("");
-  const [email, setEmail] = useState("");
   const [status, setStatus] = useState<Status>("idle");
   const [errorMsg, setErrorMsg] = useState("");
   const [dragOver, setDragOver] = useState(false);
@@ -41,7 +40,7 @@ export default function LongFormSubmitForm() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (honeypot) return;
-    if (!file || !title.trim() || !email) return;
+    if (!file || !title.trim()) return;
 
     setStatus("submitting");
     setErrorMsg("");
@@ -49,7 +48,6 @@ export default function LongFormSubmitForm() {
     const body = new FormData();
     body.append("pdf", file);
     body.append("title", title.trim());
-    body.append("email", email);
     body.append("_trap", honeypot);
 
     try {
@@ -164,30 +162,6 @@ export default function LongFormSubmitForm() {
         </div>
       </div>
 
-      {/* Email */}
-      <div>
-        <label
-          htmlFor="email"
-          className="block text-sm mb-2"
-          style={{ fontFamily: "system-ui, sans-serif", color: "var(--ink)" }}
-        >
-          Your email
-        </label>
-        <input
-          id="email"
-          type="email"
-          required
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="you@example.com"
-          className="w-full px-4 py-3 rounded-sm"
-          style={inputStyle}
-        />
-        <p className="text-xs mt-1" style={{ color: "var(--muted)", fontFamily: "system-ui, sans-serif" }}>
-          Never displayed. Used only to prevent duplicate submissions.
-        </p>
-      </div>
-
       {/* Honeypot */}
       <div style={{ display: "none" }} aria-hidden="true">
         <input
@@ -207,7 +181,7 @@ export default function LongFormSubmitForm() {
 
       <button
         type="submit"
-        disabled={!file || !title.trim() || !email || status === "submitting"}
+        disabled={!file || !title.trim() || status === "submitting"}
         className="w-full py-3 text-sm text-white transition-opacity hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
         style={{
           backgroundColor: "var(--terracotta)",

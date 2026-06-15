@@ -8,7 +8,6 @@ export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData();
     const pdf = formData.get("pdf") as File | null;
-    const email = (formData.get("email") as string | null)?.trim().toLowerCase();
     const word = (formData.get("word") as string | null)?.trim().toLowerCase();
     const honeypot = formData.get("_trap") as string | null;
 
@@ -17,7 +16,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true }); // silently discard
     }
 
-    if (!pdf || !email || !word) {
+    if (!pdf || !word) {
       return NextResponse.json({ error: "Missing required fields." }, { status: 400 });
     }
 
@@ -53,21 +52,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Word not found." }, { status: 404 });
     }
 
-    // Check for duplicate submission
-    const { data: existing } = await admin
-      .from("papers")
-      .select("id")
-      .eq("email", email)
-      .eq("word_id", wordRow.id)
-      .maybeSingle();
-
-    if (existing) {
-      return NextResponse.json(
-        { error: "You have already submitted a paper for this word." },
-        { status: 409 }
-      );
-    }
-
     // Upload PDF to Supabase Storage
     const filename = `${wordRow.id}/${Date.now()}.pdf`;
     const { error: uploadErr } = await admin.storage
@@ -84,7 +68,6 @@ export async function POST(req: NextRequest) {
       word_id: wordRow.id,
       type: "word",
       pdf_url: filename,
-      email,
       status: "pending",
     });
 

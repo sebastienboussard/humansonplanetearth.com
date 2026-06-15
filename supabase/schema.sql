@@ -15,15 +15,9 @@ create table papers (
   type text not null default 'word' check (type in ('word', 'long-form')),
   title text,
   pdf_url text not null,
-  email text not null,
   status text not null default 'pending' check (status in ('pending', 'approved', 'rejected')),
   submitted_at timestamptz default now()
 );
-
--- Unique: one submission per email per word
-create unique index one_per_email_per_word
-  on papers (email, word_id)
-  where word_id is not null and type = 'word';
 
 -- Comments table
 create table comments (

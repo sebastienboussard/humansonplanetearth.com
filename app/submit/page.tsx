@@ -60,7 +60,7 @@ export default async function SubmitPage() {
         style={{ borderTop: "1px solid var(--border)", fontFamily: "system-ui, sans-serif", color: "var(--muted)" }}
       >
         <p><strong style={{ color: "var(--ink)" }}>Format:</strong> PDF only · 1 page max · 2 MB max</p>
-        <p><strong style={{ color: "var(--ink)" }}>Email:</strong> Required to prevent duplicates. Never shown publicly.</p>
+        <p><strong style={{ color: "var(--ink)" }}>Privacy:</strong> No account, no email — nothing that could identify you is collected.</p>
         <p><strong style={{ color: "var(--ink)" }}>Authorship:</strong> All papers credited as <em>Human On Planet Earth</em>.</p>
         <p><strong style={{ color: "var(--ink)" }}>Moderation:</strong> Reviewed before publishing. Everything welcome except spam and hate.</p>
       </div>

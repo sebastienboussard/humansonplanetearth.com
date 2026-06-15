@@ -9,12 +9,11 @@ export async function POST(req: NextRequest) {
     const formData = await req.formData();
     const pdf = formData.get("pdf") as File | null;
     const title = (formData.get("title") as string | null)?.trim();
-    const email = (formData.get("email") as string | null)?.trim().toLowerCase();
     const honeypot = formData.get("_trap") as string | null;
 
     if (honeypot) return NextResponse.json({ ok: true });
 
-    if (!pdf || !title || !email) {
+    if (!pdf || !title) {
       return NextResponse.json({ error: "Missing required fields." }, { status: 400 });
     }
 
@@ -36,22 +35,6 @@ export async function POST(req: NextRequest) {
 
     const admin = getAdminClient();
 
-    // Check for existing long-form submission from this email
-    const { data: existing } = await admin
-      .from("papers")
-      .select("id")
-      .eq("type", "long-form")
-      .eq("email", email)
-      .in("status", ["pending", "approved"])
-      .maybeSingle();
-
-    if (existing) {
-      return NextResponse.json(
-        { error: "A long-form paper from this email is already pending or published." },
-        { status: 409 }
-      );
-    }
-
     // Upload PDF to Supabase Storage
     const filename = `long-form/${Date.now()}.pdf`;
     const { error: uploadErr } = await admin.storage
@@ -69,7 +52,6 @@ export async function POST(req: NextRequest) {
       type: "long-form",
       title,
       pdf_url: filename,
-      email,
       status: "pending",
     });
 

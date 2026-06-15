@@ -6,7 +6,6 @@ type Status = "idle" | "submitting" | "success" | "error";
 
 export default function SubmitForm({ word }: { word: string }) {
   const [file, setFile] = useState<File | null>(null);
-  const [email, setEmail] = useState("");
   const [status, setStatus] = useState<Status>("idle");
   const [errorMsg, setErrorMsg] = useState("");
   const [dragOver, setDragOver] = useState(false);
@@ -39,14 +38,13 @@ export default function SubmitForm({ word }: { word: string }) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (honeypot) return; // bot
-    if (!file || !email) return;
+    if (!file) return;
 
     setStatus("submitting");
     setErrorMsg("");
 
     const body = new FormData();
     body.append("pdf", file);
-    body.append("email", email);
     body.append("word", word);
     body.append("_trap", honeypot);
 
@@ -80,15 +78,6 @@ export default function SubmitForm({ word }: { word: string }) {
       </div>
     );
   }
-
-  const inputStyle = {
-    backgroundColor: "var(--card)",
-    border: "1px solid var(--border)",
-    color: "var(--ink)",
-    fontFamily: "system-ui, sans-serif",
-    fontSize: "0.875rem",
-    outline: "none",
-  };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -141,30 +130,6 @@ export default function SubmitForm({ word }: { word: string }) {
         </div>
       </div>
 
-      {/* Email */}
-      <div>
-        <label
-          htmlFor="email"
-          className="block text-sm mb-2"
-          style={{ fontFamily: "system-ui, sans-serif", color: "var(--ink)" }}
-        >
-          Your email
-        </label>
-        <input
-          id="email"
-          type="email"
-          required
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="you@example.com"
-          className="w-full px-4 py-3 rounded-sm"
-          style={inputStyle}
-        />
-        <p className="text-xs mt-1" style={{ color: "var(--muted)", fontFamily: "system-ui, sans-serif" }}>
-          Never displayed. Used only to prevent duplicate submissions.
-        </p>
-      </div>
-
       {/* Honeypot — hidden from real users */}
       <div style={{ display: "none" }} aria-hidden="true">
         <input
@@ -184,7 +149,7 @@ export default function SubmitForm({ word }: { word: string }) {
 
       <button
         type="submit"
-        disabled={!file || !email || status === "submitting"}
+        disabled={!file || status === "submitting"}
         className="w-full py-3 text-sm text-white transition-opacity hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
         style={{
           backgroundColor: "var(--terracotta)",
