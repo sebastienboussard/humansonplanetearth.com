@@ -16,10 +16,10 @@ export default function AboutPage() {
 
       <div className="space-y-6 text-base leading-relaxed" style={{ color: "var(--ink)" }}>
         <p>
-          Humanity's greatest joy is to think creatively. The Word Of Them Month is your invitation to explore your own mind. 
+          Humanity's greatest joy is to think creatively. The Word Of The Month is your invitation.
         </p>
         <p>
-          There is only one restriction, it has to fit on one page as a pdf
+          There is only one restriction, it has to fit on one page as a pdf.
         </p>
         <p>
           Every submission is published anonymously, credited as{" "}
@@ -27,8 +27,7 @@ export default function AboutPage() {
           Just a human, writing.
         </p>
         <p>
-          Visitors can read the collection and discuss each paper in the comments — also
-          anonymously. The conversation belongs to everyone.
+          Visitors can read the collection and anonymously discuss each paper in the comments. The conversation belongs to everyone.
         </p>
 
         <hr style={{ borderColor: "var(--border)" }} className="my-8" />
