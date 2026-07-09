@@ -29,10 +29,22 @@ create table comments (
   created_at timestamptz default now()
 );
 
+-- Messages table (contact form)
+create table messages (
+  id uuid primary key default gen_random_uuid(),
+  body text not null,
+  reply_email text,
+  read boolean not null default false,
+  created_at timestamptz default now()
+);
+
 -- RLS: enable on all tables
 alter table words enable row level security;
 alter table papers enable row level security;
 alter table comments enable row level security;
+alter table messages enable row level security;
+-- messages: no public policies. All access is server-side via the service-role
+-- admin client, which bypasses RLS.
 
 -- Words: anyone can read
 create policy "public read words"

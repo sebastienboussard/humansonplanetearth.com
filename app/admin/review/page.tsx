@@ -1,6 +1,7 @@
 import ReviewQueue from "./ReviewQueue";
 import PublishedPapers from "./PublishedPapers";
 import AddWordForm from "./AddWordForm";
+import MessagesInbox from "./MessagesInbox";
 
 export const metadata = { title: "Review — Admin" };
 
@@ -18,6 +19,13 @@ export default function ReviewPage() {
         >
           Log out
         </a>
+      </div>
+
+      <div className="mb-16">
+        <h2 className="text-xl font-normal mb-6" style={{ color: "var(--forest)" }}>
+          Messages
+        </h2>
+        <MessagesInbox />
       </div>
 
       <div className="mb-16">
