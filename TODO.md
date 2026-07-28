@@ -5,8 +5,9 @@
 ### 1. PDF Metadata Stripping
 Strip Author, Creator, Producer, Title, Subject, Keywords from every uploaded PDF before it hits storage. pdf-lib is already a dependency — strip fields on the loaded `pdfDoc` and re-serialize before uploading.
 
-- [ ] `app/api/submit/route.ts` — strip metadata after page count check, upload sanitized buffer
-- [ ] `app/api/submit/long-form/route.ts` — strip metadata after validation, upload sanitized buffer
+- [x] `app/api/submit/route.ts` — strip metadata after page count check, upload sanitized buffer
+- [x] `app/api/submit/long-form/route.ts` — strip metadata after validation, upload sanitized buffer
+- Note: also deletes the XMP `/Metadata` stream object from the pdf-lib context (not just the catalog key — pdf-lib doesn't GC, so the naive delete leaves the name in the file bytes). Verified with a byte-scan test. Visible bylines/comments/image EXIF still need human review before publishing.
 
 ### 2. Enumerable Upload Paths + Delete on Reject
 - [ ] `app/api/submit/route.ts` — replace `Date.now()` with `crypto.randomUUID()` in filename
