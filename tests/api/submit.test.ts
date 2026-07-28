@@ -12,10 +12,16 @@ import { POST } from "@/app/api/submit/route";
 
 const URL = "http://localhost:3000/api/submit";
 
-function buildForm(fields: { pdf?: File; word?: string; _trap?: string }): FormData {
+function buildForm(fields: {
+  pdf?: File;
+  word?: string;
+  tags?: string;
+  _trap?: string;
+}): FormData {
   const form = new FormData();
   if (fields.pdf) form.append("pdf", fields.pdf);
   if (fields.word !== undefined) form.append("word", fields.word);
+  if (fields.tags !== undefined) form.append("tags", fields.tags);
   if (fields._trap !== undefined) form.append("_trap", fields._trap);
   return form;
 }
@@ -149,6 +155,36 @@ describe("POST /api/submit", () => {
       type: "word",
       pdf_url: filename,
       status: "pending",
+      tags: [],
     });
+  });
+
+  it("normalizes submitted hashtags server-side before storing them", async () => {
+    holder.current = successfulClient();
+    const form = buildForm({
+      pdf: await makePdfFile(),
+      word: "hope",
+      tags: "#Quiet, memory  #QUIET !!! grief",
+    });
+
+    const res = await POST(formRequest(URL, form));
+    expect(res.status).toBe(200);
+
+    // lowercased, de-hashed, deduped, junk dropped — never the raw client string
+    expect(holder.current.query("papers")!.insert).toHaveBeenCalledWith(
+      expect.objectContaining({ tags: ["quiet", "memory", "grief"] })
+    );
+  });
+
+  it("caps stored hashtags at 10 regardless of how many were submitted", async () => {
+    holder.current = successfulClient();
+    const many = Array.from({ length: 25 }, (_, i) => `#tag${i}`).join(" ");
+    const res = await POST(
+      formRequest(URL, buildForm({ pdf: await makePdfFile(), word: "hope", tags: many }))
+    );
+
+    expect(res.status).toBe(200);
+    const [payload] = holder.current.query("papers")!.insert.mock.calls[0];
+    expect(payload.tags).toHaveLength(10);
   });
 });

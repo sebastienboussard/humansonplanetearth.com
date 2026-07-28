@@ -111,6 +111,7 @@ describe("POST /api/submit/long-form", () => {
       title: "My Essay",
       pdf_url: filename,
       status: "pending",
+      tags: [],
     });
   });
 });
