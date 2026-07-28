@@ -16,8 +16,13 @@ create table papers (
   title text,
   pdf_url text not null,
   status text not null default 'pending' check (status in ('pending', 'approved', 'rejected')),
+  -- Invisible hashtags: author-supplied metadata, never rendered; powers search only.
+  tags text[] not null default '{}',
   submitted_at timestamptz default now()
 );
+
+-- Speeds up tag-based queries
+create index papers_tags_idx on papers using gin (tags);
 
 -- Comments table
 create table comments (

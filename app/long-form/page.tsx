@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getAdminClient } from "@/lib/supabase";
+import LongFormList from "./LongFormList";
 
 export const revalidate = 60;
 
@@ -12,7 +13,7 @@ export default async function LongFormPage() {
 
   const { data: papers } = await admin
     .from("papers")
-    .select("id, title, submitted_at")
+    .select("id, title, submitted_at, tags")
     .eq("type", "long-form")
     .eq("status", "approved")
     .order("submitted_at", { ascending: false });
@@ -49,33 +50,7 @@ export default async function LongFormPage() {
           </p>
         </div>
       ) : (
-        <ul className="divide-y" style={{ borderColor: "var(--border)" }}>
-          {papers.map((paper: any) => (
-            <li key={paper.id}>
-              <Link
-                href={`/long-form/${paper.id}`}
-                className="flex items-baseline justify-between py-5 group gap-4"
-              >
-                <span
-                  className="text-xl font-normal group-hover:underline underline-offset-4"
-                  style={{ color: "var(--forest)" }}
-                >
-                  {paper.title}
-                </span>
-                <span
-                  className="text-sm shrink-0"
-                  style={{ fontFamily: "system-ui, sans-serif", color: "var(--muted)" }}
-                >
-                  {new Date(paper.submitted_at).toLocaleDateString("en-US", {
-                    month: "short",
-                    day: "numeric",
-                    year: "numeric",
-                  })}
-                </span>
-              </Link>
-            </li>
-          ))}
-        </ul>
+        <LongFormList papers={papers} />
       )}
     </div>
   );
