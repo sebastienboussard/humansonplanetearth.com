@@ -96,6 +96,7 @@ export default function PdfViewer({
         ) : (
           <Document
             file={src}
+            externalLinkTarget="_blank"
             onLoadSuccess={onLoadSuccess}
             onLoadError={onLoadError}
             loading={
@@ -116,8 +117,6 @@ export default function PdfViewer({
                   key={i + 1}
                   pageNumber={i + 1}
                   width={containerWidth}
-                  renderTextLayer={false}
-                  renderAnnotationLayer={false}
                   className="mb-2 last:mb-0"
                 />
               ))}
