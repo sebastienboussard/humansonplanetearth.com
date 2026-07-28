@@ -35,3 +35,31 @@ Strip Author, Creator, Producer, Title, Subject, Keywords from every uploaded PD
 **Code changes (after env vars are set):**
 - [ ] `app/submit/SubmitForm.tsx` — add `<Turnstile>` widget, gate submit button on token
 - [ ] `app/api/submit/route.ts` — verify `cf-token` against Cloudflare siteverify API (only when `TURNSTILE_SECRET_KEY` is present)
+
+## Features
+
+### "What's Changed" tab
+A page where readers can see what's new on the site — not a dev changelog, but
+a human-readable "here's what changed since you last visited."
+
+`CHANGELOG.md` already exists with dated entries and Added/Changed/Removed
+sections, so the page can render that rather than maintaining a second list.
+
+- [ ] `app/changes/page.tsx` — new route, linked from `components/Nav.tsx`
+- [ ] Decide the source: parse `CHANGELOG.md` at build time, or move entries
+      into a `changes` table so non-code updates (new word of the month, new
+      papers published) can appear without a deploy
+- [ ] Keep the entries reader-facing — "you can now filter papers by hashtag",
+      not "refactored PaperCarousel"
+- [ ] Optional: a subtle "new" marker in the nav when there are entries newer
+      than the visitor's last visit (localStorage timestamp, no account needed)
+
+## Site email
+
+The site now has its own address: **weare.HumansOnPlanetEarth@gmail.com**
+
+- [ ] Use it as the public contact address on the contact page instead of any
+      personal address
+- [ ] Use it as the `from`/reply-to for outbound notification email
+- [ ] Add it to the privacy page as the route for takedown or correction
+      requests on published papers
