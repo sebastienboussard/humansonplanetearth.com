@@ -24,7 +24,7 @@ pre-push commit `31ddfbc`, and against the live domain.
 
 ## Done
 
-- **PDF metadata stripping** — see §1 below, both routes shipped.
+- **PDF metadata stripping** — see §1 below; both routes shipped.
 - **Testing framework** — vitest suite on `main`, 71 tests, `npm test`.
 - **Invisible hashtags** — built and tested on `worktree-invisible-hashtags`;
   the Supabase migration has been applied to production, so the branch is
@@ -32,6 +32,8 @@ pre-push commit `31ddfbc`, and against the live domain.
 - **Stale `netlify.toml` removed** — the site runs on Vercel.
 
 ## Security & Privacy Fixes
+
+### 1. PDF Metadata Stripping
 Strip Author, Creator, Producer, Title, Subject, Keywords from every uploaded PDF before it hits storage. pdf-lib is already a dependency — strip fields on the loaded `pdfDoc` and re-serialize before uploading.
 
 - [x] `app/api/submit/route.ts` — strip metadata after page count check, upload sanitized buffer
