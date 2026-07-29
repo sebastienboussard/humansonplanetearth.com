@@ -1,8 +1,37 @@
 # To-Do
 
-## Security & Privacy Fixes
+## 🔴 LIVE OUTAGE — word pages return 500
 
-### 1. PDF Metadata Stripping
+Every page that renders the PDF viewer is down in production. The homepage is
+fine, so the site looks healthy at a glance.
+
+`components/PdfViewer.tsx` imports `react-pdf` at module top level. `"use client"`
+does not stop Next from server-rendering a component for the initial HTML, so
+pdf.js evaluates in Node — where `DOMMatrix` doesn't exist — and the request
+throws `ReferenceError: DOMMatrix is not defined`.
+
+Introduced by `8e8eecb` ("Enable text/annotation layers in PdfViewer"), not by
+anything in the current branches. Reproduced identically on `main`, on the
+pre-push commit `31ddfbc`, and against the live domain.
+
+- [ ] `components/PaperCarousel.tsx` — load the viewer client-only:
+      `const PdfViewer = dynamic(() => import("./PdfViewer"), { ssr: false })`
+- [ ] `app/words/[word]/[paperId]/page.tsx` — same treatment (it's a server
+      component, so the viewer needs a client wrapper)
+- [ ] `app/long-form/[paperId]/page.tsx` — check it for the same import path
+- [ ] Add a test that server-renders a word page and asserts 200, so this class
+      of SSR crash can't reach production again
+
+## Done
+
+- **PDF metadata stripping** — see §1 below, both routes shipped.
+- **Testing framework** — vitest suite on `main`, 71 tests, `npm test`.
+- **Invisible hashtags** — built and tested on `worktree-invisible-hashtags`;
+  the Supabase migration has been applied to production, so the branch is
+  deployable once the outage above is fixed.
+- **Stale `netlify.toml` removed** — the site runs on Vercel.
+
+## Security & Privacy Fixes
 Strip Author, Creator, Producer, Title, Subject, Keywords from every uploaded PDF before it hits storage. pdf-lib is already a dependency — strip fields on the loaded `pdfDoc` and re-serialize before uploading.
 
 - [x] `app/api/submit/route.ts` — strip metadata after page count check, upload sanitized buffer
@@ -29,7 +58,7 @@ Strip Author, Creator, Producer, Title, Subject, Keywords from every uploaded PD
    NEXT_PUBLIC_TURNSTILE_SITE_KEY=your_site_key
    TURNSTILE_SECRET_KEY=your_secret_key
    ```
-5. Add the same two vars in Netlify → Site settings → Environment variables
+5. Add the same two vars in Vercel → Project settings → Environment variables
 6. Run: `npm install @marsidev/react-turnstile`
 
 **Code changes (after env vars are set):**
