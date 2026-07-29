@@ -1,6 +1,12 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { getWordBySlug, getMonthName, getDaysRemaining, formatDeadline } from "@/lib/words";
+import {
+  getWordBySlug,
+  getMonthName,
+  getDaysRemaining,
+  formatDeadline,
+  showsNewestPapersFirst,
+} from "@/lib/words";
 import { getAdminClient } from "@/lib/supabase";
 import Comments from "@/components/Comments";
 import PaperCarousel from "@/components/PaperCarousel";
@@ -26,7 +32,7 @@ export default async function WordPage({
     .select("id, submitted_at, pdf_url, tags")
     .eq("word_id", entry.id)
     .eq("status", "approved")
-    .order("submitted_at", { ascending: true });
+    .order("submitted_at", { ascending: !showsNewestPapersFirst(entry) });
 
   // Don't silently render "no papers" when the query itself failed
   if (papersErr) console.error("Papers select error:", papersErr);

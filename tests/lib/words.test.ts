@@ -13,6 +13,7 @@ import {
   getMonthName,
   formatDeadline,
   getDaysRemaining,
+  showsNewestPapersFirst,
 } from "@/lib/words";
 
 afterEach(() => {
@@ -56,6 +57,23 @@ describe("getDaysRemaining", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-08-15T00:00:00Z"));
     expect(getDaysRemaining("2026-07-31")).toBe(0);
+  });
+});
+
+describe("showsNewestPapersFirst", () => {
+  it("is on for regret, the July 2026 word", () => {
+    expect(showsNewestPapersFirst({ month: 7, year: 2026 })).toBe(true);
+  });
+
+  it("stays off for every word before the cutover", () => {
+    expect(showsNewestPapersFirst({ month: 6, year: 2026 })).toBe(false);
+    expect(showsNewestPapersFirst({ month: 1, year: 2026 })).toBe(false);
+    expect(showsNewestPapersFirst({ month: 12, year: 2025 })).toBe(false);
+  });
+
+  it("stays on for later words, including across the year boundary", () => {
+    expect(showsNewestPapersFirst({ month: 8, year: 2026 })).toBe(true);
+    expect(showsNewestPapersFirst({ month: 1, year: 2027 })).toBe(true);
   });
 });
 

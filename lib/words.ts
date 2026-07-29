@@ -54,6 +54,17 @@ export async function getWordBySlug(slug: string): Promise<WordEntry | null> {
   return (data as WordEntry | null) ?? null;
 }
 
+// Papers used to read oldest-first. From "regret" (July 2026) onward the most
+// recent submission leads instead; earlier words keep the order they shipped with.
+const NEWEST_FIRST_FROM = { year: 2026, month: 7 };
+
+export function showsNewestPapersFirst(entry: Pick<WordEntry, "month" | "year">): boolean {
+  return (
+    entry.year * 12 + entry.month >=
+    NEWEST_FIRST_FROM.year * 12 + NEWEST_FIRST_FROM.month
+  );
+}
+
 export function getMonthName(month: number): string {
   return MONTH_NAMES[month - 1];
 }
