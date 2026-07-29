@@ -35,9 +35,13 @@ Reproduced locally against a production build: `/words/audacity`,
       and asserts no throw, plus a structural check that nothing outside the
       wrapper imports `PdfViewer` directly. Verified to fail with the original
       `ReferenceError` when the fix is reverted.
-- [ ] **Not yet confirmed in a real browser** — the server no longer 500s, but
-      that the viewer actually paints the PDF client-side is unverified. Worth
-      one look at a word page now that it is live.
+- [x] **Confirmed in a browser (2026-07-28)** — papers render on the live site
+      in Brave/Chromium. They did *not* render in one hardened Firefox profile,
+      but that was traced to the browser, not the site: Firefox's own built-in
+      viewer renders the same file blank, with no site code involved. The file
+      itself was verified well-formed — embedded `/FontFile2` subset font, a
+      59 KB content stream with 1319 text-show operators. Not a site bug; see
+      §4 for the failure-mode work it did surface.
 
 ## 🔴 2. The papers bucket is public
 
@@ -61,10 +65,10 @@ rest of the upload-path work rests on — decide it first.
 
 `/api/submit` and `/api/submit/long-form` accept unlimited scripted uploads —
 storage cost, quota burn, flooded review queue. This is the real abuse surface;
-admin-login brute force (§7) is the smaller one.
+admin-login brute force (§8) is the smaller one.
 
 - [ ] Rate-limit both upload routes. Must be a shared store (Supabase table with
-      an atomic upsert, or Upstash) — see the note in §7 on why in-memory fails
+      an atomic upsert, or Upstash) — see the note in §8 on why in-memory fails
 - [ ] `app/api/submit/long-form/route.ts:6` — `MAX_SIZE` is 10 MB, above Vercel's
       ~4.5 MB serverless request body limit. `req.formData()` buffers the whole
       request before the size check at `:25` runs, so a genuine 10 MB upload dies
@@ -74,9 +78,34 @@ admin-login brute force (§7) is the smaller one.
       submissions. PDF scrubbing doesn't cover what the platform logs — write
       this down on the privacy page or fix it
 
-## 4. Profiles & Notifications — go-live
+## 🟠 4. The PDF viewer fails to a transparent hole
 
-Code-complete and verified: 149 tests across 17 suites on `integration`,
+Surfaced while chasing §1. When the canvas fails to paint for any reason, the
+viewer renders **nothing** — and because there is no opaque background behind
+it, the result is a see-through gap where the paper should be. On one machine
+this showed the desktop through the browser window. The site looks broken
+rather than the paper.
+
+This matters more here than it would elsewhere. A site built around anonymity
+draws visitors on hardened, unusual and privacy-patched browsers — Tor Browser
+ships `resistFingerprinting` on by default — and canvas is exactly the surface
+those setups interfere with. The failure is silent: the reader sees a blank
+page and the site looks fine to everyone else.
+
+- [ ] Opaque background behind the canvas, so a paint failure degrades to a
+      blank page instead of a hole
+- [ ] Detect the empty-render case and fall back to the browser's native PDF
+      view (`<object>`/`<iframe>` on the same public URL), keeping react-pdf as
+      the enhanced path
+- [ ] Surface the existing Download link more prominently when the fallback
+      triggers — it already works and needs no canvas
+- [ ] Consider capping `devicePixelRatio` on `<Page>`; oversized canvases are a
+      common paint-failure trigger. (No help on hardened Firefox, which already
+      forces it to 1, but cheap insurance on HiDPI displays.)
+
+## 5. Profiles & Notifications — go-live
+
+Code-complete and verified: 155 tests across 18 suites on `integration`,
 `tsc --noEmit` clean, production build clean. What it does and how it keeps
 authorship private is in the CHANGELOG (Unreleased) and the README
 ("Profiles & Notifications", including manual setup steps).
@@ -97,7 +126,7 @@ Manual steps, only Seb can do these:
       `NOTIFY_FROM_EMAIL`, `UNSUBSCRIBE_SECRET`, `CRON_SECRET`
       (cron schedule already lives in `vercel.json`)
 
-## 5. PDF Metadata Stripping — done, with a caveat
+## 6. PDF Metadata Stripping — done, with a caveat
 
 - [x] `app/api/submit/route.ts` — strip metadata after page count check
 - [x] `app/api/submit/long-form/route.ts` — strip metadata after validation
@@ -112,7 +141,7 @@ Manual steps, only Seb can do these:
 - [ ] Not covered by the current strip: embedded attachments, document-level
       JavaScript, annotations. Decide whether to drop them too.
 
-## 6. Upload paths + delete on reject
+## 7. Upload paths + delete on reject
 
 - [ ] `app/api/submit/route.ts:91` — replace `Date.now()` with
       `crypto.randomUUID()` in the filename
@@ -124,7 +153,7 @@ Manual steps, only Seb can do these:
       live row pointing at a missing one.
 - [ ] One-time cleanup: papers already rejected still have their PDFs in storage
 
-## 7. Admin auth
+## 8. Admin auth
 
 Priorities are inverted from how this was originally written — the session
 token is the real hole, `timingSafeEqual` is close to cosmetic.
@@ -144,7 +173,7 @@ token is the real hole, `timingSafeEqual` is close to cosmetic.
       first so lengths match). Network jitter dwarfs the compare delta — do it
       last.
 
-## 8. Cloudflare Turnstile
+## 9. Cloudflare Turnstile
 
 **External setup required first:**
 1. [dash.cloudflare.com](https://dash.cloudflare.com) → Turnstile → Add widget
@@ -169,7 +198,7 @@ token is the real hole, `timingSafeEqual` is close to cosmetic.
       production an absent secret should reject.
 - [ ] Pass `remoteip` to siteverify
 
-## 9. "What's Changed" tab
+## 10. "What's Changed" tab
 
 A page where readers can see what's new — not a dev changelog, but a
 human-readable "here's what changed since you last visited."
@@ -186,7 +215,7 @@ sections, so the page can render that rather than maintaining a second list.
 - [ ] Optional: a subtle "new" marker in the nav when there are entries newer
       than the visitor's last visit (localStorage timestamp, no account needed)
 
-## 10. Site email
+## 11. Site email
 
 The site now has its own address: **weare.HumansOnPlanetEarth@gmail.com**
 
@@ -206,10 +235,26 @@ From Doubt's review, re-confirmed 2026-07-28:
 
 ## Done
 
-- **PDF metadata stripping** — both routes, XMP stream included (§5)
-- **Testing framework** — vitest, now 149 tests across 17 suites, `npm test`
+- **PDF metadata stripping** — both routes, XMP stream included (§6)
+- **Testing framework** — vitest, now 155 tests across 18 suites, `npm test`
 - **Invisible hashtags** — migration already applied to production
-- **Profiles & notifications** — code-complete, pending the manual steps in §4
+- **Profiles & notifications** — code-complete, pending the manual steps in §5
 - **Stale `netlify.toml` removed** — the site runs on Vercel
 - **Branch consolidation** — everything collected onto `integration`
-- **PDF viewer SSR outage** — fixed and regression-tested (§1)
+- **PDF viewer SSR outage** — fixed, regression-tested, shipped to production
+  and verified against the live domain (§1)
+- **Papers confirmed rendering on the live site** in Brave/Chromium. A blank
+  render on one hardened Firefox profile was traced to the browser, not the
+  site — Firefox's own viewer renders the same file blank. The file was
+  verified well-formed byte-for-byte.
+
+## Ruled out while chasing the blank-render report (2026-07-28)
+
+Recorded so none of these get re-investigated:
+- PDF file corruption — valid xref, embedded `/FontFile2`, 1319 text-show ops
+- Supabase storage / CORS — 200, `application/pdf`, `access-control-allow-origin: *`
+- pdf.js worker asset — emitted and correctly referenced at `/_next/static/media/`
+- react-pdf ↔ pdfjs-dist version mismatch — both pinned to 5.4.296
+- Text/annotation layer CSS — contains no blend modes or opacity tricks
+- Firefox fingerprinting protection — disabling it changed nothing
+- GPU compositing — Firefox's own viewer paints white, not a transparent hole

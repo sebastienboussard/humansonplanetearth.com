@@ -84,6 +84,8 @@ Built and tested, not yet on `main`. Collected on the `integration` branch.
   so pdf.js only ever evaluates in the browser. Covered by
   `tests/ssr/pdf-viewer-ssr.test.ts`, which evaluates each page module in a Node
   environment and fails with the original error if the static import returns.
+  Shipped to production and verified against the live domain: word pages, both
+  paper routes and the long-form index all return 200, and papers render.
 
 ### Removed
 - `netlify.toml`. The site deploys on Vercel; this was a leftover from an
@@ -98,6 +100,18 @@ Built and tested, not yet on `main`. Collected on the `integration` branch.
   Sanitization fails closed: a PDF that cannot be processed is rejected rather
   than stored unmodified. Visible bylines, comments, and image EXIF are not
   covered and still need human review before publishing.
+
+### Known issues
+- **The PDF viewer degrades badly when a canvas cannot paint.** Papers are
+  rendered into a `<canvas>` by pdf.js. If a browser fails to paint it — a
+  privacy-hardened profile, an unusual GPU path, an extension interfering with
+  canvas — the viewer draws nothing, and with no opaque background behind it the
+  result is a see-through gap where the paper should be rather than a readable
+  fallback. The reader sees a broken-looking page while the site looks healthy
+  to everyone else. This is worth taking seriously here specifically: a site
+  built for anonymity attracts hardened browsers, and canvas is exactly what
+  those setups interfere with. Fix planned — opaque backing plus a fallback to
+  the browser's native PDF view. See TODO §4.
 
 ## 2026-06-14
 
