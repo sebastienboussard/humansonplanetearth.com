@@ -8,20 +8,37 @@ vi.mock("@/lib/supabase", async () =>
   (await import("../helpers/supabase-mock")).supabaseModuleMock(holder)
 );
 
+// Anonymous by default; attach tests sign a profile in.
+const profileHolder = vi.hoisted(
+  () => ({ current: null }) as import("../helpers/auth-mock").ProfileHolder
+);
+vi.mock("@/lib/profile", async () =>
+  (await import("../helpers/auth-mock")).profileModuleMock(profileHolder)
+);
+
 import { POST } from "@/app/api/submit/long-form/route";
 
 const URL = "http://localhost:3000/api/submit/long-form";
 
-function buildForm(fields: { pdf?: File; title?: string; _trap?: string }): FormData {
+function buildForm(fields: {
+  pdf?: File;
+  title?: string;
+  tags?: string;
+  _trap?: string;
+  attach?: string;
+}): FormData {
   const form = new FormData();
   if (fields.pdf) form.append("pdf", fields.pdf);
   if (fields.title !== undefined) form.append("title", fields.title);
+  if (fields.tags !== undefined) form.append("tags", fields.tags);
   if (fields._trap !== undefined) form.append("_trap", fields._trap);
+  if (fields.attach !== undefined) form.append("attach", fields.attach);
   return form;
 }
 
 afterEach(() => {
   holder.current = null;
+  profileHolder.current = null;
 });
 
 describe("POST /api/submit/long-form", () => {
@@ -113,5 +130,39 @@ describe("POST /api/submit/long-form", () => {
       status: "pending",
       tags: [],
     });
+  });
+
+  it("attaches the paper to the signed-in profile when attach=1", async () => {
+    profileHolder.current = { id: "prof-1", user_id: "user-1", email: "h@example.com" };
+    holder.current = createMockSupabase({
+      tables: {
+        papers: { data: { id: "paper-1" } },
+        paper_authors: { data: null },
+      },
+    });
+
+    const res = await POST(
+      formRequest(URL, buildForm({ pdf: await makePdfFile(), title: "Essay", attach: "1" }))
+    );
+
+    expect(res.status).toBe(200);
+    expect(holder.current.query("paper_authors")!.insert).toHaveBeenCalledWith({
+      paper_id: "paper-1",
+      profile_id: "prof-1",
+      public_visible: false,
+    });
+  });
+
+  it("ignores attach=1 without a server-side session", async () => {
+    holder.current = createMockSupabase({
+      tables: { papers: { data: { id: "paper-1" } } },
+    });
+
+    const res = await POST(
+      formRequest(URL, buildForm({ pdf: await makePdfFile(), title: "Essay", attach: "1" }))
+    );
+
+    expect(res.status).toBe(200);
+    expect(holder.current.query("paper_authors")).toBeUndefined();
   });
 });

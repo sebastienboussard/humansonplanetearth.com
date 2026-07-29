@@ -19,8 +19,26 @@ export default function PrivacyPage() {
           Your identity is protected
         </h2>
         <p>
-          No names, no accounts, no tracking. When you submit a paper, we store only
-          the PDF and the word you wrote about. Nothing is attached to you.
+          No names, no tracking, and no account required. When you submit a paper
+          anonymously, we store only the PDF and the word you wrote about. Nothing
+          is attached to you.
+        </p>
+
+        <hr style={{ borderColor: "var(--border)" }} className="my-8" />
+
+        <h2 className="text-xl font-normal" style={{ color: "var(--forest)" }}>
+          Optional accounts
+        </h2>
+        <p>
+          You may create an optional account (email only — no name, no public
+          username) to receive email notifications you choose: new words, deadline
+          reminders, comments on your papers, and replies to your comments. If you
+          are signed in, you can choose to attach a submission to your profile;
+          that link is private by default and never shown publicly unless you
+          explicitly share a paper on your anonymous author page. Your email is
+          never displayed anywhere, and deleting your account permanently removes
+          your email and all profile links while your papers remain published
+          anonymously.
         </p>
 
         <hr style={{ borderColor: "var(--border)" }} className="my-8" />

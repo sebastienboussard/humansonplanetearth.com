@@ -15,6 +15,9 @@ export default function PublishedPapers() {
   const [papers, setPapers] = useState<Paper[]>([]);
   const [loading, setLoading] = useState(true);
   const [removing, setRemoving] = useState<string | null>(null);
+  const [attaching, setAttaching] = useState<string | null>(null);
+  const [attachInput, setAttachInput] = useState<Record<string, string>>({});
+  const [attachStatus, setAttachStatus] = useState<Record<string, string>>({});
 
   useEffect(() => {
     fetch("/api/admin/review?status=approved")
@@ -38,6 +41,23 @@ export default function PublishedPapers() {
     });
     setPapers((prev) => prev.filter((p) => p.id !== id));
     setRemoving(null);
+  }
+
+  async function attach(paperId: string) {
+    const profileId = attachInput[paperId]?.trim();
+    if (!profileId) return;
+    setAttaching(paperId);
+    const res = await fetch("/api/admin/attach", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ paperId, profileId }),
+    });
+    const data = await res.json();
+    setAttachStatus((s) => ({
+      ...s,
+      [paperId]: res.ok ? "Attached." : data.error ?? "Failed.",
+    }));
+    setAttaching(null);
   }
 
   if (loading) {
@@ -106,6 +126,38 @@ export default function PublishedPapers() {
             >
               {removing === paper.id ? "Removing…" : "Remove"}
             </button>
+          </div>
+
+          {/* Manual profile attachment for old papers */}
+          <div className="w-full flex items-center gap-2 flex-wrap">
+            <input
+              type="text"
+              placeholder="Profile id to attach"
+              value={attachInput[paper.id] ?? ""}
+              onChange={(e) =>
+                setAttachInput((s) => ({ ...s, [paper.id]: e.target.value }))
+              }
+              className="flex-1 min-w-48 px-3 py-1.5 rounded-sm text-xs"
+              style={{
+                backgroundColor: "var(--background, #fff)",
+                border: "1px solid var(--border)",
+                color: "var(--ink)",
+                fontFamily: "system-ui, sans-serif",
+              }}
+            />
+            <button
+              onClick={() => attach(paper.id)}
+              disabled={attaching === paper.id || !attachInput[paper.id]?.trim()}
+              className="text-xs underline underline-offset-4 disabled:opacity-40"
+              style={{ color: "var(--muted)", fontFamily: "system-ui, sans-serif" }}
+            >
+              {attaching === paper.id ? "Attaching…" : "Attach to profile"}
+            </button>
+            {attachStatus[paper.id] && (
+              <span className="text-xs" style={{ color: "var(--muted)", fontFamily: "system-ui, sans-serif" }}>
+                {attachStatus[paper.id]}
+              </span>
+            )}
           </div>
         </li>
       ))}

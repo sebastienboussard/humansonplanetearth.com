@@ -11,6 +11,7 @@ const links = [
   { href: "/submit", label: "Submit" },
   { href: "/about", label: "About" },
   { href: "/donate", label: "Donate" },
+  { href: "/account", label: "Account" },
 ];
 
 export default function Nav() {

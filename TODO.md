@@ -1,18 +1,27 @@
 # To-Do
 
-## Invisible Hashtags — branch `worktree-invisible-hashtags`
+## Profiles & Notifications (branch: `profiles-and-notifications`)
 
-Authors tag papers at submit time; tags are never displayed, only power a
-search-box filter on `/words/[word]` and `/long-form`.
+Feature is code-complete and verified: 133 tests pass across 16 suites,
+`tsc --noEmit` clean, production build clean. What it does and how it keeps
+authorship private is in the CHANGELOG (2026-07-28) and the README
+("Profiles & Notifications" section, including the manual setup steps).
 
-- [x] `supabase/migrations/0001_paper_tags.sql` — `tags text[]` column + GIN index
-- [x] `lib/tags.ts` — parse/normalize/match helpers
-- [x] Submit forms + API routes (word and long-form) accept optional hashtags
-- [x] `components/PaperCarousel.tsx` — filter box on word pages
-- [x] `app/long-form/LongFormList.tsx` — filter box on long-form index
-- [ ] **Deploy order: run the migration in Supabase BEFORE merging/deploying this
-      branch** — without the column, submits 500 and word pages show "No papers
-      published yet" (select error is logged but papers won't render)
+Remaining before merge (nice-to-have):
+- [ ] Direct unit tests for `lib/notifications.ts` and `lib/email.ts` — both
+      sit at 0% coverage because every route suite mocks them (all other new
+      code is 90–100%). Worth covering: claim-then-send dedupe via
+      `notification_log`, self-notification skip, pref filtering, the
+      `__long-form__` sentinel URL handling, and batch chunking at 100.
+
+Go-live checklist (manual, only Seb can do these):
+- [ ] Run the new sections of `supabase/schema.sql` in the Supabase SQL editor
+- [ ] Supabase dashboard → Authentication: enable magic-link email sign-in,
+      add `https://<site>/auth/confirm` to redirect URLs, set the Site URL
+- [ ] Resend: verify the sending domain (DNS) for `NOTIFY_FROM_EMAIL`
+- [ ] Vercel: set `NEXT_PUBLIC_SITE_URL`, `RESEND_API_KEY`,
+      `NOTIFY_FROM_EMAIL`, `UNSUBSCRIBE_SECRET`, `CRON_SECRET`
+      (cron schedule already lives in `vercel.json`)
 
 ## Security & Privacy Fixes
 
