@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase, getAdminClient } from "@/lib/supabase";
+import { getSessionUser, ensureProfile } from "@/lib/profile";
+import { notifyPaperComment, notifyCommentReply } from "@/lib/notifications";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -59,6 +61,35 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+    // Optional authorship: recorded server-side from the session (never from the
+    // client) and only in the private comment_authors table — comments render
+    // anonymously everywhere regardless. Failures never fail the comment.
+    let authorProfileId: string | null = null;
+    try {
+      const user = await getSessionUser();
+      if (user) {
+        const profile = await ensureProfile(user);
+        if (profile) {
+          authorProfileId = profile.id;
+          const { error: authorErr } = await admin
+            .from("comment_authors")
+            .insert({ comment_id: comment.id, profile_id: profile.id });
+          if (authorErr) console.error("Comment author insert error:", authorErr);
+        }
+      }
+    } catch (err) {
+      console.error("Comment author error:", err);
+    }
+
+    try {
+      if (paperId) await notifyPaperComment(paperId, comment, authorProfileId);
+      if (parentCommentId) {
+        await notifyCommentReply(parentCommentId, comment, wordId, paperId ?? null, authorProfileId);
+      }
+    } catch (err) {
+      console.error("Comment notification error:", err);
+    }
 
     return NextResponse.json({ comment });
   } catch {

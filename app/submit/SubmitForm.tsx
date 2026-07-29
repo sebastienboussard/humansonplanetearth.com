@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
+import { createBrowserSupabase } from "@/lib/supabase-browser";
 
 type Status = "idle" | "submitting" | "success" | "error";
 
@@ -12,6 +13,16 @@ export default function SubmitForm({ word }: { word: string }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   // Honeypot
   const [honeypot, setHoneypot] = useState("");
+  // Optional profile attachment (only offered when signed in)
+  const [signedIn, setSignedIn] = useState(false);
+  const [attach, setAttach] = useState(false);
+
+  useEffect(() => {
+    createBrowserSupabase()
+      .auth.getUser()
+      .then(({ data }) => setSignedIn(Boolean(data?.user)))
+      .catch(() => setSignedIn(false));
+  }, []);
 
   function handleFile(f: File) {
     if (f.type !== "application/pdf") {
@@ -47,6 +58,7 @@ export default function SubmitForm({ word }: { word: string }) {
     body.append("pdf", file);
     body.append("word", word);
     body.append("_trap", honeypot);
+    if (signedIn && attach) body.append("attach", "1");
 
     try {
       const res = await fetch("/api/submit", { method: "POST", body });
@@ -129,6 +141,28 @@ export default function SubmitForm({ word }: { word: string }) {
           )}
         </div>
       </div>
+
+      {/* Optional profile attachment — only rendered for signed-in visitors */}
+      {signedIn && (
+        <label
+          className="flex items-start gap-3 cursor-pointer text-sm"
+          style={{ fontFamily: "system-ui, sans-serif", color: "var(--ink)" }}
+        >
+          <input
+            type="checkbox"
+            checked={attach}
+            onChange={(e) => setAttach(e.target.checked)}
+            className="mt-1"
+          />
+          <span>
+            Attach to my anonymous profile
+            <span className="block text-xs mt-0.5" style={{ color: "var(--muted)" }}>
+              Kept private unless you choose to share it. The paper is still published
+              anonymously either way.
+            </span>
+          </span>
+        </label>
+      )}
 
       {/* Honeypot — hidden from real users */}
       <div style={{ display: "none" }} aria-hidden="true">

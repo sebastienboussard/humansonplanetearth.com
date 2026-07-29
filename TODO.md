@@ -1,5 +1,28 @@
 # To-Do
 
+## Profiles & Notifications (branch: `profiles-and-notifications`)
+
+Feature is code-complete and verified: 133 tests pass across 16 suites,
+`tsc --noEmit` clean, production build clean. What it does and how it keeps
+authorship private is in the CHANGELOG (2026-07-28) and the README
+("Profiles & Notifications" section, including the manual setup steps).
+
+Remaining before merge (nice-to-have):
+- [ ] Direct unit tests for `lib/notifications.ts` and `lib/email.ts` — both
+      sit at 0% coverage because every route suite mocks them (all other new
+      code is 90–100%). Worth covering: claim-then-send dedupe via
+      `notification_log`, self-notification skip, pref filtering, the
+      `__long-form__` sentinel URL handling, and batch chunking at 100.
+
+Go-live checklist (manual, only Seb can do these):
+- [ ] Run the new sections of `supabase/schema.sql` in the Supabase SQL editor
+- [ ] Supabase dashboard → Authentication: enable magic-link email sign-in,
+      add `https://<site>/auth/confirm` to redirect URLs, set the Site URL
+- [ ] Resend: verify the sending domain (DNS) for `NOTIFY_FROM_EMAIL`
+- [ ] Vercel: set `NEXT_PUBLIC_SITE_URL`, `RESEND_API_KEY`,
+      `NOTIFY_FROM_EMAIL`, `UNSUBSCRIBE_SECRET`, `CRON_SECRET`
+      (cron schedule already lives in `vercel.json`)
+
 ## Security & Privacy Fixes
 
 ### 1. PDF Metadata Stripping

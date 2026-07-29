@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PDFDocument, PDFName, PDFRef } from "pdf-lib";
 import { getAdminClient } from "@/lib/supabase";
+import { getSessionUser, ensureProfile } from "@/lib/profile";
 
 const MAX_SIZE = 2 * 1024 * 1024; // 2 MB
 
@@ -98,16 +99,37 @@ export async function POST(req: NextRequest) {
     }
 
     // Insert paper row
-    const { error: insertErr } = await admin.from("papers").insert({
-      word_id: wordRow.id,
-      type: "word",
-      pdf_url: filename,
-      status: "pending",
-    });
+    const { data: paper, error: insertErr } = await admin
+      .from("papers")
+      .insert({
+        word_id: wordRow.id,
+        type: "word",
+        pdf_url: filename,
+        status: "pending",
+      })
+      .select("id")
+      .single();
 
     if (insertErr) {
       console.error("DB insert error:", insertErr);
       return NextResponse.json({ error: "Submission failed. Please try again." }, { status: 500 });
+    }
+
+    // Optional profile attachment — always derived from the server-side session,
+    // never from a client-sent id. Failure must not fail the submission.
+    if (formData.get("attach") === "1" && paper) {
+      try {
+        const user = await getSessionUser();
+        const profile = user ? await ensureProfile(user) : null;
+        if (profile) {
+          const { error: attachErr } = await admin
+            .from("paper_authors")
+            .insert({ paper_id: paper.id, profile_id: profile.id, public_visible: false });
+          if (attachErr) console.error("Paper attach error:", attachErr);
+        }
+      } catch (err) {
+        console.error("Paper attach error:", err);
+      }
     }
 
     return NextResponse.json({ ok: true });
