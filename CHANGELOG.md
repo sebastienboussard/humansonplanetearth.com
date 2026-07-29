@@ -33,8 +33,11 @@ Built and tested, not yet on `main`. Collected on the `integration` branch.
   a new `papers.tags` column.
 - Test coverage for both features: unit tests for the tag helpers, route tests
   asserting hashtags are normalized server-side rather than trusted from the
-  client, and suites for the account, unsubscribe, attach and cron routes.
-  149 tests across 17 suites.
+  client, suites for the account, unsubscribe, attach and cron routes, and
+  direct unit suites for the notification fan-out (`lib/notifications.ts` —
+  dedupe, self-notification skip, pref filtering, paper-URL resolution) and
+  the Resend wrapper (`lib/email.ts` — batch chunking at 100, failure
+  handling). 181 tests across 20 suites.
 
 ### Changed
 - Profile/paper and profile/comment links live in separate tables

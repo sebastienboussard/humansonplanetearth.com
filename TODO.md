@@ -105,17 +105,18 @@ page and the site looks fine to everyone else.
 
 ## 5. Profiles & Notifications — go-live
 
-Code-complete and verified: 155 tests across 18 suites on `integration`,
+Code-complete and verified: 181 tests across 20 suites on `integration`,
 `tsc --noEmit` clean, production build clean. What it does and how it keeps
 authorship private is in the CHANGELOG (Unreleased) and the README
 ("Profiles & Notifications", including manual setup steps).
 
-Nice-to-have before merge:
-- [ ] Direct unit tests for `lib/notifications.ts` and `lib/email.ts` — both
-      sit at 0% coverage because every route suite mocks them (all other new
-      code is 90–100%). Worth covering: claim-then-send dedupe via
-      `notification_log`, self-notification skip, pref filtering, the
-      `__long-form__` sentinel URL handling, and batch chunking at 100.
+- [x] Direct unit tests for `lib/notifications.ts` and `lib/email.ts`
+      (`tests/lib/notifications.test.ts`, `tests/lib/email.test.ts`) — both
+      were at 0% because every route suite mocks them; now 92%/100% line
+      coverage. Covers claim-then-send dedupe via `notification_log`,
+      self-notification skip, pref filtering, the `__long-form__` sentinel
+      URL handling, word vs long-form paper URLs, the 200-char excerpt cap,
+      and batch chunking at 100 (including partial-failure counting).
 
 Manual steps, only Seb can do these:
 - [ ] Run the new sections of `supabase/schema.sql` in the Supabase SQL editor
