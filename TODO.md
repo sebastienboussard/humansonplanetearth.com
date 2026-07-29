@@ -1,5 +1,19 @@
 # To-Do
 
+## Invisible Hashtags — branch `worktree-invisible-hashtags`
+
+Authors tag papers at submit time; tags are never displayed, only power a
+search-box filter on `/words/[word]` and `/long-form`.
+
+- [x] `supabase/migrations/0001_paper_tags.sql` — `tags text[]` column + GIN index
+- [x] `lib/tags.ts` — parse/normalize/match helpers
+- [x] Submit forms + API routes (word and long-form) accept optional hashtags
+- [x] `components/PaperCarousel.tsx` — filter box on word pages
+- [x] `app/long-form/LongFormList.tsx` — filter box on long-form index
+- [ ] **Deploy order: run the migration in Supabase BEFORE merging/deploying this
+      branch** — without the column, submits 500 and word pages show "No papers
+      published yet" (select error is logged but papers won't render)
+
 ## Security & Privacy Fixes
 
 ### 1. PDF Metadata Stripping

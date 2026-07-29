@@ -7,6 +7,7 @@ type Status = "idle" | "submitting" | "success" | "error";
 export default function LongFormSubmitForm() {
   const [file, setFile] = useState<File | null>(null);
   const [title, setTitle] = useState("");
+  const [tags, setTags] = useState("");
   const [status, setStatus] = useState<Status>("idle");
   const [errorMsg, setErrorMsg] = useState("");
   const [dragOver, setDragOver] = useState(false);
@@ -48,6 +49,7 @@ export default function LongFormSubmitForm() {
     const body = new FormData();
     body.append("pdf", file);
     body.append("title", title.trim());
+    body.append("tags", tags);
     body.append("_trap", honeypot);
 
     try {
@@ -112,6 +114,29 @@ export default function LongFormSubmitForm() {
           className="w-full px-4 py-3 rounded-sm"
           style={inputStyle}
         />
+      </div>
+
+      {/* Hashtags — optional, never shown publicly; used only to filter papers */}
+      <div>
+        <label
+          htmlFor="tags"
+          className="block text-sm mb-2"
+          style={{ fontFamily: "system-ui, sans-serif", color: "var(--ink)" }}
+        >
+          Hashtags <span style={{ color: "var(--muted)" }}>(optional)</span>
+        </label>
+        <input
+          id="tags"
+          type="text"
+          value={tags}
+          onChange={(e) => setTags(e.target.value)}
+          placeholder="#quiet #memory grief"
+          className="w-full px-4 py-3 rounded-sm"
+          style={inputStyle}
+        />
+        <p className="text-xs mt-1" style={{ color: "var(--muted)", fontFamily: "system-ui, sans-serif" }}>
+          Tags are never displayed — they only help readers filter papers by theme.
+        </p>
       </div>
 
       {/* PDF drop zone */}

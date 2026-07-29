@@ -21,14 +21,16 @@ export default async function WordPage({
 
   const admin = getAdminClient();
 
-  const papers = (
-    await admin
-      .from("papers")
-      .select("id, submitted_at, pdf_url")
-      .eq("word_id", entry.id)
-      .eq("status", "approved")
-      .order("submitted_at", { ascending: true })
-  ).data ?? [];
+  const { data: papersData, error: papersErr } = await admin
+    .from("papers")
+    .select("id, submitted_at, pdf_url, tags")
+    .eq("word_id", entry.id)
+    .eq("status", "approved")
+    .order("submitted_at", { ascending: true });
+
+  // Don't silently render "no papers" when the query itself failed
+  if (papersErr) console.error("Papers select error:", papersErr);
+  const papers = papersData ?? [];
 
   const papersWithUrls = papers.map((paper: any) => ({
     ...paper,

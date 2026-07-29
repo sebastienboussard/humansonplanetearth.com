@@ -6,6 +6,7 @@ type Status = "idle" | "submitting" | "success" | "error";
 
 export default function SubmitForm({ word }: { word: string }) {
   const [file, setFile] = useState<File | null>(null);
+  const [tags, setTags] = useState("");
   const [status, setStatus] = useState<Status>("idle");
   const [errorMsg, setErrorMsg] = useState("");
   const [dragOver, setDragOver] = useState(false);
@@ -46,6 +47,7 @@ export default function SubmitForm({ word }: { word: string }) {
     const body = new FormData();
     body.append("pdf", file);
     body.append("word", word);
+    body.append("tags", tags);
     body.append("_trap", honeypot);
 
     try {
@@ -128,6 +130,36 @@ export default function SubmitForm({ word }: { word: string }) {
             </div>
           )}
         </div>
+      </div>
+
+      {/* Hashtags — optional, never shown publicly; used only to filter papers */}
+      <div>
+        <label
+          htmlFor="tags"
+          className="block text-sm mb-2"
+          style={{ fontFamily: "system-ui, sans-serif", color: "var(--ink)" }}
+        >
+          Hashtags <span style={{ color: "var(--muted)" }}>(optional)</span>
+        </label>
+        <input
+          id="tags"
+          type="text"
+          value={tags}
+          onChange={(e) => setTags(e.target.value)}
+          placeholder="#quiet #memory grief"
+          className="w-full px-4 py-3 rounded-sm"
+          style={{
+            backgroundColor: "var(--card)",
+            border: "1px solid var(--border)",
+            color: "var(--ink)",
+            fontFamily: "system-ui, sans-serif",
+            fontSize: "0.875rem",
+            outline: "none",
+          }}
+        />
+        <p className="text-xs mt-1" style={{ color: "var(--muted)", fontFamily: "system-ui, sans-serif" }}>
+          Tags are never displayed — they only help readers filter papers by theme.
+        </p>
       </div>
 
       {/* Honeypot — hidden from real users */}

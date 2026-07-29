@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PDFDocument, PDFName, PDFRef } from "pdf-lib";
 import { getAdminClient } from "@/lib/supabase";
+import { parseTags } from "@/lib/tags";
 
 const MAX_SIZE = 2 * 1024 * 1024; // 2 MB
 
@@ -9,6 +10,7 @@ export async function POST(req: NextRequest) {
     const formData = await req.formData();
     const pdf = formData.get("pdf") as File | null;
     const word = (formData.get("word") as string | null)?.trim().toLowerCase();
+    const tags = parseTags(formData.get("tags") as string | null);
     const honeypot = formData.get("_trap") as string | null;
 
     // Bot check
@@ -103,6 +105,7 @@ export async function POST(req: NextRequest) {
       type: "word",
       pdf_url: filename,
       status: "pending",
+      tags,
     });
 
     if (insertErr) {
