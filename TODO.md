@@ -10,29 +10,34 @@ All feature branches are now collected on `integration`.
 
 ---
 
-## 🔴 1. LIVE OUTAGE — word pages return 500
-
-Every page that renders the PDF viewer is down in production. The homepage is
-fine, so the site looks healthy at a glance.
+## ✅ 1. LIVE OUTAGE — word pages return 500 — FIXED on `integration`
 
 `components/PdfViewer.tsx` imports `react-pdf` at module top level. `"use client"`
 does not stop Next from server-rendering a component for the initial HTML, so
-pdf.js evaluates in Node — where `DOMMatrix` doesn't exist — and the request
-throws `ReferenceError: DOMMatrix is not defined`.
+pdf.js evaluated in Node — where `DOMMatrix` doesn't exist — and the request
+threw `ReferenceError: DOMMatrix is not defined`. The homepage was unaffected,
+so the site looked healthy at a glance.
 
-Introduced by `8e8eecb` ("Enable text/annotation layers in PdfViewer"), not by
-anything in the current branches. Reproduced identically on `main`, on the
-pre-push commit `31ddfbc`, and against the live domain.
+Introduced by `8e8eecb` ("Enable text/annotation layers in PdfViewer").
+Reproduced locally against a production build: `/words/audacity`,
+`/words/communicate` and `/words/connect` all returned 500 before the fix and
+200 after.
 
-- [ ] `components/PaperCarousel.tsx` — load the viewer client-only:
-      `const PdfViewer = dynamic(() => import("./PdfViewer"), { ssr: false })`
-- [ ] `app/words/[word]/[paperId]/page.tsx` — same treatment (it's a server
-      component, so the viewer needs a client wrapper)
-- [ ] `app/long-form/[paperId]/page.tsx` — check it for the same import path
-- [ ] Add a test that server-renders a word page and asserts 200, so this class
-      of SSR crash can't reach production again
-
-Nothing else ships until this is fixed.
+- [x] `components/PdfViewerClient.tsx` — new `"use client"` wrapper that loads
+      the viewer with `dynamic(() => import("./PdfViewer"), { ssr: false })`.
+      One wrapper rather than three call-site fixes, because `ssr: false` is
+      only legal inside a client component and two of the three call sites are
+      server components.
+- [x] `components/PaperCarousel.tsx`, `app/words/[word]/[paperId]/page.tsx`,
+      `app/long-form/[paperId]/page.tsx` — all import the wrapper
+- [x] `tests/ssr/pdf-viewer-ssr.test.ts` — regression guard. Evaluates each page
+      module in the Node test environment (the context that lacks `DOMMatrix`)
+      and asserts no throw, plus a structural check that nothing outside the
+      wrapper imports `PdfViewer` directly. Verified to fail with the original
+      `ReferenceError` when the fix is reverted.
+- [ ] **Not yet confirmed in a real browser** — the server no longer 500s, but
+      that the viewer actually paints the PDF client-side is unverified. Worth
+      one look at a word page before this goes live.
 
 ## 🔴 2. The papers bucket is public
 
@@ -207,3 +212,4 @@ From Doubt's review, re-confirmed 2026-07-28:
 - **Profiles & notifications** — code-complete, pending the manual steps in §4
 - **Stale `netlify.toml` removed** — the site runs on Vercel
 - **Branch consolidation** — everything collected onto `integration`
+- **PDF viewer SSR outage** — fixed and regression-tested (§1)

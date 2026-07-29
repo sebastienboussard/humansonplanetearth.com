@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { cache } from "react";
 import { getAdminClient } from "@/lib/supabase";
 import Comments from "@/components/Comments";
-import PdfViewer from "@/components/PdfViewer";
+import PdfViewer from "@/components/PdfViewerClient";
 
 export const revalidate = 1800;
 

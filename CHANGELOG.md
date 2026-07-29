@@ -46,6 +46,19 @@ Built and tested, not yet on `main`. Collected on the `integration` branch.
 - `/api/admin/words` fans out new-word notification emails after a successful
   insert; notification failures never fail word creation.
 
+### Fixed
+- **Word and paper pages no longer return 500.** `components/PdfViewer.tsx`
+  imports react-pdf at module top level, and pdf.js references `DOMMatrix` — a
+  browser-only global — while it evaluates. `"use client"` does not stop Next
+  from server-rendering a component for the initial HTML, so every page
+  embedding the viewer threw `ReferenceError: DOMMatrix is not defined` in Node
+  before its handler ever ran. The homepage was unaffected, which made the site
+  look healthy at a glance. The viewer is now loaded through a client wrapper
+  (`components/PdfViewerClient.tsx`) with `dynamic(..., { ssr: false })`, so
+  pdf.js only ever evaluates in the browser. Covered by
+  `tests/ssr/pdf-viewer-ssr.test.ts`, which evaluates each page module in a Node
+  environment and fails with the original error if the static import returns.
+
 ### Database
 - `papers.tags text[] not null default '{}'` plus a GIN index
   (`supabase/migrations/0001_paper_tags.sql`). **Already applied to
