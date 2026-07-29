@@ -10,18 +10,20 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
   import.meta.url
 ).toString();
 
-export default function PdfViewer({
-  src,
-  title,
-  paperNumber,
-  paperHref,
-}: {
+export type PdfViewerProps = {
   src: string;
   title: string;
   height?: string; // kept for backwards compat, unused
   paperNumber?: number;
   paperHref?: string;
-}) {
+};
+
+export default function PdfViewer({
+  src,
+  title,
+  paperNumber,
+  paperHref,
+}: PdfViewerProps) {
   const [numPages, setNumPages] = useState<number | null>(null);
   const [error, setError] = useState(false);
   const [containerWidth, setContainerWidth] = useState<number>(0);
