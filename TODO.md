@@ -10,7 +10,7 @@ All feature branches are now collected on `integration`.
 
 ---
 
-## ✅ 1. LIVE OUTAGE — word pages return 500 — FIXED on `integration`
+## ✅ 1. LIVE OUTAGE — word pages return 500 — FIXED AND LIVE
 
 `components/PdfViewer.tsx` imports `react-pdf` at module top level. `"use client"`
 does not stop Next from server-rendering a component for the initial HTML, so
@@ -37,7 +37,7 @@ Reproduced locally against a production build: `/words/audacity`,
       `ReferenceError` when the fix is reverted.
 - [ ] **Not yet confirmed in a real browser** — the server no longer 500s, but
       that the viewer actually paints the PDF client-side is unverified. Worth
-      one look at a word page before this goes live.
+      one look at a word page now that it is live.
 
 ## 🔴 2. The papers bucket is public
 

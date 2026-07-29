@@ -46,19 +46,6 @@ Built and tested, not yet on `main`. Collected on the `integration` branch.
 - `/api/admin/words` fans out new-word notification emails after a successful
   insert; notification failures never fail word creation.
 
-### Fixed
-- **Word and paper pages no longer return 500.** `components/PdfViewer.tsx`
-  imports react-pdf at module top level, and pdf.js references `DOMMatrix` — a
-  browser-only global — while it evaluates. `"use client"` does not stop Next
-  from server-rendering a component for the initial HTML, so every page
-  embedding the viewer threw `ReferenceError: DOMMatrix is not defined` in Node
-  before its handler ever ran. The homepage was unaffected, which made the site
-  look healthy at a glance. The viewer is now loaded through a client wrapper
-  (`components/PdfViewerClient.tsx`) with `dynamic(..., { ssr: false })`, so
-  pdf.js only ever evaluates in the browser. Covered by
-  `tests/ssr/pdf-viewer-ssr.test.ts`, which evaluates each page module in a Node
-  environment and fails with the original error if the static import returns.
-
 ### Database
 - `papers.tags text[] not null default '{}'` plus a GIN index
   (`supabase/migrations/0001_paper_tags.sql`). **Already applied to
@@ -86,6 +73,17 @@ Built and tested, not yet on `main`. Collected on the `integration` branch.
 - `vitest` was added to `package.json` without regenerating the lockfile,
   which would have failed the production build at `npm ci`. Caught before it
   reached `main`.
+- **Word and paper pages no longer return 500.** `components/PdfViewer.tsx`
+  imports react-pdf at module top level, and pdf.js references `DOMMatrix` — a
+  browser-only global — while it evaluates. `"use client"` does not stop Next
+  from server-rendering a component for the initial HTML, so every page
+  embedding the viewer threw `ReferenceError: DOMMatrix is not defined` in Node
+  before its route handler ever ran. The homepage was unaffected, which made the
+  site look healthy at a glance. The viewer is now loaded through a client
+  wrapper (`components/PdfViewerClient.tsx`) with `dynamic(..., { ssr: false })`,
+  so pdf.js only ever evaluates in the browser. Covered by
+  `tests/ssr/pdf-viewer-ssr.test.ts`, which evaluates each page module in a Node
+  environment and fails with the original error if the static import returns.
 
 ### Removed
 - `netlify.toml`. The site deploys on Vercel; this was a leftover from an
@@ -100,16 +98,6 @@ Built and tested, not yet on `main`. Collected on the `integration` branch.
   Sanitization fails closed: a PDF that cannot be processed is rejected rather
   than stored unmodified. Visible bylines, comments, and image EXIF are not
   covered and still need human review before publishing.
-
-### Known issues
-- **Word pages return 500 in production.** `components/PdfViewer.tsx` imports
-  `react-pdf` at module top level, and `"use client"` does not prevent Next
-  from server-rendering a component for the initial HTML — so pdf.js evaluates
-  in Node, where `DOMMatrix` is undefined. The homepage is unaffected, which
-  makes the site look healthy at a glance. Introduced earlier by `8e8eecb`
-  ("Enable text/annotation layers in PdfViewer") and confirmed on `main`, on
-  the preceding commit, and against the live domain. Fix is to load the viewer
-  with `dynamic(..., { ssr: false })`. See TODO.
 
 ## 2026-06-14
 
