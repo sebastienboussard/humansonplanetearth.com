@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import PdfViewer from "./PdfViewer";
+import PdfViewer from "./PdfViewerClient";
 import Comments from "./Comments";
 
 type Paper = {
