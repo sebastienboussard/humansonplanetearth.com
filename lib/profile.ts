@@ -11,13 +11,21 @@ export type Profile = {
 export type NotificationPrefs = {
   new_word: boolean;
   deadline_reminders: boolean;
+  deadline_14d: boolean;
+  deadline_7d: boolean;
+  deadline_1d: boolean;
   paper_comments: boolean;
   comment_replies: boolean;
 };
 
+// deadline_14d starts off: it was added after launch, and opting people into a
+// reminder they never asked for is the one default that can annoy rather than help.
 export const DEFAULT_PREFS: NotificationPrefs = {
   new_word: true,
   deadline_reminders: true,
+  deadline_14d: false,
+  deadline_7d: true,
+  deadline_1d: true,
   paper_comments: true,
   comment_replies: true,
 };

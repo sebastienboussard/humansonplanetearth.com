@@ -3,6 +3,7 @@ import { PDFDocument, PDFName, PDFRef } from "pdf-lib";
 import { getAdminClient } from "@/lib/supabase";
 import { parseTags } from "@/lib/tags";
 import { getSessionUser, ensureProfile } from "@/lib/profile";
+import { notifyAdminNewPaper } from "@/lib/admin-alerts";
 
 const MAX_SIZE = 10 * 1024 * 1024; // 10MB
 
@@ -101,6 +102,13 @@ export async function POST(req: NextRequest) {
     if (insertErr) {
       console.error("DB insert error:", insertErr);
       return NextResponse.json({ error: "Submission failed. Please try again." }, { status: 500 });
+    }
+
+    // Alert the admin inbox — failure must not fail the submission.
+    try {
+      await notifyAdminNewPaper({ type: "long-form", word: null, title });
+    } catch (err) {
+      console.error("Admin alert error:", err);
     }
 
     // Optional profile attachment — always derived from the server-side session,

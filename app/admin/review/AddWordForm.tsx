@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useAdminData } from "./AdminData";
 
 const MONTHS = [
   "January", "February", "March", "April", "May", "June",
@@ -13,6 +14,7 @@ function lastDayOfMonth(year: number, month: number): string {
 }
 
 export default function AddWordForm() {
+  const { addWord } = useAdminData();
   const now = new Date();
   const [word, setWord] = useState("");
   const [month, setMonth] = useState(String(now.getMonth() + 1));
@@ -34,18 +36,13 @@ export default function AddWordForm() {
     setStatus("loading");
     setError("");
 
-    const res = await fetch("/api/admin/words", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ word, month, year, deadline }),
-    });
+    const failure = await addWord({ word, month, year, deadline });
 
-    if (res.ok) {
+    if (!failure) {
       setStatus("success");
       setWord("");
     } else {
-      const data = await res.json();
-      setError(data.error ?? "Something went wrong.");
+      setError(failure);
       setStatus("error");
     }
   }

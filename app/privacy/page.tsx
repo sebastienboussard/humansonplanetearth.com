@@ -34,8 +34,7 @@ export default function PrivacyPage() {
           username) to receive email notifications you choose: new words, deadline
           reminders, comments on your papers, and replies to your comments. If you
           are signed in, you can choose to attach a submission to your profile;
-          that link is private by default and never shown publicly unless you
-          explicitly share a paper on your anonymous author page. Your email is
+          that link is private and never shown publicly. Your email is
           never displayed anywhere, and deleting your account permanently removes
           your email and all profile links while your papers remain published
           anonymously.

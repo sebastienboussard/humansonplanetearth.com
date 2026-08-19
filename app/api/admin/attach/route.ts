@@ -16,7 +16,7 @@ function isAuthed(req: NextRequest) {
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 // Manually attach an existing (old) paper to a profile. Always private —
-// only the owner can make it visible from their dashboard.
+// attachments are an internal log with no public surface.
 export async function POST(req: NextRequest) {
   if (!isAuthed(req)) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
 

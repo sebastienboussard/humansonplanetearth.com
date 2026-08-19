@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabase";
 import { getDaysRemaining } from "@/lib/words";
-import { notifyDeadline } from "@/lib/notifications";
+import { notifyDeadline, isDeadlineWindow } from "@/lib/notifications";
 
 // Daily Vercel Cron (see vercel.json). Sends reminders when the current word's
-// deadline is exactly 7 or 1 days away; the notification_log claim makes
+// deadline is exactly 14, 7 or 1 days away; the notification_log claim makes
 // reruns on the same day no-ops.
 export async function GET(req: NextRequest) {
   if (req.headers.get("authorization") !== `Bearer ${process.env.CRON_SECRET}`) {
@@ -30,7 +30,7 @@ export async function GET(req: NextRequest) {
   }
 
   const days = getDaysRemaining(word.deadline);
-  if (days !== 7 && days !== 1) {
+  if (!isDeadlineWindow(days)) {
     return NextResponse.json({ ok: true, sent: 0, reason: `deadline in ${days} days` });
   }
 

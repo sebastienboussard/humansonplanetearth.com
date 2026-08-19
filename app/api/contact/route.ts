@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabase";
+import { notifyAdminNewMessage } from "@/lib/admin-alerts";
 
 const MAX_LEN = 5000;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -33,6 +34,17 @@ export async function POST(req: NextRequest) {
       email = e;
     }
 
+    // Email the admin inbox before touching the database. The email carries
+    // the full body and reply address, so if the insert fails afterwards the
+    // message has still genuinely reached a human. (The production `messages`
+    // table has been missing before — TODO §1a — and messages were lost.)
+    let emailed = false;
+    try {
+      emailed = await notifyAdminNewMessage({ body: trimmed, replyEmail: email });
+    } catch (err) {
+      console.error("Admin message alert error:", err);
+    }
+
     const admin = getAdminClient();
     const { error } = await admin.from("messages").insert({
       body: trimmed,
@@ -41,7 +53,14 @@ export async function POST(req: NextRequest) {
 
     if (error) {
       console.error("Contact insert error:", error);
-      return NextResponse.json({ error: "Submission failed. Please try again." }, { status: 500 });
+      if (!emailed) {
+        return NextResponse.json(
+          { error: "Submission failed. Please try again." },
+          { status: 500 }
+        );
+      }
+      // The insert failed but the email was delivered — the message got
+      // through, so don't tell the visitor otherwise. Logged loudly above.
     }
 
     return NextResponse.json({ ok: true });

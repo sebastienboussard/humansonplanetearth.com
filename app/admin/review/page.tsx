@@ -1,7 +1,4 @@
-import ReviewQueue from "./ReviewQueue";
-import PublishedPapers from "./PublishedPapers";
-import AddWordForm from "./AddWordForm";
-import MessagesInbox from "./MessagesInbox";
+import AdminDashboard from "./AdminDashboard";
 
 export const metadata = { title: "Review — Admin" };
 
@@ -21,28 +18,7 @@ export default function ReviewPage() {
         </a>
       </div>
 
-      <div className="mb-16">
-        <h2 className="text-xl font-normal mb-6" style={{ color: "var(--forest)" }}>
-          Messages
-        </h2>
-        <MessagesInbox />
-      </div>
-
-      <div className="mb-16">
-        <h2 className="text-xl font-normal mb-6" style={{ color: "var(--forest)" }}>
-          Pending Papers
-        </h2>
-        <ReviewQueue />
-      </div>
-
-      <div className="mb-16">
-        <h2 className="text-xl font-normal mb-6" style={{ color: "var(--forest)" }}>
-          Published Papers
-        </h2>
-        <PublishedPapers />
-      </div>
-
-      <AddWordForm />
+      <AdminDashboard />
     </div>
   );
 }

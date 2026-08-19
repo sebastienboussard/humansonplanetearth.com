@@ -125,6 +125,38 @@ describe("notifyDeadline", () => {
     });
   });
 
+  it("logs the 14-day kind, so all three windows can send for one word", async () => {
+    holder.current = createMockSupabase({
+      tables: {
+        notification_prefs: { data: [prefRow("p1", "a@test.example")] },
+        notification_log: { error: null },
+      },
+    });
+
+    await notifyDeadline(word, 14);
+
+    expect(holder.current.query("notification_log", 0)!.insert).toHaveBeenCalledWith({
+      profile_id: "p1",
+      kind: "deadline_14d",
+      ref_id: "w1",
+    });
+  });
+
+  it("filters on the master switch and the window column together", async () => {
+    holder.current = createMockSupabase({
+      tables: {
+        notification_prefs: { data: [prefRow("p1", "a@test.example")] },
+        notification_log: { error: null },
+      },
+    });
+
+    await notifyDeadline(word, 14);
+
+    const q = holder.current.query("notification_prefs", 0)!;
+    expect(q.eq).toHaveBeenCalledWith("deadline_reminders", true);
+    expect(q.eq).toHaveBeenCalledWith("deadline_14d", true);
+  });
+
   it("returns 0 when everyone is already claimed", async () => {
     holder.current = createMockSupabase({
       tables: {

@@ -101,6 +101,7 @@ export default async function WordPage({
           papers={papersWithUrls}
           wordId={entry.id}
           wordSlug={entry.word}
+          defaultNewestFirst={showsNewestPapersFirst(entry)}
         />
       )}
 

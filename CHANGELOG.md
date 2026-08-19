@@ -14,13 +14,14 @@ Built and tested, not yet on `main`. Collected on the `integration` branch.
   replies to your comments. Every email carries a signed one-click unsubscribe
   link that works without logging in. Emails are sent through Resend.
 - Papers can optionally be attached to a profile at submission time (or
-  manually by the admin for old papers). Attachments are private by default;
-  owners can share individual papers on a public anonymous author page
-  (`/author/[id]`, "Papers by a Human On Planet Earth" — no name shown, and
-  unknown ids render identically to empty profiles).
-- Account page (`/account`) with notification preferences, paper visibility
-  toggles, sign-out, and permanent account deletion (removes the email and all
-  profile links; papers stay published anonymously).
+  manually by the admin for old papers). Attachments are a private internal
+  log with no public surface — only the owner sees the list, on their account
+  page. (A public anonymous author page with per-paper sharing was built and
+  then taken out before release; the dormant `public_visible` column remains
+  in `paper_authors` for a possible future opt-in version.)
+- Account page (`/account`) with notification preferences, a private list of
+  your attached papers, sign-out, and permanent account deletion (removes the
+  email and all profile links; papers stay published anonymously).
 - Signed-in commenting silently records authorship in a private table so reply
   notifications work — comments still render anonymously everywhere and the
   comments API never returns author data.
