@@ -1,14 +1,41 @@
 import { NextRequest, NextResponse } from "next/server";
+import crypto from "crypto";
 import { PDFDocument, PDFName, PDFRef } from "pdf-lib";
 import { getAdminClient } from "@/lib/supabase";
+import { clientIp, rateLimit, tooManyRequests } from "@/lib/rate-limit";
+import { LONG_FORM_MAX_SIZE } from "@/lib/upload-limits";
 import { parseTags } from "@/lib/tags";
 import { getSessionUser, ensureProfile } from "@/lib/profile";
 import { notifyAdminNewPaper } from "@/lib/admin-alerts";
 
-const MAX_SIZE = 10 * 1024 * 1024; // 10MB
+// 4 MB, not 10. Vercel caps a serverless request body at ~4.5 MB, and
+// `req.formData()` buffers the entire request before any check below can run —
+// so a genuine 10 MB upload died at the platform boundary with a generic error
+// instead of ours. Shared with the form so the two cannot drift.
+const MAX_SIZE = LONG_FORM_MAX_SIZE;
+
+// Long-form papers are a bigger ask to review, so the hourly allowance is
+// tighter than the one-page word route.
+const MAX_UPLOADS = 3;
+const WINDOW_SECONDS = 60 * 60;
 
 export async function POST(req: NextRequest) {
   try {
+    const limit = await rateLimit(`submit-long-form:${clientIp(req)}`, MAX_UPLOADS, WINDOW_SECONDS);
+    if (!limit.allowed) {
+      return tooManyRequests(
+        limit.retryAfter,
+        "You have submitted several papers already. Please try again later."
+      );
+    }
+
+    // Reject on the declared length before buffering the body, so an oversized
+    // upload fails fast rather than after we have read all of it.
+    const declared = Number(req.headers.get("content-length"));
+    if (Number.isFinite(declared) && declared > MAX_SIZE) {
+      return NextResponse.json({ error: "File must be under 4 MB." }, { status: 413 });
+    }
+
     const formData = await req.formData();
     const pdf = formData.get("pdf") as File | null;
     const title = (formData.get("title") as string | null)?.trim();
@@ -26,7 +53,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (pdf.size > MAX_SIZE) {
-      return NextResponse.json({ error: "File must be under 10 MB." }, { status: 400 });
+      return NextResponse.json({ error: "File must be under 4 MB." }, { status: 400 });
     }
 
     // Validate it's actually a PDF
@@ -69,13 +96,15 @@ export async function POST(req: NextRequest) {
 
     // Re-check size — re-saving can grow the file past the limit
     if (cleanBuffer.length > MAX_SIZE) {
-      return NextResponse.json({ error: "File must be under 10 MB." }, { status: 400 });
+      return NextResponse.json({ error: "File must be under 4 MB." }, { status: 400 });
     }
 
     const admin = getAdminClient();
 
     // Upload PDF to Supabase Storage
-    const filename = `long-form/${Date.now()}.pdf`;
+    // randomUUID, not Date.now(): timestamps collide under concurrent uploads
+    // and leak submission times to anyone who can see a storage path.
+    const filename = `long-form/${crypto.randomUUID()}.pdf`;
     const { error: uploadErr } = await admin.storage
       .from("papers")
       .upload(filename, cleanBuffer, { contentType: "application/pdf", upsert: false });

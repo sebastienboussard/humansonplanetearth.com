@@ -16,9 +16,17 @@ import { createServerSupabase } from "@/lib/supabase-server";
 //                    browser that asked for it.
 //
 //   ?token_hash=...  Produced when the email template is overridden to the
-//                    {{ .TokenHash }} form. Carries no PKCE verifier, so it
-//                    works across devices — open it on your phone, stay signed
-//                    in on your phone.
+//                    {{ .TokenHash }} form. Kept for completeness, but note it
+//                    CANNOT currently be reached: @supabase/ssr hard-codes
+//                    flowType "pkce" (createBrowserClient.js sets it after the
+//                    caller's options, so it is not overridable), which makes
+//                    signInWithOtp send a code_challenge and Supabase issue a
+//                    `pkce_`-prefixed token. verifyOtp sends no code verifier,
+//                    so it cannot redeem one. An earlier version of this
+//                    comment claimed the token_hash form "works across
+//                    devices"; it does not, and overriding the template to
+//                    chase that broke sign-in entirely. Use
+//                    {{ .ConfirmationURL }} in the Supabase templates.
 //
 // Handling only token_hash silently broke every sign-in: the default template
 // never sends it, so verification was skipped and the reader was bounced to

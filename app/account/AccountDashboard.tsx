@@ -42,6 +42,12 @@ const DEADLINE_WINDOWS: { key: keyof Prefs; label: string }[] = [
 const sansMuted = { fontFamily: "system-ui, sans-serif", color: "var(--muted)" } as const;
 const sansInk = { fontFamily: "system-ui, sans-serif", color: "var(--ink)" } as const;
 
+// The notifications panel is seven checkboxes deep and pushed everything else
+// below the fold, so it collapses. Closed by default — the papers list is what
+// people come back for; prefs are set once. Read from localStorage in an effect
+// rather than in the initial state so the server and first client render agree.
+const NOTIF_OPEN_KEY = "hope-account-notifications-open";
+
 export default function AccountDashboard() {
   const [prefs, setPrefs] = useState<Prefs | null>(null);
   const [papers, setPapers] = useState<PaperEntry[]>([]);
@@ -49,6 +55,27 @@ export default function AccountDashboard() {
   const [errorMsg, setErrorMsg] = useState("");
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
+
+  useEffect(() => {
+    try {
+      setNotifOpen(localStorage.getItem(NOTIF_OPEN_KEY) === "true");
+    } catch {
+      // Storage blocked (private mode, hardened browser) — stay closed.
+    }
+  }, []);
+
+  function toggleNotifOpen() {
+    setNotifOpen((open) => {
+      const next = !open;
+      try {
+        localStorage.setItem(NOTIF_OPEN_KEY, String(next));
+      } catch {
+        // Preference just won't persist; the panel still opens.
+      }
+      return next;
+    });
+  }
 
   useEffect(() => {
     async function load() {
@@ -107,14 +134,54 @@ export default function AccountDashboard() {
     return <p className="text-sm" style={{ ...sansMuted, color: "var(--terracotta)" }}>{errorMsg}</p>;
   }
 
+  // Only the four master switches count; the deadline windows live under one of
+  // them and would make "6 of 7 on" read as more than the reader turned on.
+  const enabledCount = PREF_LABELS.filter(({ key }) => prefs?.[key]).length;
+
   return (
     <div className="space-y-12">
       {/* Notification preferences */}
       <section>
         <h2 className="text-xl mb-4" style={{ color: "var(--forest)" }}>
-          Email Notifications
+          <button
+            type="button"
+            onClick={toggleNotifOpen}
+            aria-expanded={notifOpen}
+            aria-controls="notification-prefs"
+            className="flex items-baseline gap-3 w-full text-left"
+          >
+            <span>Email Notifications</span>
+            <span className="text-xs" style={sansMuted}>
+              {enabledCount === 0
+                ? "all off"
+                : `${enabledCount} of ${PREF_LABELS.length} on`}
+            </span>
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 12 12"
+              aria-hidden="true"
+              className="ml-auto shrink-0 self-center"
+              style={{
+                color: "var(--muted)",
+                transition: "transform 150ms",
+                transform: notifOpen ? "rotate(90deg)" : "rotate(0deg)",
+              }}
+            >
+              <path
+                d="M4 2l4 4-4 4"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
         </h2>
         <div
+          id="notification-prefs"
+          hidden={!notifOpen}
           className="rounded-sm divide-y"
           style={{ backgroundColor: "var(--card)", border: "1px solid var(--border)" }}
         >

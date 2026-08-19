@@ -79,13 +79,15 @@ describe("POST /api/submit/long-form", () => {
     expect(res.status).toBe(400);
   });
 
-  it("rejects files over 10 MB", async () => {
+  it("rejects files over 4 MB", async () => {
+    // 4 MB, not 10: Vercel refuses a serverless request body above ~4.5 MB
+    // before our handler runs at all, so a higher limit was unenforceable.
     holder.current = createMockSupabase();
-    const pdf = makeFileOfSize(10 * 1024 * 1024 + 1);
+    const pdf = makeFileOfSize(4 * 1024 * 1024 + 1);
     const res = await POST(formRequest(URL, buildForm({ pdf, title: "Essay" })));
 
     expect(res.status).toBe(400);
-    expect((await res.json()).error).toMatch(/10 MB/);
+    expect((await res.json()).error).toMatch(/4 MB/);
   });
 
   it("rejects files that claim to be PDFs but fail parsing", async () => {
@@ -128,7 +130,7 @@ describe("POST /api/submit/long-form", () => {
     expect(res.status).toBe(200);
     const bucket = holder.current.bucket("papers")!;
     const [filename] = bucket.upload.mock.calls[0];
-    expect(filename).toMatch(/^long-form\/\d+\.pdf$/);
+    expect(filename).toMatch(/^long-form\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.pdf$/);
 
     expect(holder.current.query("papers")!.insert).toHaveBeenCalledWith({
       word_id: null,
@@ -203,5 +205,30 @@ describe("POST /api/submit/long-form", () => {
 
     expect(res.status).toBe(200);
     expect(holder.current.query("paper_authors")).toBeUndefined();
+  });
+
+  it("refuses further uploads once the hourly window is spent", async () => {
+    holder.current = createMockSupabase({
+      rpcs: { rate_limit_hit: { data: [{ allowed: false, hits: 4, retry_after: 900 }] } },
+    });
+
+    const pdf = await makePdfFile();
+    const res = await POST(formRequest(URL, buildForm({ pdf, title: "Essay" })));
+
+    expect(res.status).toBe(429);
+    expect(holder.current.bucket("papers")).toBeUndefined();
+  });
+
+  it("rejects an oversized body on content-length before buffering it", async () => {
+    // req.formData() reads the whole request first, so the declared length is
+    // the only chance to refuse a large upload cheaply.
+    holder.current = createMockSupabase();
+    const form = buildForm({ pdf: await makePdfFile(), title: "Essay" });
+    const res = await POST(
+      formRequest(URL, form, { headers: { "content-length": String(9 * 1024 * 1024) } })
+    );
+
+    expect(res.status).toBe(413);
+    expect((await res.json()).error).toMatch(/4 MB/);
   });
 });

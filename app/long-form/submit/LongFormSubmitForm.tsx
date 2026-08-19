@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { createBrowserSupabase } from "@/lib/supabase-browser";
+import { LONG_FORM_MAX_SIZE, oversizeMessage } from "@/lib/upload-limits";
 
 type Status = "idle" | "submitting" | "success" | "error";
 
@@ -11,6 +12,8 @@ export default function LongFormSubmitForm() {
   const [tags, setTags] = useState("");
   const [status, setStatus] = useState<Status>("idle");
   const [errorMsg, setErrorMsg] = useState("");
+  // File problems render next to the dropzone; errorMsg is for submit failures.
+  const [fileError, setFileError] = useState("");
   const [dragOver, setDragOver] = useState(false);
   const [honeypot, setHoneypot] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -25,20 +28,18 @@ export default function LongFormSubmitForm() {
       .catch(() => setSignedIn(false));
   }, []);
 
-  const MAX_SIZE = 10 * 1024 * 1024; // 10MB
-
   function handleFile(f: File) {
     if (f.type !== "application/pdf") {
-      setErrorMsg("Only PDF files are accepted.");
+      setFileError("That is not a PDF. Only PDF files are accepted.");
       setFile(null);
       return;
     }
-    if (f.size > MAX_SIZE) {
-      setErrorMsg("File must be under 10 MB.");
+    if (f.size > LONG_FORM_MAX_SIZE) {
+      setFileError(oversizeMessage(f.size, LONG_FORM_MAX_SIZE));
       setFile(null);
       return;
     }
-    setErrorMsg("");
+    setFileError("");
     setFile(f);
   }
 
@@ -192,12 +193,31 @@ export default function LongFormSubmitForm() {
                 Drag and drop your PDF here, or click to browse
               </p>
               <p className="text-xs mt-1" style={{ color: "var(--muted)", fontFamily: "system-ui, sans-serif" }}>
-                No page limit · 10 MB max
+                No page limit · 4 MB max
               </p>
             </div>
           )}
         </div>
       </div>
+
+      {/* Right under the dropzone, not at the foot of the form. A rejected
+          file resets the zone to its empty prompt, so a message 200px lower
+          reads as "nothing happened" — which is how an oversized paper
+          appeared to vanish. role="alert" so screen readers get it too. */}
+      {fileError && (
+        <p
+          role="alert"
+          className="mt-3 text-sm leading-relaxed px-4 py-3 rounded-sm"
+          style={{
+            backgroundColor: "var(--card)",
+            border: "1px solid var(--terracotta)",
+            color: "var(--terracotta)",
+            fontFamily: "system-ui, sans-serif",
+          }}
+        >
+          {fileError}
+        </p>
+      )}
 
       {/* Optional profile attachment — only rendered for signed-in visitors */}
       {signedIn && (

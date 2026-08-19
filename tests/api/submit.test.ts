@@ -165,7 +165,7 @@ describe("POST /api/submit", () => {
     const bucket = holder.current.bucket("papers")!;
     expect(bucket.upload).toHaveBeenCalledTimes(1);
     const [filename, , uploadOpts] = bucket.upload.mock.calls[0];
-    expect(filename).toMatch(/^word-1\/\d+\.pdf$/);
+    expect(filename).toMatch(/^word-1\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.pdf$/);
     expect(uploadOpts).toMatchObject({ contentType: "application/pdf", upsert: false });
 
     const insert = holder.current.query("papers")!.insert;
@@ -289,5 +289,48 @@ describe("POST /api/submit", () => {
 
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ ok: true });
+  });
+
+  it("refuses further uploads once the hourly window is spent", async () => {
+    holder.current = createMockSupabase({
+      rpcs: { rate_limit_hit: { data: [{ allowed: false, hits: 6, retry_after: 1800 }] } },
+    });
+
+    const pdf = await makePdfFile();
+    const res = await POST(formRequest(URL, buildForm({ pdf, word: "hope" })));
+
+    expect(res.status).toBe(429);
+    expect(res.headers.get("retry-after")).toBe("1800");
+    // Refused before anything is parsed, stored or written.
+    expect(holder.current.bucket("papers")).toBeUndefined();
+    expect(holder.current.queries).toHaveLength(0);
+  });
+
+  it("keys the limiter on the forwarded client IP", async () => {
+    holder.current = successfulClient();
+    const pdf = await makePdfFile();
+
+    await POST(
+      formRequest(URL, buildForm({ pdf, word: "hope" }), {
+        headers: { "x-forwarded-for": "203.0.113.9, 10.0.0.1" },
+      })
+    );
+
+    expect(holder.current.rpcCalls[0]).toMatchObject({
+      fn: "rate_limit_hit",
+      args: { p_key: "submit:203.0.113.9", p_max: 5 },
+    });
+  });
+
+  it("still accepts the submission when the rate-limit store is down", async () => {
+    // Fail open — a database blip must not close submissions.
+    const client = successfulClient();
+    client.rpc.mockRejectedValueOnce(new Error("store unreachable"));
+    holder.current = client;
+
+    const pdf = await makePdfFile();
+    const res = await POST(formRequest(URL, buildForm({ pdf, word: "hope" })));
+
+    expect(res.status).toBe(200);
   });
 });

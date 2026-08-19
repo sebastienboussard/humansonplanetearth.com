@@ -4,56 +4,64 @@ All notable changes to this project are documented here.
 
 ## Unreleased
 
-Profiles & notifications. Code-complete and tested; ships once the remaining
-Supabase and Vercel setup is done (see TODO §5).
-
-### Added
-- Optional anonymous user profiles with email notifications. Passwordless
-  magic-link sign-in (Supabase Auth) — email only, no username, no password.
-  Four opt-out notification types: new word announced, deadline reminders
-  (7 days / 1 day, via a daily Vercel Cron job), comments on your papers, and
-  replies to your comments. Every email carries a signed one-click unsubscribe
-  link that works without logging in. Emails are sent through Resend.
-- Papers can optionally be attached to a profile at submission time (or
-  manually by the admin for old papers). Attachments are a private internal
-  log with no public surface — only the owner sees the list, on their account
-  page. (A public anonymous author page with per-paper sharing was built and
-  then taken out before release; the dormant `public_visible` column remains
-  in `paper_authors` for a possible future opt-in version.)
-- Account page (`/account`) with notification preferences, a private list of
-  your attached papers, sign-out, and permanent account deletion (removes the
-  email and all profile links; papers stay published anonymously).
-- Signed-in commenting silently records authorship in a private table so reply
-  notifications work — comments still render anonymously everywhere and the
-  comments API never returns author data.
-- Test coverage: suites for the account, unsubscribe, attach and cron routes,
-  plus direct unit suites for the notification fan-out (`lib/notifications.ts`
-  — dedupe, self-notification skip, pref filtering, paper-URL resolution) and
-  the Resend wrapper (`lib/email.ts` — batch chunking at 100, failure
-  handling). 181 tests across 20 suites.
+### Security
+- **Upload rate limiting.** `/api/submit` and `/api/submit/long-form` accepted
+  unlimited scripted uploads. Both are now capped per IP per hour (5 word
+  papers, 3 long-form) using a shared Postgres counter, so the limit holds
+  across serverless instances — a module-level counter cannot work on Vercel,
+  where cold starts reset state and concurrent requests land on separate
+  instances. The whole hit is a single atomic upsert. If the store is
+  unreachable the limiter fails **open** and logs: it sits behind the real
+  validation, and a database blip must not close submissions.
+- **Admin sessions are no longer a constant.** The session cookie was
+  `HMAC(ADMIN_PASSWORD, "hope-admin-session")` — the same value on every device
+  in every session forever, with no expiry, so one leaked cookie stayed valid
+  until the password was rotated. Tokens now carry a random per-session nonce
+  and a signed issue time, and expire after 7 days. Tokens minted by the old
+  scheme are rejected. The derivation had been copy-pasted into five files and
+  now lives in `lib/admin-auth.ts`.
+- **Admin login is rate-limited** — 8 attempts per 15 minutes per IP — and the
+  password compare is constant-time.
+- **Rejected papers' PDFs are deleted.** Rejecting a paper only updated the row;
+  the file stayed in the bucket, downloadable by anyone who guessed the path.
+  Both the reject and delete paths now update the database first and remove the
+  file second, so a failed removal leaves a stray file rather than a live row
+  pointing at nothing. `scripts/cleanup-rejected-pdfs.mjs` clears the backlog
+  (dry run by default).
+- **Stored PDF filenames use `crypto.randomUUID()`** instead of `Date.now()`,
+  which collided under concurrent uploads and leaked submission times to anyone
+  who could read a storage path.
 
 ### Changed
-- Profile/paper and profile/comment links live in separate tables
-  (`paper_authors`, `comment_authors`) with RLS enabled and zero policies,
-  instead of author columns on the publicly readable `papers`/`comments`
-  tables — the links are invisible to the anon key by construction.
-- Submit-page privacy copy now reads "No account required" (previously
-  "No account, no email"), and the privacy page documents optional accounts.
-- `/api/admin/words` fans out new-word notification emails after a successful
-  insert; notification failures never fail word creation.
+- Long-form uploads are capped at **4 MB**, down from 10 MB. Vercel refuses a
+  serverless request body above ~4.5 MB before the handler runs, so the old
+  limit was never enforceable — a genuine 10 MB upload died at the platform
+  boundary with a generic error instead of ours. Oversized requests are now
+  refused on `content-length` before the body is buffered.
+- **Oversized uploads say so clearly.** Both submit forms rejected a too-large
+  file at selection, but the message rendered at the foot of the form while the
+  dropzone reset to its empty prompt — so an oversized paper appeared to vanish
+  with no explanation. The warning now sits directly under the dropzone, is
+  announced to screen readers, and names the file's actual size against the
+  limit ("That file is 6.4 MB — the limit is 4.0 MB") with advice on what to do,
+  rather than restating the cap. Both limits now come from
+  `lib/upload-limits.ts`, shared by the forms and the routes, so they cannot
+  drift apart.
+- The account page's Email Notifications panel collapses, and remembers whether
+  you left it open. Seven checkboxes had pushed everything else below the fold;
+  the heading now summarises state ("3 of 4 on") when closed.
 
 ### Database
-- `profiles`, `notification_prefs`, `paper_authors`, `comment_authors` and
-  `notification_log` — the profiles sections of `supabase/schema.sql`.
-  **Applied to production 2026-08-19**, but from an earlier revision of the
-  file: `notification_prefs` is still missing `deadline_14d`, `deadline_7d`
-  and `deadline_1d`. `supabase/migrations/0002_deadline_reminder_windows.sql`
-  must be run before this ships, or saving a deadline-window preference fails
-  and the reminder cron sends nothing.
+- `rate_limits` plus the atomic `rate_limit_hit()` and `prune_rate_limits()`
+  functions — `supabase/migrations/0003_rate_limits.sql`. **Must be applied
+  before this ships.** Until it is, the limiters fail open and every upload is
+  allowed, exactly as today.
 
 ## 2026-08-19
 
-Released to production.
+Released to production. Profiles & notifications shipped later the same day —
+the hold-back was reverted once the Supabase tables and magic-link auth were
+confirmed in place.
 
 ### Added
 - **Admin dashboard rework.** `/admin/review` is now tabbed — Messages /

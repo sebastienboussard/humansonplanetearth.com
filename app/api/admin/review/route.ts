@@ -1,16 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
-import crypto from "crypto";
 import { getAdminClient } from "@/lib/supabase";
+import { isAdminRequest as isAuthed } from "@/lib/admin-auth";
 
-function getSessionToken() {
-  return crypto
-    .createHmac("sha256", process.env.ADMIN_PASSWORD ?? "unset")
-    .update("hope-admin-session")
-    .digest("hex");
-}
-
-function isAuthed(req: NextRequest) {
-  return req.cookies.get("admin_session")?.value === getSessionToken();
+/**
+ * Best-effort storage removal. The file may already be gone, and neither
+ * deleting nor rejecting a paper should fail because the bucket did — the
+ * database is the record of truth about what is published.
+ */
+async function removeStoredPdf(path: string) {
+  try {
+    const { error } = await getAdminClient().storage.from("papers").remove([path]);
+    if (error) console.error("Storage removal failed:", path, error.message);
+  } catch (err) {
+    console.error("Storage removal failed:", path, err);
+  }
 }
 
 // GET — list papers by status (pending by default, or ?status=approved)
@@ -57,11 +60,12 @@ export async function DELETE(req: NextRequest) {
 
   if (!paper) return NextResponse.json({ error: "Paper not found." }, { status: 404 });
 
-  // Best-effort storage deletion — file may already be gone
-  await admin.storage.from("papers").remove([paper.pdf_url]);
-
+  // Row first, then the file. A stray orphaned PDF is a smaller problem than a
+  // live row pointing at storage that no longer exists.
   const { error } = await admin.from("papers").delete().eq("id", id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  await removeStoredPdf(paper.pdf_url);
 
   return NextResponse.json({ ok: true });
 }
@@ -77,9 +81,21 @@ export async function PATCH(req: NextRequest) {
   }
 
   const admin = getAdminClient();
+
+  // Rejecting used to leave the PDF sitting in the bucket forever. Read the
+  // path before the update, because after it the row is still there but the
+  // file should not be.
+  let pdfUrl: string | null = null;
+  if (status === "rejected") {
+    const { data: paper } = await admin.from("papers").select("pdf_url").eq("id", id).single();
+    pdfUrl = paper?.pdf_url ?? null;
+  }
+
   const { error } = await admin.from("papers").update({ status }).eq("id", id);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  if (pdfUrl) await removeStoredPdf(pdfUrl);
 
   return NextResponse.json({ ok: true });
 }
