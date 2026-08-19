@@ -3,6 +3,7 @@ import crypto from "crypto";
 import { PDFDocument, PDFName, PDFRef } from "pdf-lib";
 import { getAdminClient } from "@/lib/supabase";
 import { clientIp, rateLimit, tooManyRequests } from "@/lib/rate-limit";
+import { LONG_FORM_MAX_SIZE } from "@/lib/upload-limits";
 import { parseTags } from "@/lib/tags";
 import { getSessionUser, ensureProfile } from "@/lib/profile";
 import { notifyAdminNewPaper } from "@/lib/admin-alerts";
@@ -10,8 +11,8 @@ import { notifyAdminNewPaper } from "@/lib/admin-alerts";
 // 4 MB, not 10. Vercel caps a serverless request body at ~4.5 MB, and
 // `req.formData()` buffers the entire request before any check below can run —
 // so a genuine 10 MB upload died at the platform boundary with a generic error
-// instead of ours. The limit now sits under the cap it actually has.
-const MAX_SIZE = 4 * 1024 * 1024; // 4 MB
+// instead of ours. Shared with the form so the two cannot drift.
+const MAX_SIZE = LONG_FORM_MAX_SIZE;
 
 // Long-form papers are a bigger ask to review, so the hourly allowance is
 // tighter than the one-page word route.

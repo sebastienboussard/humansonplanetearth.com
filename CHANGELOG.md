@@ -38,6 +38,15 @@ All notable changes to this project are documented here.
   limit was never enforceable — a genuine 10 MB upload died at the platform
   boundary with a generic error instead of ours. Oversized requests are now
   refused on `content-length` before the body is buffered.
+- **Oversized uploads say so clearly.** Both submit forms rejected a too-large
+  file at selection, but the message rendered at the foot of the form while the
+  dropzone reset to its empty prompt — so an oversized paper appeared to vanish
+  with no explanation. The warning now sits directly under the dropzone, is
+  announced to screen readers, and names the file's actual size against the
+  limit ("That file is 6.4 MB — the limit is 4.0 MB") with advice on what to do,
+  rather than restating the cap. Both limits now come from
+  `lib/upload-limits.ts`, shared by the forms and the routes, so they cannot
+  drift apart.
 - The account page's Email Notifications panel collapses, and remembers whether
   you left it open. Seven checkboxes had pushed everything else below the fold;
   the heading now summarises state ("3 of 4 on") when closed.

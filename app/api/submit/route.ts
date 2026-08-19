@@ -3,11 +3,12 @@ import crypto from "crypto";
 import { PDFDocument, PDFName, PDFRef } from "pdf-lib";
 import { getAdminClient } from "@/lib/supabase";
 import { clientIp, rateLimit, tooManyRequests } from "@/lib/rate-limit";
+import { WORD_MAX_SIZE } from "@/lib/upload-limits";
 import { parseTags } from "@/lib/tags";
 import { getSessionUser, ensureProfile } from "@/lib/profile";
 import { notifyAdminNewPaper } from "@/lib/admin-alerts";
 
-const MAX_SIZE = 2 * 1024 * 1024; // 2 MB
+const MAX_SIZE = WORD_MAX_SIZE;
 
 // Five papers an hour per IP. Well above what a person submitting their own
 // work needs, and far below what makes a scripted flood worth running.

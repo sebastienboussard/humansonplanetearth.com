@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { createBrowserSupabase } from "@/lib/supabase-browser";
+import { WORD_MAX_SIZE, oversizeMessage } from "@/lib/upload-limits";
 
 type Status = "idle" | "submitting" | "success" | "error";
 
@@ -10,6 +11,8 @@ export default function SubmitForm({ word }: { word: string }) {
   const [tags, setTags] = useState("");
   const [status, setStatus] = useState<Status>("idle");
   const [errorMsg, setErrorMsg] = useState("");
+  // File problems render next to the dropzone; errorMsg is for submit failures.
+  const [fileError, setFileError] = useState("");
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   // Honeypot
@@ -27,16 +30,16 @@ export default function SubmitForm({ word }: { word: string }) {
 
   function handleFile(f: File) {
     if (f.type !== "application/pdf") {
-      setErrorMsg("Only PDF files are accepted.");
+      setFileError("That is not a PDF. Only PDF files are accepted.");
       setFile(null);
       return;
     }
-    if (f.size > 2 * 1024 * 1024) {
-      setErrorMsg("File must be under 2 MB.");
+    if (f.size > WORD_MAX_SIZE) {
+      setFileError(oversizeMessage(f.size, WORD_MAX_SIZE));
       setFile(null);
       return;
     }
-    setErrorMsg("");
+    setFileError("");
     setFile(f);
   }
 
@@ -143,6 +146,25 @@ export default function SubmitForm({ word }: { word: string }) {
           )}
         </div>
       </div>
+
+      {/* Right under the dropzone, not at the foot of the form. A rejected
+          file resets the zone to its empty prompt, so a message 200px lower
+          reads as "nothing happened" — which is how an oversized paper
+          appeared to vanish. role="alert" so screen readers get it too. */}
+      {fileError && (
+        <p
+          role="alert"
+          className="mt-3 text-sm leading-relaxed px-4 py-3 rounded-sm"
+          style={{
+            backgroundColor: "var(--card)",
+            border: "1px solid var(--terracotta)",
+            color: "var(--terracotta)",
+            fontFamily: "system-ui, sans-serif",
+          }}
+        >
+          {fileError}
+        </p>
+      )}
 
       {/* Hashtags — optional, never shown publicly; used only to filter papers */}
       <div>
