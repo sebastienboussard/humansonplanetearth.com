@@ -32,6 +32,14 @@ All notable changes to this project are documented here.
   which collided under concurrent uploads and leaked submission times to anyone
   who could read a storage path.
 
+### Added
+- **Home page surfaces what's new.** An expandable "What's new on the site"
+  strip above the hero (native `<details>`, no JavaScript required) announces
+  reader-facing features from a hardcoded list in `data/whats-new.ts`. The hero
+  links to the newest approved paper for the current word, and the long-form
+  teaser links to the latest long-form paper by title and date. Home page ISR
+  lowered from 3600s to 60s so new papers appear promptly.
+
 ### Changed
 - Long-form uploads are capped at **4 MB**, down from 10 MB. Vercel refuses a
   serverless request body above ~4.5 MB before the handler runs, so the old
@@ -64,6 +72,29 @@ the hold-back was reverted once the Supabase tables and magic-link auth were
 confirmed in place.
 
 ### Added
+- Optional anonymous user profiles with email notifications. Passwordless
+  magic-link sign-in (Supabase Auth) — email only, no username, no password.
+  Four opt-out notification types: new word announced, deadline reminders
+  (7 days / 1 day, via a daily Vercel Cron job), comments on your papers, and
+  replies to your comments. Every email carries a signed one-click unsubscribe
+  link that works without logging in. Emails are sent through Resend.
+- Papers can optionally be attached to a profile at submission time (or
+  manually by the admin for old papers). Attachments are a private internal
+  log with no public surface — only the owner sees the list, on their account
+  page. (A public anonymous author page with per-paper sharing was built and
+  then taken out before release; the dormant `public_visible` column remains
+  in `paper_authors` for a possible future opt-in version.)
+- Account page (`/account`) with notification preferences, a private list of
+  your attached papers, sign-out, and permanent account deletion (removes the
+  email and all profile links; papers stay published anonymously).
+- Signed-in commenting silently records authorship in a private table so reply
+  notifications work — comments still render anonymously everywhere and the
+  comments API never returns author data.
+- Test coverage: suites for the account, unsubscribe, attach and cron routes,
+  plus direct unit suites for the notification fan-out (`lib/notifications.ts`
+  — dedupe, self-notification skip, pref filtering, paper-URL resolution) and
+  the Resend wrapper (`lib/email.ts` — batch chunking at 100, failure
+  handling). 181 tests across 20 suites.
 - **Admin dashboard rework.** `/admin/review` is now tabbed — Messages /
   Pending papers / Published papers / Words — with unread and pending count
   badges and the active tab synced to the URL hash, so reloads and email deep
@@ -79,6 +110,16 @@ confirmed in place.
   (lowercased, `#` stripped, letters/digits/hyphens/underscores only, max 10
   tags of 30 characters) and stored in `papers.tags`.
 
+### Changed
+- Profile/paper and profile/comment links live in separate tables
+  (`paper_authors`, `comment_authors`) with RLS enabled and zero policies,
+  instead of author columns on the publicly readable `papers`/`comments`
+  tables — the links are invisible to the anon key by construction.
+- Submit-page privacy copy now reads "No account required" (previously
+  "No account, no email"), and the privacy page documents optional accounts.
+- `/api/admin/words` fans out new-word notification emails after a successful
+  insert; notification failures never fail word creation.
+
 ### Fixed
 - **The contact form no longer loses messages.** The route now emails the
   admin inbox *before* inserting into the database and returns success if the
@@ -90,6 +131,10 @@ confirmed in place.
   list — which fetched once on mount — never learned about it.
 
 ### Database
+- `profiles`, `notification_prefs`, `paper_authors`, `comment_authors` and
+  `notification_log` — the profiles sections of `supabase/schema.sql`, plus
+  `supabase/migrations/0002_deadline_reminder_windows.sql` for the three
+  deadline-window columns. All applied to production and verified 2026-08-19.
 - `papers.tags text[] not null default '{}'` plus a GIN index
   (`supabase/migrations/0001_paper_tags.sql`).
 - `messages` created in production from the `supabase/schema.sql` definition.
