@@ -1,18 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import crypto from "crypto";
 import { getAdminClient } from "@/lib/supabase";
+import { isAdminRequest as isAuthed } from "@/lib/admin-auth";
 import { notifyNewWord } from "@/lib/notifications";
-
-function getSessionToken() {
-  return crypto
-    .createHmac("sha256", process.env.ADMIN_PASSWORD ?? "unset")
-    .update("hope-admin-session")
-    .digest("hex");
-}
-
-function isAuthed(req: NextRequest) {
-  return req.cookies.get("admin_session")?.value === getSessionToken();
-}
 
 // GET — list all words, newest month first, for the admin Words tab
 export async function GET(req: NextRequest) {

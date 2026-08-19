@@ -88,7 +88,12 @@ sending domain was verified the same day).
       so this cannot drift again (see §5, which already lists the profiles
       tables as a manual step — that step is what's missing here too)
 
-## 🔴 2. The papers bucket is public
+## ⏸ 2. The papers bucket is public — DEFERRED
+
+**Deliberately parked 2026-08-19.** Seb's call: the bucket stays public for now.
+Recorded rather than closed, because §7's cleanup script and the reject-deletes-
+PDF change both assume a guessable path is readable — that assumption is what
+makes deleting rejected files worth doing at all.
 
 `supabase/schema.sql:66-67` creates the bucket with `public=false`, and the
 comment at `:72-73` claims PDFs are served via signed URLs. Both are false in
@@ -106,22 +111,29 @@ rest of the upload-path work rests on — decide it first.
       (b) private bucket + `createSignedUrl` with a short TTL on every read path
 - [ ] Fix the false comment in `supabase/schema.sql:72-73` either way
 
-## 🔴 3. Upload endpoints have no rate limit and no auth
+## ✅ 3. Upload endpoints have no rate limit and no auth — DONE
 
-`/api/submit` and `/api/submit/long-form` accept unlimited scripted uploads —
-storage cost, quota burn, flooded review queue. This is the real abuse surface;
-admin-login brute force (§8) is the smaller one.
+`/api/submit` and `/api/submit/long-form` accepted unlimited scripted uploads —
+storage cost, quota burn, flooded review queue.
 
-- [ ] Rate-limit both upload routes. Must be a shared store (Supabase table with
-      an atomic upsert, or Upstash) — see the note in §8 on why in-memory fails
-- [ ] `app/api/submit/long-form/route.ts:6` — `MAX_SIZE` is 10 MB, above Vercel's
-      ~4.5 MB serverless request body limit. `req.formData()` buffers the whole
-      request before the size check at `:25` runs, so a genuine 10 MB upload dies
-      at the platform boundary, not with our error message. Either lower the
-      limit to ~4 MB effective, or move to direct-to-Supabase signed upload URLs
+- [x] Both upload routes rate-limited through a shared Supabase store
+      (`supabase/migrations/0003_rate_limits.sql`, `lib/rate-limit.ts`). The
+      whole hit is one `insert ... on conflict do update`, so it is atomic under
+      concurrency — no read-modify-write race where two simultaneous requests
+      both read 4 and both write 5. Word papers 5/hour/IP, long-form 3/hour/IP.
+      **Fails open** if the store is unreachable: the limiter sits behind the
+      real checks, and a database blip must not close submissions. Contrast §9,
+      where the check *is* the boundary and must fail closed
+- [x] `app/api/submit/long-form/route.ts` — `MAX_SIZE` lowered 10 MB → 4 MB, under
+      Vercel's ~4.5 MB serverless body cap, so the limit is one we can actually
+      enforce. Added a `content-length` pre-check that refuses oversized bodies
+      with 413 before `req.formData()` buffers them. Form copy updated to match
 - [ ] Threat model: Vercel request logs likely record submitter IPs alongside
       submissions. PDF scrubbing doesn't cover what the platform logs — write
-      this down on the privacy page or fix it
+      this down on the privacy page or fix it. **Now sharper:** the rate limiter
+      derives an IP from `x-forwarded-for` on every upload. It is never stored
+      (only a key like `submit:<ip>` with a counter, expiring within the hour),
+      but the privacy page should say so plainly rather than leave it implicit
 
 ## 🟠 4. The PDF viewer fails to a transparent hole
 
@@ -197,52 +209,45 @@ What this changes:
 - [ ] Whatever the cause, it is out of our control. §4's mitigations are the
       deliverable; this section is only about not re-litigating the diagnosis.
 
-## 5. Profiles & Notifications — go-live
+## ✅ 5. Profiles & Notifications — LIVE
 
-Code-complete and verified: 181 tests across 20 suites on `integration`,
-`tsc --noEmit` clean, production build clean. What it does and how it keeps
-authorship private is in the CHANGELOG (Unreleased) and the README
-("Profiles & Notifications", including manual setup steps).
+Shipped to `main` on 2026-08-18 by reverting the carve-out commit `df1166c`
+(`caac5a2`), plus two follow-ups: `b3a35c7` (`/api/account/me` returns every
+notification pref) and `37eac38` (`/auth/confirm` accepts PKCE codes). What it
+does and how it keeps authorship private is in the CHANGELOG and the README.
 
-- [x] Direct unit tests for `lib/notifications.ts` and `lib/email.ts`
-      (`tests/lib/notifications.test.ts`, `tests/lib/email.test.ts`) — both
-      were at 0% because every route suite mocks them; now 92%/100% line
-      coverage. Covers claim-then-send dedupe via `notification_log`,
-      self-notification skip, pref filtering, the `__long-form__` sentinel
-      URL handling, word vs long-form paper URLs, the 200-char excerpt cap,
-      and batch chunking at 100 (including partial-failure counting).
+Every manual step is now verified — checked directly against production on
+2026-08-19:
 
-The code ships by reverting the carve-out commit `df1166c` on top of `main`,
-which reproduces this tree exactly — no merge from `integration` needed, and
-no conflicts. Branch: `release-profiles`.
+- [x] All five profiles tables present
+- [x] Supabase email sign-in enabled (`/auth/v1/settings` reports `email: true`)
+- [x] Resend sending domain verified; a real send returned HTTP 200
+- [x] `supabase/migrations/0002_deadline_reminder_windows.sql` **is applied** —
+      all three `deadline_14d` / `deadline_7d` / `deadline_1d` columns return
+      200 with the migration's defaults. This was recorded here as the one true
+      blocker; it had already been run
+- [x] Site URL and redirect allow-list. This *was* wrong: `{{ .SiteURL }}` was
+      still `http://localhost:3000`, so every emailed link pointed at localhost
+- [x] `UNSUBSCRIBE_SECRET` and `CRON_SECRET` present in Vercel. Confirmed by
+      probe rather than by dashboard: `Bearer undefined` to the cron route
+      returns 401 (it would return 200 if the var were unset), and an
+      unsubscribe signature forged with the `"unset"` fallback key is rejected
 
-Manual steps, only Seb can do these. Status verified directly against
-production on 2026-08-19:
+**Magic-link templates — resolved 2026-08-19.** The Supabase email templates had
+been overridden to the `{{ .TokenHash }}` form, which cannot work here:
+`@supabase/ssr` hard-codes `flowType: "pkce"` (`createBrowserClient.js:40`,
+spread *after* the caller's options, so it is not overridable), so
+`signInWithOtp` sends a `code_challenge` and the emailed token comes back
+`pkce_`-prefixed. `verifyOtp` never sends a code verifier, so it cannot redeem
+one. The fix is `{{ .ConfirmationURL }}` in both the Confirm signup and Magic
+Link templates — Supabase's own verify endpoint converts the PKCE token to a
+`?code=`, which `exchangeCodeForSession` handles.
 
-- [x] Run the profiles sections of `supabase/schema.sql` — all five tables
-      (`profiles`, `notification_prefs`, `paper_authors`, `comment_authors`,
-      `notification_log`) confirmed present
-- [x] Supabase dashboard → Authentication: email sign-in confirmed enabled
-      (`/auth/v1/settings` reports `email: true`, signups open)
-- [x] Resend: sending domain verified — DKIM, SPF and MX all resolving, and a
-      real send returned HTTP 200
-- [ ] **Run `supabase/migrations/0002_deadline_reminder_windows.sql`.** Still
-      outstanding and now the one true blocker: the tables were created from
-      an earlier revision of `schema.sql`, so `notification_prefs` has no
-      `deadline_14d` / `deadline_7d` / `deadline_1d` columns. Confirmed by
-      querying each column — the three return HTTP 400. Until it runs, saving
-      a deadline-window checkbox fails and the cron sends nothing, because
-      `subscribers()` filters on columns that do not exist
-- [ ] Supabase dashboard → Authentication → URL Configuration: confirm the
-      Site URL is set and `https://humansonplanetearth.com/auth/confirm` is in
-      the redirect allow-list. Not exposed over the API, so it needs eyes on
-      the dashboard; if it is wrong, magic links land somewhere unexpected
-- [ ] Vercel: add `UNSUBSCRIBE_SECRET` and `CRON_SECRET`, and confirm the four
-      from the 2026-08-19 release are present (`NEXT_PUBLIC_SITE_URL`,
-      `RESEND_API_KEY`, `NOTIFY_FROM_EMAIL`, `ADMIN_NOTIFY_EMAIL`) — these are
-      not visible from outside the dashboard. A live `/contact` submission
-      that produces an alert email proves all four at once
-      (cron schedule lives in `vercel.json`, restored by this branch)
+Consequence worth recording: **there is no cross-device magic link available**
+while `@supabase/ssr` forces PKCE. The link only works in the browser that
+requested it, because the verifier lives in that browser's cookie. The comment
+in `app/auth/confirm/route.ts` claiming the `token_hash` form "works across
+devices" was wrong and has been corrected.
 
 ## 6. PDF Metadata Stripping — done, with a caveat
 
@@ -259,37 +264,43 @@ production on 2026-08-19:
 - [ ] Not covered by the current strip: embedded attachments, document-level
       JavaScript, annotations. Decide whether to drop them too.
 
-## 7. Upload paths + delete on reject
+## ✅ 7. Upload paths + delete on reject — DONE
 
-- [ ] `app/api/submit/route.ts:91` — replace `Date.now()` with
-      `crypto.randomUUID()` in the filename
-- [ ] `app/api/submit/long-form/route.ts:75` — same
-- [ ] `app/api/admin/review/route.ts` — the `DELETE` handler removes the storage
-      object (`:61`), but `PATCH` to `rejected` (`:69-84`) only updates the row.
-      Rejected PDFs stay in the bucket and, per §2, stay downloadable.
-- [ ] Order it update-row-first, then best-effort remove. A stray file beats a
-      live row pointing at a missing one.
-- [ ] One-time cleanup: papers already rejected still have their PDFs in storage
+- [x] `app/api/submit/route.ts` — `crypto.randomUUID()` instead of `Date.now()`
+      in the filename. Timestamps collide under concurrent uploads and leak
+      submission times to anyone who can read a storage path
+- [x] `app/api/submit/long-form/route.ts` — same
+- [x] `app/api/admin/review/route.ts` — `PATCH` to `rejected` now removes the
+      storage object. It reads `pdf_url` before the update, since afterwards the
+      row survives but the file should not
+- [x] Both paths ordered update-row-first, then best-effort remove — including
+      the existing `DELETE` handler, which had them the other way round. A stray
+      file beats a live row pointing at a missing one. Removal failures are
+      logged, never fatal: the database is the record of what is published
+- [ ] One-time cleanup: papers already rejected still have their PDFs in storage.
+      `scripts/cleanup-rejected-pdfs.ts` does it — **dry run by default**, pass
+      `--apply` to delete. Not run yet; needs Seb
 
-## 8. Admin auth
+## ✅ 8. Admin auth — DONE
 
-Priorities are inverted from how this was originally written — the session
-token is the real hole, `timingSafeEqual` is close to cosmetic.
-
-- [ ] `getSessionToken()` is `HMAC(ADMIN_PASSWORD, "hope-admin-session")` — a
-      constant. Every admin session forever carries the same cookie value; if it
-      leaks it stays valid until the password rotates. It's also duplicated
-      across `app/api/admin/{words,messages,attach,review}/route.ts`. Replace
-      with a random per-session token (server-side) or a signed JWT with `exp`,
-      in one shared module.
-- [ ] Rate-limit the login route via the shared store from §3. A module-level
-      in-memory limiter cannot work on Vercel: cold starts reset module state and
-      concurrent requests land on separate instances, each counting "attempt 1
-      of 5". `NextRequest.ip` is also unset — read `x-forwarded-for` /
-      `x-real-ip`.
-- [ ] Only then: `crypto.timingSafeEqual` for the password compare (SHA-256 both
-      first so lengths match). Network jitter dwarfs the compare delta — do it
-      last.
+- [x] `getSessionToken()` was `HMAC(ADMIN_PASSWORD, "hope-admin-session")` — a
+      constant, with no expiry, duplicated across five files. Replaced by
+      `lib/admin-auth.ts`, one module: tokens are
+      `<issuedAt>.<random nonce>.<hmac>`, so every login yields a different
+      cookie and a leaked one dies after 7 days. `issuedAt` is inside the signed
+      payload, so a holder cannot extend it without breaking the HMAC. Rotating
+      `ADMIN_PASSWORD` still invalidates everything. Stateless by choice — a
+      sessions table would allow revoking one device, at the cost of a database
+      round trip on every admin request; with a single admin, password rotation
+      is the revoke button. Old constant tokens are rejected (regression-tested)
+- [x] Login route rate-limited via the shared store from §3 — 8 attempts per
+      15 minutes per IP, keyed off `x-forwarded-for` / `x-real-ip` because
+      `NextRequest.ip` is unset on Vercel
+- [x] `crypto.timingSafeEqual` for the password compare, both sides SHA-256'd
+      first so the buffers match length regardless of what was submitted
+      (`timingSafeEqual` throws on a length mismatch, and the throw itself would
+      leak the expected length). Smallest of the three by real-world impact —
+      network jitter dwarfs the delta — but cheap and correct
 
 ## 9. Cloudflare Turnstile
 

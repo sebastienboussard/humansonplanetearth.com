@@ -55,7 +55,18 @@ export type StorageBucketMock = {
   getPublicUrl: Mock;
 };
 
+export type RpcResult = {
+  data?: unknown;
+  error?: { message: string } | null;
+};
+
 export type MockSupabaseOptions = {
+  /**
+   * Results keyed by RPC function name. Anything not listed resolves to
+   * `{ data: null, error: null }`, which `rateLimit` treats as a store failure
+   * and therefore allows — matching production's fail-open behaviour.
+   */
+  rpcs?: Record<string, RpcResult>;
   /**
    * Results keyed by table name. An array is consumed as a FIFO queue —
    * one entry per `.from(table)` call. A single object is reused as the
@@ -78,7 +89,15 @@ export function createMockSupabase(options: MockSupabaseOptions = {}) {
   const buckets: Record<string, StorageBucketMock> = {};
   const storageOpts = options.storage ?? {};
 
+  const rpcResults = options.rpcs ?? {};
+  const rpcCalls: { fn: string; args: unknown }[] = [];
+
   const client = {
+    rpc: vi.fn(async (fn: string, args: unknown) => {
+      rpcCalls.push({ fn, args });
+      const queued = rpcResults[fn];
+      return { data: queued?.data ?? null, error: queued?.error ?? null };
+    }),
     from: vi.fn((table: string) => {
       const queued = queues[table]?.shift();
       const query = makeQuery(table, {
@@ -102,6 +121,8 @@ export function createMockSupabase(options: MockSupabaseOptions = {}) {
     },
     /** All query chains created so far, in call order. */
     queries,
+    /** Every rpc() call made, in order. */
+    rpcCalls,
     /** The nth query made against a table (0-based). */
     query(table: string, nth = 0): RecordedQuery | undefined {
       return queries.filter((q) => q.table === table)[nth];

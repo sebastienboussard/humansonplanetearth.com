@@ -1,21 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
-import crypto from "crypto";
-
-function getSessionToken() {
-  return crypto
-    .createHmac("sha256", process.env.ADMIN_PASSWORD ?? "unset")
-    .update("hope-admin-session")
-    .digest("hex");
-}
+import { isAdminRequest } from "@/lib/admin-auth";
 
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   // Only protect /admin/* (but not /admin login page itself)
   if (pathname.startsWith("/admin") && pathname !== "/admin") {
-    const cookie = req.cookies.get("admin_session")?.value;
-    if (cookie !== getSessionToken()) {
+    if (!isAdminRequest(req)) {
       return NextResponse.redirect(new URL("/admin", req.url));
     }
     return NextResponse.next();

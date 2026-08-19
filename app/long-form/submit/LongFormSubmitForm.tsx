@@ -25,7 +25,8 @@ export default function LongFormSubmitForm() {
       .catch(() => setSignedIn(false));
   }, []);
 
-  const MAX_SIZE = 10 * 1024 * 1024; // 10MB
+  // Must stay in step with the route: Vercel caps request bodies at ~4.5 MB.
+  const MAX_SIZE = 4 * 1024 * 1024; // 4 MB
 
   function handleFile(f: File) {
     if (f.type !== "application/pdf") {
@@ -34,7 +35,7 @@ export default function LongFormSubmitForm() {
       return;
     }
     if (f.size > MAX_SIZE) {
-      setErrorMsg("File must be under 10 MB.");
+      setErrorMsg("File must be under 4 MB.");
       setFile(null);
       return;
     }
@@ -192,7 +193,7 @@ export default function LongFormSubmitForm() {
                 Drag and drop your PDF here, or click to browse
               </p>
               <p className="text-xs mt-1" style={{ color: "var(--muted)", fontFamily: "system-ui, sans-serif" }}>
-                No page limit · 10 MB max
+                No page limit · 4 MB max
               </p>
             </div>
           )}

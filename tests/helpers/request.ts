@@ -3,10 +3,13 @@ import { NextRequest } from "next/server";
 type RequestOpts = {
   method?: string;
   cookies?: Record<string, string>;
+  /** Extra request headers — e.g. x-forwarded-for for rate-limit tests. */
+  headers?: Record<string, string>;
 };
 
-function buildHeaders(cookies?: Record<string, string>, extra?: Record<string, string>) {
-  const headers = new Headers(extra);
+function buildHeaders(opts: RequestOpts, extra?: Record<string, string>) {
+  const headers = new Headers({ ...extra, ...opts.headers });
+  const { cookies } = opts;
   if (cookies && Object.keys(cookies).length > 0) {
     headers.set(
       "cookie",
@@ -22,7 +25,7 @@ function buildHeaders(cookies?: Record<string, string>, extra?: Record<string, s
 export function jsonRequest(url: string, body: unknown, opts: RequestOpts = {}): NextRequest {
   return new NextRequest(url, {
     method: opts.method ?? "POST",
-    headers: buildHeaders(opts.cookies, { "content-type": "application/json" }),
+    headers: buildHeaders(opts, { "content-type": "application/json" }),
     body: JSON.stringify(body),
     duplex: "half", // undici requires this when a body is present
   });
@@ -32,7 +35,7 @@ export function jsonRequest(url: string, body: unknown, opts: RequestOpts = {}):
 export function malformedJsonRequest(url: string, opts: RequestOpts = {}): NextRequest {
   return new NextRequest(url, {
     method: opts.method ?? "POST",
-    headers: buildHeaders(opts.cookies, { "content-type": "application/json" }),
+    headers: buildHeaders(opts, { "content-type": "application/json" }),
     body: "{not valid json",
     duplex: "half", // undici requires this when a body is present
   });
@@ -42,7 +45,7 @@ export function malformedJsonRequest(url: string, opts: RequestOpts = {}): NextR
 export function formRequest(url: string, form: FormData, opts: RequestOpts = {}): NextRequest {
   return new NextRequest(url, {
     method: opts.method ?? "POST",
-    headers: buildHeaders(opts.cookies),
+    headers: buildHeaders(opts),
     body: form,
     duplex: "half", // undici requires this when a body is present
   });
@@ -52,6 +55,6 @@ export function formRequest(url: string, form: FormData, opts: RequestOpts = {})
 export function getRequest(url: string, opts: RequestOpts = {}): NextRequest {
   return new NextRequest(url, {
     method: opts.method ?? "GET",
-    headers: buildHeaders(opts.cookies),
+    headers: buildHeaders(opts),
   });
 }

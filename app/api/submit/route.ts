@@ -1,14 +1,29 @@
 import { NextRequest, NextResponse } from "next/server";
+import crypto from "crypto";
 import { PDFDocument, PDFName, PDFRef } from "pdf-lib";
 import { getAdminClient } from "@/lib/supabase";
+import { clientIp, rateLimit, tooManyRequests } from "@/lib/rate-limit";
 import { parseTags } from "@/lib/tags";
 import { getSessionUser, ensureProfile } from "@/lib/profile";
 import { notifyAdminNewPaper } from "@/lib/admin-alerts";
 
 const MAX_SIZE = 2 * 1024 * 1024; // 2 MB
 
+// Five papers an hour per IP. Well above what a person submitting their own
+// work needs, and far below what makes a scripted flood worth running.
+const MAX_UPLOADS = 5;
+const WINDOW_SECONDS = 60 * 60;
+
 export async function POST(req: NextRequest) {
   try {
+    const limit = await rateLimit(`submit:${clientIp(req)}`, MAX_UPLOADS, WINDOW_SECONDS);
+    if (!limit.allowed) {
+      return tooManyRequests(
+        limit.retryAfter,
+        "You have submitted several papers already. Please try again later."
+      );
+    }
+
     const formData = await req.formData();
     const pdf = formData.get("pdf") as File | null;
     const word = (formData.get("word") as string | null)?.trim().toLowerCase();
@@ -91,7 +106,9 @@ export async function POST(req: NextRequest) {
     }
 
     // Upload PDF to Supabase Storage
-    const filename = `${wordRow.id}/${Date.now()}.pdf`;
+    // randomUUID, not Date.now(): timestamps collide under concurrent uploads
+    // and leak submission times to anyone who can see a storage path.
+    const filename = `${wordRow.id}/${crypto.randomUUID()}.pdf`;
     const { error: uploadErr } = await admin.storage
       .from("papers")
       .upload(filename, cleanBuffer, { contentType: "application/pdf", upsert: false });

@@ -1,17 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import crypto from "crypto";
 import { getAdminClient } from "@/lib/supabase";
-
-function getSessionToken() {
-  return crypto
-    .createHmac("sha256", process.env.ADMIN_PASSWORD ?? "unset")
-    .update("hope-admin-session")
-    .digest("hex");
-}
-
-function isAuthed(req: NextRequest) {
-  return req.cookies.get("admin_session")?.value === getSessionToken();
-}
+import { isAdminRequest as isAuthed } from "@/lib/admin-auth";
 
 // GET — list messages, newest first
 export async function GET(req: NextRequest) {

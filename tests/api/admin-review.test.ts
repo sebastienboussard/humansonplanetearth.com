@@ -106,15 +106,58 @@ describe("PATCH /api/admin/review", () => {
     expect(q.eq).toHaveBeenCalledWith("id", "p1");
   });
 
-  it("rejects a paper", async () => {
-    holder.current = createMockSupabase({ tables: { papers: { data: null } } });
+  it("rejects a paper and deletes its PDF from storage", async () => {
+    // Rejecting used to leave the file in the bucket, still downloadable by
+    // anyone who knew the path. The lookup runs first, then the update.
+    holder.current = createMockSupabase({
+      tables: { papers: [{ data: { pdf_url: "word-1/abc.pdf" } }, { data: null }] },
+    });
 
     const res = await PATCH(
       jsonRequest(URL, { id: "p1", status: "rejected" }, { method: "PATCH", cookies: adminCookies() })
     );
 
     expect(res.status).toBe(200);
-    expect(holder.current.query("papers")!.update).toHaveBeenCalledWith({ status: "rejected" });
+    expect(holder.current.query("papers", 1)!.update).toHaveBeenCalledWith({ status: "rejected" });
+    expect(holder.current.bucket("papers")!.remove).toHaveBeenCalledWith(["word-1/abc.pdf"]);
+  });
+
+  it("still rejects when the paper has no stored file", async () => {
+    holder.current = createMockSupabase({
+      tables: { papers: [{ data: null }, { data: null }] },
+    });
+
+    const res = await PATCH(
+      jsonRequest(URL, { id: "p1", status: "rejected" }, { method: "PATCH", cookies: adminCookies() })
+    );
+
+    expect(res.status).toBe(200);
+    expect(holder.current.bucket("papers")).toBeUndefined();
+  });
+
+  it("does not touch storage when approving", async () => {
+    holder.current = createMockSupabase({ tables: { papers: { data: null } } });
+
+    await PATCH(
+      jsonRequest(URL, { id: "p1", status: "approved" }, { method: "PATCH", cookies: adminCookies() })
+    );
+
+    expect(holder.current.bucket("papers")).toBeUndefined();
+  });
+
+  it("reports success even if the storage removal fails", async () => {
+    // The database is the record of what is published; a stuck bucket must not
+    // leave the admin unable to reject.
+    holder.current = createMockSupabase({
+      tables: { papers: [{ data: { pdf_url: "word-1/abc.pdf" } }, { data: null }] },
+      storage: { removeError: { message: "bucket unavailable" } },
+    });
+
+    const res = await PATCH(
+      jsonRequest(URL, { id: "p1", status: "rejected" }, { method: "PATCH", cookies: adminCookies() })
+    );
+
+    expect(res.status).toBe(200);
   });
 });
 

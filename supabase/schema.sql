@@ -141,3 +141,18 @@ alter table notification_prefs enable row level security;
 alter table paper_authors enable row level security;
 alter table comment_authors enable row level security;
 alter table notification_log enable row level security;
+
+-- ============ Rate limiting ============
+
+-- Shared counter store for the upload and admin-login limiters. Defined in
+-- full — table plus the atomic rate_limit_hit() / prune_rate_limits()
+-- functions — in supabase/migrations/0003_rate_limits.sql. Run that migration
+-- rather than copying from here; this section exists so a from-scratch setup
+-- knows the table belongs to the schema.
+--
+-- create table rate_limits (
+--   key text primary key,
+--   count integer not null default 0,
+--   window_start timestamptz not null default now()
+-- );
+-- alter table rate_limits enable row level security;
