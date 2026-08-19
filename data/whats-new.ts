@@ -3,6 +3,10 @@
 // "you can now filter papers by hashtag", not a dev changelog. The planned
 // /changes page (TODO §10) is expected to consume this same array.
 
+/** The public repository. The site's code is open — say so where readers look. */
+export const REPO_URL = "https://github.com/sebastienboussard/humansonplanetearth.com";
+export const CHANGELOG_URL = `${REPO_URL}/blob/main/CHANGELOG.md`;
+
 export type WhatsNewEntry = {
   date: string; // ISO "YYYY-MM-DD"
   title: string;

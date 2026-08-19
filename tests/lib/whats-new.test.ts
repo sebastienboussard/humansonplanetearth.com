@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { WHATS_NEW } from "@/data/whats-new";
+import { WHATS_NEW, CHANGELOG_URL, REPO_URL } from "@/data/whats-new";
 
 describe("WHATS_NEW entries", () => {
   it("has at least one entry", () => {
@@ -37,5 +37,15 @@ describe("WHATS_NEW entries", () => {
         expect(entry.href.startsWith("/")).toBe(true);
       }
     }
+  });
+});
+
+describe("outbound links", () => {
+  it("points the changelog at CHANGELOG.md on the default branch", () => {
+    expect(CHANGELOG_URL).toBe(`${REPO_URL}/blob/main/CHANGELOG.md`);
+  });
+
+  it("uses the public repo URL", () => {
+    expect(REPO_URL).toMatch(/^https:\/\/github\.com\/[\w.-]+\/[\w.-]+$/);
   });
 });

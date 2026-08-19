@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { WHATS_NEW } from "@/data/whats-new";
+import { WHATS_NEW, CHANGELOG_URL, REPO_URL } from "@/data/whats-new";
 
 // Formats the hardcoded ISO date in UTC so "2026-08-01" never renders as Jul 31.
 function formatEntryDate(iso: string): string {
@@ -66,6 +66,40 @@ export default function WhatsNewBanner() {
             </li>
           ))}
         </ul>
+
+        {/* The entries above are written for readers and stay short. This is
+            the way through to everything else: the full changelog, and the
+            code itself. Plain <a> rather than next/link — both leave the site. */}
+        <p
+          className="mt-5 pt-4 text-xs leading-relaxed"
+          style={{
+            borderTop: "1px solid var(--border)",
+            fontFamily: "system-ui, sans-serif",
+            color: "var(--muted)",
+          }}
+        >
+          This site is an open source project. Read the{" "}
+          <a
+            href={CHANGELOG_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline underline-offset-4"
+            style={{ color: "var(--terracotta)" }}
+          >
+            full changelog
+          </a>{" "}
+          or browse the code{" "}
+          <a
+            href={REPO_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline underline-offset-4"
+            style={{ color: "var(--terracotta)" }}
+          >
+            on GitHub
+          </a>
+          .
+        </p>
       </div>
     </details>
   );
