@@ -24,9 +24,9 @@ export type WhatsNewEntry = {
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
     date: "2026-08-19",
-    title: "Get notified — still anonymous",
+    title: "Get notified — Introducing Accounts",
     blurb:
-      "Choose what you want to hear about: a new word announced, a deadline coming up, comments on your papers, replies to your comments. An account takes an email and nothing else — no name, no password — and every email carries a one-click unsubscribe. Papers stay credited only to Human On Planet Earth.",
+      "Create an account and choose what you want to hear about: a new word announced, a deadline coming up, comments on your papers, replies to your comments. An account takes an email and nothing else — no name, no password — and every email carries a one-click unsubscribe. Papers stay credited only to Human On Planet Earth. This is to encourage discussions and responses. If you do not want an account there is no change. You can still submit without an account.",
     href: "/account",
   },
   {
