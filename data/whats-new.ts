@@ -24,16 +24,9 @@ export type WhatsNewEntry = {
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
     date: "2026-08-19",
-    title: "Clearer upload limits",
+    title: "Get notified — still anonymous",
     blurb:
-      "If your PDF is too large, the submit page now tells you straight away — how big it is, what the limit is, and what to do — instead of quietly clearing your file. Long-form papers cap at 4 MB, word papers at 2 MB.",
-    href: "/submit",
-  },
-  {
-    date: "2026-08-19",
-    title: "Accounts, still anonymous",
-    blurb:
-      "You can now make an account — no name required — to be emailed when a new word arrives, when a deadline nears, or when someone replies to your comment. Papers are still credited only to Human On Planet Earth.",
+      "Choose what you want to hear about: a new word announced, a deadline coming up, comments on your papers, replies to your comments. An account takes an email and nothing else — no name, no password — and every email carries a one-click unsubscribe. Papers stay credited only to Human On Planet Earth.",
     href: "/account",
   },
   {
@@ -41,6 +34,13 @@ export const WHATS_NEW: WhatsNewEntry[] = [
     title: "Find papers by hashtag",
     blurb:
       "Papers carry quiet hashtags. On word pages and in the long-form index, you can now filter by them.",
+  },
+  {
+    date: "2026-08-19",
+    title: "Clearer upload limits",
+    blurb:
+      "If your PDF is too large, the submit page now tells you straight away — how big it is, what the limit is, and what to do — instead of quietly clearing your file. Long-form papers cap at 4 MB, word papers at 2 MB.",
+    href: "/submit",
   },
   {
     date: "2026-07-01",
