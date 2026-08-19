@@ -278,8 +278,9 @@ devices" was wrong and has been corrected.
       file beats a live row pointing at a missing one. Removal failures are
       logged, never fatal: the database is the record of what is published
 - [ ] One-time cleanup: papers already rejected still have their PDFs in storage.
-      `scripts/cleanup-rejected-pdfs.ts` does it — **dry run by default**, pass
-      `--apply` to delete. Not run yet; needs Seb
+      `scripts/cleanup-rejected-pdfs.mjs` does it — **dry run by default**, pass
+      `--apply` to delete. A dry run on 2026-08-19 found exactly **3** orphaned
+      files, all with old `Date.now()` names. Not deleted yet; needs Seb
 
 ## ✅ 8. Admin auth — DONE
 

@@ -2,16 +2,17 @@
  * One-time cleanup: remove storage objects for papers that were rejected
  * before the review route started deleting them (TODO §7).
  *
- * Dry run by default — it prints what it would delete and touches nothing.
+ * Dry run by default — prints what it would delete and touches nothing.
  * Pass --apply to actually remove the files.
  *
- *   npx tsx scripts/cleanup-rejected-pdfs.ts
- *   npx tsx scripts/cleanup-rejected-pdfs.ts --apply
+ *   set -a; . ./.env.local; set +a
+ *   node scripts/cleanup-rejected-pdfs.mjs
+ *   node scripts/cleanup-rejected-pdfs.mjs --apply
  *
- * Reads NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SECRET_KEY from the environment
- * (load .env.local yourself, e.g. with `set -a; . ./.env.local; set +a`).
+ * Plain ESM on purpose: it runs with the node already installed and the
+ * @supabase/supabase-js already in node_modules — no tsx, no build step.
  *
- * Rejected rows are kept — only the PDF goes. Nothing on the site renders a
+ * Rejected rows are kept; only the PDF goes. Nothing on the site renders a
  * rejected paper, so the file has no reader-facing purpose, and while the
  * bucket is public it is downloadable by anyone who guesses the path.
  */
@@ -22,7 +23,8 @@ const apply = process.argv.includes("--apply");
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const key = process.env.SUPABASE_SECRET_KEY;
 if (!url || !key) {
-  console.error("Set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SECRET_KEY first.");
+  console.error("Set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SECRET_KEY first:");
+  console.error("  set -a; . ./.env.local; set +a");
   process.exit(1);
 }
 
@@ -38,7 +40,7 @@ if (error) {
   process.exit(1);
 }
 
-const paths = (rejected ?? []).map((p) => p.pdf_url).filter(Boolean) as string[];
+const paths = (rejected ?? []).map((p) => p.pdf_url).filter(Boolean);
 
 if (paths.length === 0) {
   console.log("No rejected papers with stored files. Nothing to do.");

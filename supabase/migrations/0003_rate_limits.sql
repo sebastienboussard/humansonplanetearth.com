@@ -33,7 +33,6 @@ as $$
 declare
   v_count integer;
   v_start timestamptz;
-  v_expired boolean;
 begin
   insert into rate_limits as r (key, count, window_start)
     values (p_key, 1, now())

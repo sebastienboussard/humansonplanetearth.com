@@ -26,7 +26,7 @@ All notable changes to this project are documented here.
   the file stayed in the bucket, downloadable by anyone who guessed the path.
   Both the reject and delete paths now update the database first and remove the
   file second, so a failed removal leaves a stray file rather than a live row
-  pointing at nothing. `scripts/cleanup-rejected-pdfs.ts` clears the backlog
+  pointing at nothing. `scripts/cleanup-rejected-pdfs.mjs` clears the backlog
   (dry run by default).
 - **Stored PDF filenames use `crypto.randomUUID()`** instead of `Date.now()`,
   which collided under concurrent uploads and leaked submission times to anyone
