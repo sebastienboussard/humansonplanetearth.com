@@ -47,7 +47,7 @@ Reproduced locally against a production build: `/words/audacity`,
       see-through hole the site embed shows. That single word was carrying a
       lot of weight; see §4a.
 
-## 🔴 1a. LIVE BUG — the contact form has never delivered a message
+## ✅ 1a. LIVE BUG — the contact form has never delivered a message — FIXED AND LIVE
 
 Found 2026-07-29 while previewing `integration` on localhost against the live
 database. Six of the nine tables the code touches **do not exist in production**:
@@ -71,15 +71,19 @@ sent through `/contact` on the live site was lost. The admin inbox at
 Not verified by submitting a live message — the table's absence and the insert
 are both confirmed directly, which is enough.
 
-- [ ] Create `messages` in production from the `schema.sql` definition, so the
-      contact form starts working — independent of anything on `integration`.
-      (§12 reordered the route to email the admin inbox *before* the insert,
-      so once `integration` ships, messages stop being lost even while this
-      table is missing — but that is a mitigation, and only works once the
-      Resend env vars in §5 are live. This item stays open either way.)
+**Resolved 2026-08-19.** All nine tables now exist in production, and the
+email-first contact route shipped to `main` the same day. Verified end to end
+against the live database: a submission returns 200, the row lands in
+`messages`, and the admin alert email is delivered through Resend (whose
+sending domain was verified the same day).
+
+- [x] Create `messages` in production from the `schema.sql` definition
+- [x] Email-first ordering shipped, so a future insert failure no longer loses
+      the message — the mitigation is live rather than theoretical
 - [ ] Check whether any messages were sent during the outage window; they are
       not recoverable from the database, so the only trace would be in
-      Supabase request logs
+      Supabase request logs. Note the table held **only** the two test rows
+      afterwards, confirming nothing was ever stored
 - [ ] Decide whether `schema.sql` sections should become numbered migrations,
       so this cannot drift again (see §5, which already lists the profiles
       tables as a manual step — that step is what's missing here too)
@@ -208,26 +212,37 @@ authorship private is in the CHANGELOG (Unreleased) and the README
       URL handling, word vs long-form paper URLs, the 200-char excerpt cap,
       and batch chunking at 100 (including partial-failure counting).
 
-Manual steps, only Seb can do these:
-- [ ] Run `supabase/migrations/0002_deadline_reminder_windows.sql` — adds
-      `deadline_14d` / `deadline_7d` / `deadline_1d` to `notification_prefs`.
-      Pure `add column if not exists`, so it is safe on the tables created on
-      2026-07-29. Until it runs, saving a deadline-window checkbox fails and
-      the cron sends nothing, because `subscribers()` filters on a column that
-      does not exist
-- [ ] Run the new sections of `supabase/schema.sql` in the Supabase SQL editor
-      — confirmed still outstanding on 2026-07-29: `profiles`,
-      `notification_prefs`, `notification_log`, `paper_authors` and
-      `comment_authors` are all absent from production, so signing in reaches
-      `/account` and then fails with "Could not load your account" (§1a).
-      Until this runs, `integration` cannot go live
-- [ ] Supabase dashboard → Authentication: enable magic-link email sign-in,
-      add `https://<site>/auth/confirm` to redirect URLs, set the Site URL
-- [ ] Resend: verify the sending domain (DNS) for `NOTIFY_FROM_EMAIL`
-- [ ] Vercel: set `NEXT_PUBLIC_SITE_URL`, `RESEND_API_KEY`,
-      `NOTIFY_FROM_EMAIL`, `UNSUBSCRIBE_SECRET`, `CRON_SECRET`,
-      `ADMIN_NOTIFY_EMAIL` (§12 — admin alerts)
-      (cron schedule already lives in `vercel.json`)
+The code ships by reverting the carve-out commit `df1166c` on top of `main`,
+which reproduces this tree exactly — no merge from `integration` needed, and
+no conflicts. Branch: `release-profiles`.
+
+Manual steps, only Seb can do these. Status verified directly against
+production on 2026-08-19:
+
+- [x] Run the profiles sections of `supabase/schema.sql` — all five tables
+      (`profiles`, `notification_prefs`, `paper_authors`, `comment_authors`,
+      `notification_log`) confirmed present
+- [x] Supabase dashboard → Authentication: email sign-in confirmed enabled
+      (`/auth/v1/settings` reports `email: true`, signups open)
+- [x] Resend: sending domain verified — DKIM, SPF and MX all resolving, and a
+      real send returned HTTP 200
+- [ ] **Run `supabase/migrations/0002_deadline_reminder_windows.sql`.** Still
+      outstanding and now the one true blocker: the tables were created from
+      an earlier revision of `schema.sql`, so `notification_prefs` has no
+      `deadline_14d` / `deadline_7d` / `deadline_1d` columns. Confirmed by
+      querying each column — the three return HTTP 400. Until it runs, saving
+      a deadline-window checkbox fails and the cron sends nothing, because
+      `subscribers()` filters on columns that do not exist
+- [ ] Supabase dashboard → Authentication → URL Configuration: confirm the
+      Site URL is set and `https://humansonplanetearth.com/auth/confirm` is in
+      the redirect allow-list. Not exposed over the API, so it needs eyes on
+      the dashboard; if it is wrong, magic links land somewhere unexpected
+- [ ] Vercel: add `UNSUBSCRIBE_SECRET` and `CRON_SECRET`, and confirm the four
+      from the 2026-08-19 release are present (`NEXT_PUBLIC_SITE_URL`,
+      `RESEND_API_KEY`, `NOTIFY_FROM_EMAIL`, `ADMIN_NOTIFY_EMAIL`) — these are
+      not visible from outside the dashboard. A live `/contact` submission
+      that produces an alert email proves all four at once
+      (cron schedule lives in `vercel.json`, restored by this branch)
 
 ## 6. PDF Metadata Stripping — done, with a caveat
 

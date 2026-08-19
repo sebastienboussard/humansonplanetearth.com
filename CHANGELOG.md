@@ -4,7 +4,8 @@ All notable changes to this project are documented here.
 
 ## Unreleased
 
-Built and tested, not yet on `main`. Collected on the `integration` branch.
+Profiles & notifications. Code-complete and tested; ships once the remaining
+Supabase and Vercel setup is done (see TODO §5).
 
 ### Added
 - Optional anonymous user profiles with email notifications. Passwordless
@@ -25,18 +26,9 @@ Built and tested, not yet on `main`. Collected on the `integration` branch.
 - Signed-in commenting silently records authorship in a private table so reply
   notifications work — comments still render anonymously everywhere and the
   comments API never returns author data.
-- **Invisible hashtags.** Authors can optionally tag a paper when they submit
-  it. Tags are never displayed anywhere on the site — they exist only to power
-  a filter box on word pages and the long-form index, so a reader can narrow
-  the list by theme without the pages gaining visible clutter. Tags are
-  normalized server-side (lowercased, `#` stripped, restricted to letters,
-  digits, hyphens and underscores, max 10 tags of 30 characters) and stored in
-  a new `papers.tags` column.
-- Test coverage for both features: unit tests for the tag helpers, route tests
-  asserting hashtags are normalized server-side rather than trusted from the
-  client, suites for the account, unsubscribe, attach and cron routes, and
-  direct unit suites for the notification fan-out (`lib/notifications.ts` —
-  dedupe, self-notification skip, pref filtering, paper-URL resolution) and
+- Test coverage: suites for the account, unsubscribe, attach and cron routes,
+  plus direct unit suites for the notification fan-out (`lib/notifications.ts`
+  — dedupe, self-notification skip, pref filtering, paper-URL resolution) and
   the Resend wrapper (`lib/email.ts` — batch chunking at 100, failure
   handling). 181 tests across 20 suites.
 
@@ -51,12 +43,48 @@ Built and tested, not yet on `main`. Collected on the `integration` branch.
   insert; notification failures never fail word creation.
 
 ### Database
+- `profiles`, `notification_prefs`, `paper_authors`, `comment_authors` and
+  `notification_log` — the profiles sections of `supabase/schema.sql`.
+  **Applied to production 2026-08-19**, but from an earlier revision of the
+  file: `notification_prefs` is still missing `deadline_14d`, `deadline_7d`
+  and `deadline_1d`. `supabase/migrations/0002_deadline_reminder_windows.sql`
+  must be run before this ships, or saving a deadline-window preference fails
+  and the reminder cron sends nothing.
+
+## 2026-08-19
+
+Released to production.
+
+### Added
+- **Admin dashboard rework.** `/admin/review` is now tabbed — Messages /
+  Pending papers / Published papers / Words — with unread and pending count
+  badges and the active tab synced to the URL hash, so reloads and email deep
+  links land on the right tab. The published tab gained a word/title search
+  and sorts newest-first; the words tab lists existing words above the add
+  form. One shared client context owns all four datasets.
+- **Admin email alerts.** New paper submissions and contact messages email
+  `ADMIN_NOTIFY_EMAIL` through Resend. Unset var = silent no-op. Alerts carry
+  no tags, storage paths or profile ids.
+- **Invisible hashtags.** Authors can optionally tag a paper when they submit
+  it. Tags are never displayed anywhere on the site — they exist only to power
+  a filter box on word pages and the long-form index. Normalized server-side
+  (lowercased, `#` stripped, letters/digits/hyphens/underscores only, max 10
+  tags of 30 characters) and stored in `papers.tags`.
+
+### Fixed
+- **The contact form no longer loses messages.** The route now emails the
+  admin inbox *before* inserting into the database and returns success if the
+  email got through even when the insert fails. The `messages` table was
+  missing from production entirely, so every message ever sent through
+  `/contact` had been silently discarded.
+- Approved papers now appear in the admin published history immediately.
+  Approving only mutated the review queue's local state, so the published
+  list — which fetched once on mount — never learned about it.
+
+### Database
 - `papers.tags text[] not null default '{}'` plus a GIN index
-  (`supabase/migrations/0001_paper_tags.sql`). **Already applied to
-  production** — it is additive, so current live code is unaffected.
-- Profiles, notification preferences, `paper_authors`, `comment_authors` and
-  `notification_log` — the new sections of `supabase/schema.sql`. **Not yet
-  applied**; see TODO for the go-live checklist.
+  (`supabase/migrations/0001_paper_tags.sql`).
+- `messages` created in production from the `supabase/schema.sql` definition.
 
 ## 2026-07-28
 

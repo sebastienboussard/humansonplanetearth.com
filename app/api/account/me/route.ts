@@ -14,7 +14,13 @@ export async function GET() {
   const admin = getAdminClient();
   const { data: prefs } = await admin
     .from("notification_prefs")
-    .select("new_word, deadline_reminders, paper_comments, comment_replies")
+    // Must list every column the account dashboard renders. Omitting the three
+    // deadline windows made them load as unchecked whatever was stored — and
+    // since they default to true in the database, the page claimed reminders
+    // were off while they were still being sent.
+    .select(
+      "new_word, deadline_reminders, deadline_14d, deadline_7d, deadline_1d, paper_comments, comment_replies"
+    )
     .eq("profile_id", profile.id)
     .maybeSingle();
 

@@ -19,6 +19,9 @@ const profile = { id: "prof-1", user_id: "user-1", email: "human@example.com" };
 const prefs = {
   new_word: true,
   deadline_reminders: false,
+  deadline_14d: false,
+  deadline_7d: true,
+  deadline_1d: true,
   paper_comments: true,
   comment_replies: true,
 };
@@ -83,6 +86,23 @@ describe("GET /api/account/me", () => {
       prefs,
     });
     expect(JSON.stringify(body)).not.toContain("user-1");
+  });
+
+  // Regression guard: the route once selected only four of the seven columns,
+  // so the three deadline windows always reached the dashboard undefined and
+  // rendered as unchecked — while the database defaults had them sending.
+  it("selects every preference column the account dashboard renders", async () => {
+    userHolder.current = user;
+    holder.current = createMockSupabase({
+      tables: { profiles: { data: profile }, notification_prefs: { data: prefs } },
+    });
+
+    await GET();
+
+    const selected = holder.current.query("notification_prefs")!.select.mock.calls[0][0];
+    for (const column of Object.keys(prefs)) {
+      expect(selected).toContain(column);
+    }
   });
 
   it("returns 500 when profile creation fails", async () => {
