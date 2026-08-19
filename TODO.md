@@ -37,11 +37,52 @@ Reproduced locally against a production build: `/words/audacity`,
       `ReferenceError` when the fix is reverted.
 - [x] **Confirmed in a browser (2026-07-28)** — papers render on the live site
       in Brave/Chromium. They did *not* render in one hardened Firefox profile,
-      but that was traced to the browser, not the site: Firefox's own built-in
-      viewer renders the same file blank, with no site code involved. The file
-      itself was verified well-formed — embedded `/FontFile2` subset font, a
-      59 KB content stream with 1319 text-show operators. Not a site bug; see
-      §4 for the failure-mode work it did surface.
+      with no site code involved: opening the raw PDF URL in its own tab, in
+      Firefox's built-in viewer, fails there too. The file itself was verified
+      well-formed — embedded `/FontFile2` subset font, a 59 KB content stream
+      with 1319 text-show operators. Not a site bug; see §4 for the
+      failure-mode work it did surface, and §4a for what's still open.
+- **Correction (2026-07-28, later)** — the separate-tab render was first
+      recorded as *blank/white*. On re-checking it is **transparent**, the same
+      see-through hole the site embed shows. That single word was carrying a
+      lot of weight; see §4a.
+
+## 🔴 1a. LIVE BUG — the contact form has never delivered a message
+
+Found 2026-07-29 while previewing `integration` on localhost against the live
+database. Six of the nine tables the code touches **do not exist in production**:
+
+| Present in prod | Missing from prod |
+| --- | --- |
+| `words`, `papers` (incl. `tags`), `comments` | `messages`, `profiles`, `notification_prefs`, `notification_log`, `paper_authors`, `comment_authors` |
+
+`supabase/schema.sql` defines all nine. Only the first three were ever applied;
+the schema grew with each feature and was never re-run. The repo has one
+migration file, `0001_paper_tags.sql`, covering the `tags` column and nothing
+else.
+
+`messages` is the urgent one, because it is used by code on `main` — the
+deployed branch. `app/api/contact/route.ts:37` inserts into `messages`, gets
+`PGRST205: Could not find the table 'public.messages' in the schema cache`, and
+returns 500 "Submission failed. Please try again." Every message anyone has
+sent through `/contact` on the live site was lost. The admin inbox at
+`/api/admin/messages` reads the same missing table.
+
+Not verified by submitting a live message — the table's absence and the insert
+are both confirmed directly, which is enough.
+
+- [ ] Create `messages` in production from the `schema.sql` definition, so the
+      contact form starts working — independent of anything on `integration`.
+      (§12 reordered the route to email the admin inbox *before* the insert,
+      so once `integration` ships, messages stop being lost even while this
+      table is missing — but that is a mitigation, and only works once the
+      Resend env vars in §5 are live. This item stays open either way.)
+- [ ] Check whether any messages were sent during the outage window; they are
+      not recoverable from the database, so the only trace would be in
+      Supabase request logs
+- [ ] Decide whether `schema.sql` sections should become numbered migrations,
+      so this cannot drift again (see §5, which already lists the profiles
+      tables as a manual step — that step is what's missing here too)
 
 ## 🔴 2. The papers bucket is public
 
@@ -94,14 +135,63 @@ page and the site looks fine to everyone else.
 
 - [ ] Opaque background behind the canvas, so a paint failure degrades to a
       blank page instead of a hole
-- [ ] Detect the empty-render case and fall back to the browser's native PDF
-      view (`<object>`/`<iframe>` on the same public URL), keeping react-pdf as
-      the enhanced path
-- [ ] Surface the existing Download link more prominently when the fallback
-      triggers — it already works and needs no canvas
+- [ ] ~~Detect the empty-render case and fall back to the browser's native PDF
+      view (`<object>`/`<iframe>` on the same public URL)~~ — **this fallback
+      does not work on the affected profile.** Firefox's native PDF view *is*
+      pdf.js on a canvas, and it fails there in exactly the same way (§4a). An
+      `<object>` fallback would swap one transparent hole for another. Still
+      worth doing for the general case, but it cannot be the only fallback.
+- [ ] **Promote to primary fallback:** the Download link. It needs no canvas,
+      it already works, and it is the only path verified to work on a machine
+      where canvas paint fails. Surface it prominently whenever the empty-render
+      case is detected — not as a secondary nicety.
 - [ ] Consider capping `devicePixelRatio` on `<Page>`; oversized canvases are a
       common paint-failure trigger. (No help on hardened Firefox, which already
       forces it to 1, but cheap insurance on HiDPI displays.)
+
+## 🟠 4a. Reopened: what actually fails on the hardened Firefox profile
+
+The 2026-07-28 investigation closed on "not a site bug" and ruled out GPU
+compositing. The stated reason was: *Firefox's own viewer paints white, not a
+transparent hole* — i.e. the browser's canvas works, the two failures look
+different, so they have different causes.
+
+That premise is now retracted. The separate-tab render is **transparent**, not
+white. Both paths — our react-pdf embed and Firefox's own built-in viewer —
+fail identically, and both are pdf.js drawing to a `<canvas>`.
+
+What this changes:
+- **"GPU compositing" moves out of "ruled out" and becomes the leading
+  hypothesis.** It was ruled out on the white-vs-transparent distinction alone,
+  and that distinction was a mis-observation.
+- pdf.js fills the whole canvas opaque white *before* it executes any page
+  content. Verified in the pinned source: `beginDrawing()` does
+  `fillStyle = background || "#ffffff"; fillRect(0, 0, width, height)` as its
+  first act, and `executeOperatorList` only runs after
+  (`node_modules/pdfjs-dist/build/pdf.mjs:9831-9861`). So a **white** page means
+  "rendering started and drew nothing" — a content/font problem. A
+  **transparent** page means **rendering never started at all**: no canvas, or
+  a canvas that never reached the compositor. Much narrower, and it points away
+  from the file and toward the graphics stack.
+- The conclusion "not a site bug" **still holds** and is in fact stronger — the
+  failure reproduces with zero site code, in Firefox's privileged viewer, on
+  the raw storage URL.
+
+- [ ] **The one test that settles it:** open a completely unrelated PDF from
+      some other domain in that same Firefox profile. Transparent too → the
+      browser/profile is confirmed, and this file is exonerated for good.
+      Renders normally → the file is back in scope and §259's "PDF file
+      corruption — ruled out" needs re-opening as well.
+- [ ] Check `about:support` → Graphics in that profile: WebRender status,
+      compositor, and any listed failure logs. Try toggling
+      `gfx.webrender.software` to isolate the compositor.
+- [ ] Check for canvas-blocking *extensions* (CanvasBlocker, NoScript). Note
+      this was **not** covered by "disabling fingerprinting protection changed
+      nothing" (§264) — Firefox's built-in `resistFingerprinting` and an
+      extension that stubs out `getContext("2d")` are different mechanisms, and
+      only the first one was tested.
+- [ ] Whatever the cause, it is out of our control. §4's mitigations are the
+      deliverable; this section is only about not re-litigating the diagnosis.
 
 ## 5. Profiles & Notifications — go-live
 
@@ -119,12 +209,24 @@ authorship private is in the CHANGELOG (Unreleased) and the README
       and batch chunking at 100 (including partial-failure counting).
 
 Manual steps, only Seb can do these:
+- [ ] Run `supabase/migrations/0002_deadline_reminder_windows.sql` — adds
+      `deadline_14d` / `deadline_7d` / `deadline_1d` to `notification_prefs`.
+      Pure `add column if not exists`, so it is safe on the tables created on
+      2026-07-29. Until it runs, saving a deadline-window checkbox fails and
+      the cron sends nothing, because `subscribers()` filters on a column that
+      does not exist
 - [ ] Run the new sections of `supabase/schema.sql` in the Supabase SQL editor
+      — confirmed still outstanding on 2026-07-29: `profiles`,
+      `notification_prefs`, `notification_log`, `paper_authors` and
+      `comment_authors` are all absent from production, so signing in reaches
+      `/account` and then fails with "Could not load your account" (§1a).
+      Until this runs, `integration` cannot go live
 - [ ] Supabase dashboard → Authentication: enable magic-link email sign-in,
       add `https://<site>/auth/confirm` to redirect URLs, set the Site URL
 - [ ] Resend: verify the sending domain (DNS) for `NOTIFY_FROM_EMAIL`
 - [ ] Vercel: set `NEXT_PUBLIC_SITE_URL`, `RESEND_API_KEY`,
-      `NOTIFY_FROM_EMAIL`, `UNSUBSCRIBE_SECRET`, `CRON_SECRET`
+      `NOTIFY_FROM_EMAIL`, `UNSUBSCRIBE_SECRET`, `CRON_SECRET`,
+      `ADMIN_NOTIFY_EMAIL` (§12 — admin alerts)
       (cron schedule already lives in `vercel.json`)
 
 ## 6. PDF Metadata Stripping — done, with a caveat
@@ -220,10 +322,50 @@ sections, so the page can render that rather than maintaining a second list.
 
 The site now has its own address: **weare.HumansOnPlanetEarth@gmail.com**
 
+- [x] It now receives the admin alerts (§12) via `ADMIN_NOTIFY_EMAIL` — new
+      papers and contact messages land in this inbox
 - [ ] Use it as the public contact address instead of any personal address
-- [ ] Use it as the `from`/reply-to for outbound notification email
+- [ ] Use it as the `from`/reply-to for outbound notification email — note
+      Resend can't send *from* a `gmail.com` address; `NOTIFY_FROM_EMAIL`
+      stays on the site domain with this address as reply-to
 - [ ] Add it to the privacy page as the route for takedown or correction
       requests on published papers
+
+## 12. Admin page — tabs, published history, admin alerts
+
+Done on `integration`, 2026-08-01. Three problems, one shape: `/admin/review`
+stacked four sections that each fetched once on mount and owned their data
+privately.
+
+**The bug: approved papers never appeared in the published history.** Approve
+in `ReviewQueue` only removed the paper from that component's local state;
+`PublishedPapers` had fetched once and never refetched, so the approved paper
+joined nothing until a hard reload. Even then it was invisible — the published
+list was re-sorted *alphabetically by word*, burying each new arrival among the
+papers for the same word.
+
+- [x] `lib/admin-queue.ts` — the queue moves as pure functions
+      (`movePaperToPublished`, `sortPublished` newest-first, `filterPapers`,
+      `unreadCount`), unit-tested since the node-only test env can't test
+      components. Mutation-verified: reverting the move logic fails 4 tests
+- [x] `app/admin/review/AdminData.tsx` — one client context owns all four
+      datasets; pending and published live in a single state object so a paper
+      can only leave one list by joining the other. Approve = optimistic move
+      + background refetch. All admin reads are `cache: "no-store"`
+- [x] Tabs — `AdminDashboard.tsx`: Messages / Pending papers / Published
+      papers / Words, with unread and pending count badges, active tab synced
+      to `location.hash` so reloads and email deep links land on the right tab
+- [x] Published tab gained a search box (word or title); Words tab lists
+      existing words (new `GET /api/admin/words`) above the add form
+- [x] Admin email alerts — `lib/admin-alerts.ts` emails `ADMIN_NOTIFY_EMAIL`
+      on new paper submissions (both routes) and contact messages. Unset var =
+      silent no-op. Alerts carry no tags, storage paths or profile ids
+- [x] Contact route now emails **before** the insert and returns 200 if the
+      email got through even when the insert fails — because of §1a, that
+      insert *does* fail in production today, and this at least stops the
+      message loss. Mitigation, not the fix; §1a stays open
+- [ ] Send a real end-to-end email once Resend DNS is verified (§5) — the
+      code path is live but unverified against the real API
 
 ---
 
@@ -239,15 +381,21 @@ From Doubt's review, re-confirmed 2026-07-28:
 - **PDF metadata stripping** — both routes, XMP stream included (§6)
 - **Testing framework** — vitest, now 155 tests across 18 suites, `npm test`
 - **Invisible hashtags** — migration already applied to production
-- **Profiles & notifications** — code-complete, pending the manual steps in §5
+- **Profiles & notifications** — code-complete, pending the manual steps in §5.
+  2026-08-05: the public anonymous author page (`/author/[id]`) and the
+  per-paper "show on author page" toggle were removed before release —
+  profiles are an internal-only log for now. The `public_visible` column
+  stays in `paper_authors` (dormant, default false) in case sharing returns.
 - **Stale `netlify.toml` removed** — the site runs on Vercel
 - **Branch consolidation** — everything collected onto `integration`
 - **PDF viewer SSR outage** — fixed, regression-tested, shipped to production
   and verified against the live domain (§1)
-- **Papers confirmed rendering on the live site** in Brave/Chromium. A blank
+- **Papers confirmed rendering on the live site** in Brave/Chromium. A failed
   render on one hardened Firefox profile was traced to the browser, not the
-  site — Firefox's own viewer renders the same file blank. The file was
-  verified well-formed byte-for-byte.
+  site — Firefox's own viewer fails on the same file, with no site code
+  involved. The file was verified well-formed byte-for-byte. (Originally
+  written as "renders the same file blank"; the render is transparent, not
+  blank — see §4a. The not-a-site-bug conclusion is unaffected.)
 
 ## Ruled out while chasing the blank-render report (2026-07-28)
 
@@ -257,5 +405,10 @@ Recorded so none of these get re-investigated:
 - pdf.js worker asset — emitted and correctly referenced at `/_next/static/media/`
 - react-pdf ↔ pdfjs-dist version mismatch — both pinned to 5.4.296
 - Text/annotation layer CSS — contains no blend modes or opacity tricks
-- Firefox fingerprinting protection — disabling it changed nothing
-- GPU compositing — Firefox's own viewer paints white, not a transparent hole
+- Firefox fingerprinting protection — disabling it changed nothing. Note this
+  covers Firefox's built-in `resistFingerprinting` only, *not* canvas-blocking
+  extensions (§4a)
+- ~~GPU compositing — Firefox's own viewer paints white, not a transparent
+  hole~~ — **RETRACTED 2026-07-28.** The premise was wrong: the native viewer
+  renders transparent, same as ours. Moved back to open, and it is now the
+  leading hypothesis (§4a)

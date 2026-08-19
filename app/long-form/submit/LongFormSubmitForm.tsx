@@ -214,7 +214,7 @@ export default function LongFormSubmitForm() {
           <span>
             Attach to my anonymous profile
             <span className="block text-xs mt-0.5" style={{ color: "var(--muted)" }}>
-              Kept private unless you choose to share it. The paper is still published
+              Kept private — only you can see the link. The paper is still published
               anonymously either way.
             </span>
           </span>

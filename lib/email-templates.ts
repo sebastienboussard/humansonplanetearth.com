@@ -37,7 +37,8 @@ export function deadlineReminderEmail(
   daysLeft: number,
   profileId: string
 ): EmailContent {
-  const when = daysLeft === 1 ? "tomorrow" : `in ${daysLeft} days`;
+  const when =
+    daysLeft === 1 ? "tomorrow" : daysLeft === 14 ? "in two weeks" : `in ${daysLeft} days`;
   return {
     subject: `"${word}" deadline ${when}`,
     text: [
@@ -64,6 +65,53 @@ export function paperCommentEmail(
       "",
       `Read and reply: ${paperUrl}`,
       footer(profileId, "paper_comments"),
+    ].join("\n"),
+  };
+}
+
+// ---- Admin alerts ----
+// These go to the site's own inbox, not to a reader, so they take no
+// profileId and must never use footer() — its unsubscribe link is signed
+// against a reader profile that doesn't exist here.
+
+function adminFooter(tab: "pending" | "messages"): string {
+  return ["", "—", `Open the admin page: ${siteUrl()}/admin/review#${tab}`].join("\n");
+}
+
+// Carries only type and word/title — never tags, storage paths or profile ids.
+export function adminNewPaperEmail(paper: {
+  type: "word" | "long-form";
+  word: string | null;
+  title: string | null;
+}): EmailContent {
+  const label =
+    paper.type === "long-form"
+      ? `long-form paper "${paper.title ?? "Untitled"}"`
+      : `paper for "${paper.word ?? "unknown word"}"`;
+  return {
+    subject: `New paper submitted: ${
+      paper.type === "long-form" ? paper.title ?? "Untitled" : paper.word ?? "unknown word"
+    }`,
+    text: [
+      `A new ${label} is waiting for review.`,
+      adminFooter("pending"),
+    ].join("\n"),
+  };
+}
+
+export function adminNewMessageEmail(message: {
+  body: string;
+  replyEmail: string | null;
+}): EmailContent {
+  return {
+    subject: "New contact message",
+    text: [
+      "Someone sent a message through the contact form:",
+      "",
+      message.body,
+      "",
+      message.replyEmail ? `Reply to: ${message.replyEmail}` : "No reply address left.",
+      adminFooter("messages"),
     ].join("\n"),
   };
 }

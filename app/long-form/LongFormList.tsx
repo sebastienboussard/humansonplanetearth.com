@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { matchesTagQuery } from "@/lib/tags";
+import { SearchIcon } from "@/components/icons";
 
 type Paper = {
   id: string;
@@ -23,20 +24,26 @@ export default function LongFormList({ papers }: { papers: Paper[] }) {
   return (
     <div>
       {/* Tag filter — matches invisible hashtags authors attached at submit time */}
-      <div className="mb-6">
+      <div
+        className="mb-6 flex items-center gap-2 px-4 py-2 rounded-sm"
+        style={{
+          backgroundColor: "var(--card)",
+          border: "1px solid var(--border)",
+          color: "var(--muted)",
+        }}
+      >
+        <SearchIcon />
         <input
           type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Filter by hashtag…"
           aria-label="Filter papers by hashtag"
-          className="w-full px-4 py-2 rounded-sm text-sm"
+          className="w-full text-sm bg-transparent"
           style={{
-            backgroundColor: "var(--card)",
-            border: "1px solid var(--border)",
             color: "var(--ink)",
             fontFamily: "system-ui, sans-serif",
             outline: "none",
+            border: "none",
           }}
         />
       </div>

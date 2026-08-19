@@ -9,6 +9,8 @@ vi.mock("@/lib/supabase", async () =>
 
 vi.mock("@/lib/notifications", () => ({
   notifyDeadline: vi.fn(async () => 3),
+  // Real implementation: the route's window check is the behaviour under test.
+  isDeadlineWindow: (days: number) => [14, 7, 1].includes(days),
 }));
 
 import { GET } from "@/app/api/cron/deadline-reminders/route";
@@ -48,7 +50,7 @@ describe("GET /api/cron/deadline-reminders", () => {
     expect(notifyDeadline).not.toHaveBeenCalled();
   });
 
-  it("does nothing when the deadline is not 7 or 1 days away", async () => {
+  it("does nothing when the deadline is not 14, 7 or 1 days away", async () => {
     holder.current = createMockSupabase({
       tables: {
         words: { data: { id: "w1", word: "hope", deadline: deadlineInDays(4) } },
@@ -58,6 +60,16 @@ describe("GET /api/cron/deadline-reminders", () => {
     expect(res.status).toBe(200);
     expect((await res.json()).sent).toBe(0);
     expect(notifyDeadline).not.toHaveBeenCalled();
+  });
+
+  it("fans out the 14-day reminder", async () => {
+    const word = { id: "w1", word: "hope", deadline: deadlineInDays(14) };
+    holder.current = createMockSupabase({ tables: { words: { data: word } } });
+
+    const res = await GET(cronRequest("test-cron-secret"));
+
+    expect(res.status).toBe(200);
+    expect(notifyDeadline).toHaveBeenCalledWith(word, 14);
   });
 
   it("fans out the 7-day reminder", async () => {

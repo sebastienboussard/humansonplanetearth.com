@@ -88,10 +88,16 @@ create table profiles (
   created_at timestamptz default now()
 );
 
+-- deadline_reminders is the master switch; the three window columns pick which
+-- reminders it sends. Two weeks is off by default — it was added later, and
+-- opting people in retroactively would mean sending mail nobody asked for.
 create table notification_prefs (
   profile_id uuid primary key references profiles(id) on delete cascade,
   new_word boolean not null default true,
   deadline_reminders boolean not null default true,
+  deadline_14d boolean not null default false,
+  deadline_7d boolean not null default true,
+  deadline_1d boolean not null default true,
   paper_comments boolean not null default true,
   comment_replies boolean not null default true,
   updated_at timestamptz default now()
@@ -103,6 +109,8 @@ create table notification_prefs (
 create table paper_authors (
   paper_id uuid primary key references papers(id) on delete cascade,
   profile_id uuid not null references profiles(id) on delete cascade,
+  -- Dormant: the public author page was removed; nothing reads or sets this
+  -- to true today. Kept for a possible future opt-in sharing feature.
   public_visible boolean not null default false,
   created_at timestamptz default now()
 );

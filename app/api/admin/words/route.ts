@@ -14,6 +14,23 @@ function isAuthed(req: NextRequest) {
   return req.cookies.get("admin_session")?.value === getSessionToken();
 }
 
+// GET — list all words, newest month first, for the admin Words tab
+export async function GET(req: NextRequest) {
+  if (!isAuthed(req)) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+
+  const admin = getAdminClient();
+  const { data: words, error } = await admin
+    .from("words")
+    .select("id, word, month, year, deadline")
+    .neq("word", "__long-form__")
+    .order("year", { ascending: false })
+    .order("month", { ascending: false });
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  return NextResponse.json({ words: words ?? [] });
+}
+
 export async function POST(req: NextRequest) {
   if (!isAuthed(req)) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
 

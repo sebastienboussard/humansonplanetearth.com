@@ -12,8 +12,9 @@ vi.mock("@/lib/notifications", () => ({
   notifyNewWord: vi.fn(),
 }));
 
-import { POST } from "@/app/api/admin/words/route";
+import { GET, POST } from "@/app/api/admin/words/route";
 import { notifyNewWord } from "@/lib/notifications";
+import { getRequest } from "../helpers/request";
 
 const URL = "http://localhost:3000/api/admin/words";
 
@@ -22,6 +23,39 @@ const validBody = { word: "Hope", month: "8", year: "2026", deadline: "2026-08-3
 afterEach(() => {
   holder.current = null;
   vi.mocked(notifyNewWord).mockClear();
+});
+
+describe("GET /api/admin/words", () => {
+  it("rejects unauthenticated requests", async () => {
+    holder.current = createMockSupabase();
+    const res = await GET(getRequest(URL));
+    expect(res.status).toBe(401);
+  });
+
+  it("lists words, excluding the long-form sentinel", async () => {
+    const rows = [
+      { id: "w2", word: "regret", month: 7, year: 2026, deadline: "2026-07-31" },
+      { id: "w1", word: "stardust", month: 4, year: 2026, deadline: "2026-04-30" },
+    ];
+    holder.current = createMockSupabase({ tables: { words: { data: rows } } });
+
+    const res = await GET(getRequest(URL, { cookies: adminCookies() }));
+
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ words: rows });
+    const q = holder.current.query("words")!;
+    expect(q.neq).toHaveBeenCalledWith("word", "__long-form__");
+    expect(q.order).toHaveBeenCalledWith("year", { ascending: false });
+    expect(q.order).toHaveBeenCalledWith("month", { ascending: false });
+  });
+
+  it("returns 500 when the select fails", async () => {
+    holder.current = createMockSupabase({
+      tables: { words: { error: { message: "boom" } } },
+    });
+    const res = await GET(getRequest(URL, { cookies: adminCookies() }));
+    expect(res.status).toBe(500);
+  });
 });
 
 describe("POST /api/admin/words", () => {

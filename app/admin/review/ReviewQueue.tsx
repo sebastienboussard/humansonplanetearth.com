@@ -1,47 +1,20 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
-type Paper = {
-  id: string;
-  type: string;
-  title: string | null;
-  pdf_url: string;
-  submitted_at: string;
-  signed_url: string | null;
-  words: { word: string; month: number; year: number } | null;
-};
+import { useState } from "react";
+import { useAdminData } from "./AdminData";
+import { paperLabel } from "@/lib/admin-queue";
 
 export default function ReviewQueue() {
-  const [papers, setPapers] = useState<Paper[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { pending, loading, approve, reject } = useAdminData();
   const [acting, setActing] = useState<string | null>(null);
-
-  async function load() {
-    setLoading(true);
-    const res = await fetch("/api/admin/review");
-    const data = await res.json();
-    const sorted = (data.papers ?? []).sort((a: Paper, b: Paper) =>
-      (a.words?.word ?? a.title ?? "").localeCompare(b.words?.word ?? b.title ?? "")
-    );
-    setPapers(sorted);
-    setLoading(false);
-  }
-
-  useEffect(() => { load(); }, []);
 
   async function decide(id: string, status: "approved" | "rejected") {
     setActing(id);
-    await fetch("/api/admin/review", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id, status }),
-    });
-    setPapers((prev) => prev.filter((p) => p.id !== id));
+    await (status === "approved" ? approve(id) : reject(id));
     setActing(null);
   }
 
-  if (loading) {
+  if (loading.pending) {
     return (
       <p className="text-sm italic" style={{ color: "var(--muted)", fontFamily: "system-ui, sans-serif" }}>
         Loading…
@@ -49,7 +22,7 @@ export default function ReviewQueue() {
     );
   }
 
-  if (papers.length === 0) {
+  if (pending.length === 0) {
     return (
       <div
         className="py-16 text-center rounded-sm"
@@ -64,7 +37,7 @@ export default function ReviewQueue() {
 
   return (
     <ul className="space-y-6">
-      {papers.map((paper) => (
+      {pending.map((paper) => (
         <li
           key={paper.id}
           className="rounded-sm p-6"
@@ -73,9 +46,7 @@ export default function ReviewQueue() {
           <div className="flex items-start justify-between gap-4 flex-wrap">
             <div>
               <p className="text-lg font-normal mb-1" style={{ color: "var(--forest)" }}>
-                {paper.type === "long-form" && paper.title
-                  ? paper.title
-                  : paper.words?.word ?? "Unknown word"}
+                {paperLabel(paper)}
               </p>
               <p
                 className="text-xs"

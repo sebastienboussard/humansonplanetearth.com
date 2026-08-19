@@ -85,6 +85,24 @@ describe("PATCH /api/account/prefs", () => {
     expect(q.eq).toHaveBeenCalledWith("profile_id", "prof-1");
   });
 
+  it("accepts the three deadline windows", async () => {
+    userHolder.current = user;
+    holder.current = signedInClient();
+
+    const res = await PATCH(
+      jsonRequest(
+        URL,
+        { deadline_14d: true, deadline_7d: false, deadline_1d: true },
+        { method: "PATCH" }
+      )
+    );
+
+    expect(res.status).toBe(200);
+    expect(holder.current.query("notification_prefs")!.update).toHaveBeenCalledWith(
+      expect.objectContaining({ deadline_14d: true, deadline_7d: false, deadline_1d: true })
+    );
+  });
+
   it("returns 500 when the update fails", async () => {
     userHolder.current = user;
     holder.current = createMockSupabase({

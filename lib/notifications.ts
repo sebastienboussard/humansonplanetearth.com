@@ -9,6 +9,14 @@ import {
 import { formatDeadline } from "@/lib/words";
 
 type WordRow = { id: string; word: string; deadline: string };
+
+/** Days before the deadline a reminder can go out. */
+export const DEADLINE_WINDOWS = [14, 7, 1] as const;
+export type DeadlineWindow = (typeof DEADLINE_WINDOWS)[number];
+
+export function isDeadlineWindow(days: number): days is DeadlineWindow {
+  return (DEADLINE_WINDOWS as readonly number[]).includes(days);
+}
 type CommentRow = { id: string; body: string };
 
 function siteUrl() {
@@ -33,13 +41,16 @@ async function claim(profileId: string, kind: string, refId: string | null): Pro
 
 type Subscriber = { profileId: string; email: string };
 
-/** All subscribers with the given pref enabled. */
-async function subscribers(pref: string): Promise<Subscriber[]> {
+/**
+ * All subscribers with every given pref enabled. Deadline reminders pass two —
+ * the master switch and the specific window — so turning either off is enough
+ * to stop the mail.
+ */
+async function subscribers(...prefs: string[]): Promise<Subscriber[]> {
   const admin = getAdminClient();
-  const { data, error } = await admin
-    .from("notification_prefs")
-    .select("profile_id, profiles(id, email)")
-    .eq(pref, true);
+  let query = admin.from("notification_prefs").select("profile_id, profiles(id, email)");
+  for (const pref of prefs) query = query.eq(pref, true);
+  const { data, error } = await query;
   if (error) {
     console.error("Subscriber lookup error:", error);
     return [];
@@ -92,10 +103,15 @@ export async function notifyNewWord(word: WordRow): Promise<void> {
   }
 }
 
-export async function notifyDeadline(word: WordRow, daysLeft: 7 | 1): Promise<number> {
+export async function notifyDeadline(
+  word: WordRow,
+  daysLeft: DeadlineWindow
+): Promise<number> {
   try {
-    const kind = daysLeft === 7 ? "deadline_7d" : "deadline_1d";
-    const subs = await subscribers("deadline_reminders");
+    // The pref column and the notification_log kind share one name per window,
+    // so a reminder can only be sent to someone who asked for that window.
+    const kind = `deadline_${daysLeft}d`;
+    const subs = await subscribers("deadline_reminders", kind);
     const messages: EmailMessage[] = [];
     for (const sub of subs) {
       if (!(await claim(sub.profileId, kind, word.id))) continue;

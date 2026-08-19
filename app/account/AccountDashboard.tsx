@@ -1,19 +1,20 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { createBrowserSupabase } from "@/lib/supabase-browser";
 
 type Prefs = {
   new_word: boolean;
   deadline_reminders: boolean;
+  deadline_14d: boolean;
+  deadline_7d: boolean;
+  deadline_1d: boolean;
   paper_comments: boolean;
   comment_replies: boolean;
 };
 
 type PaperEntry = {
   paper_id: string;
-  public_visible: boolean;
   papers: {
     id: string;
     title: string | null;
@@ -25,16 +26,23 @@ type PaperEntry = {
 
 const PREF_LABELS: { key: keyof Prefs; label: string; detail: string }[] = [
   { key: "new_word", label: "New word announced", detail: "When a new monthly word is published." },
-  { key: "deadline_reminders", label: "Deadline reminders", detail: "7 days and 1 day before the current word's deadline." },
+  { key: "deadline_reminders", label: "Deadline reminders", detail: "Before the current word's deadline — pick which ones below." },
   { key: "paper_comments", label: "Comments on your papers", detail: "When someone comments on a paper attached to your profile." },
   { key: "comment_replies", label: "Replies to your comments", detail: "When someone replies to a comment you made while signed in." },
+];
+
+// Shown indented under "Deadline reminders" while that switch is on. Two weeks
+// is off by default; the other two match what the reminder always sent.
+const DEADLINE_WINDOWS: { key: keyof Prefs; label: string }[] = [
+  { key: "deadline_14d", label: "2 weeks before" },
+  { key: "deadline_7d", label: "1 week before" },
+  { key: "deadline_1d", label: "1 day before" },
 ];
 
 const sansMuted = { fontFamily: "system-ui, sans-serif", color: "var(--muted)" } as const;
 const sansInk = { fontFamily: "system-ui, sans-serif", color: "var(--ink)" } as const;
 
 export default function AccountDashboard() {
-  const [profileId, setProfileId] = useState<string | null>(null);
   const [prefs, setPrefs] = useState<Prefs | null>(null);
   const [papers, setPapers] = useState<PaperEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -52,7 +60,6 @@ export default function AccountDashboard() {
         const me = await meRes.json();
         const mine = await papersRes.json();
         if (!meRes.ok) throw new Error(me.error);
-        setProfileId(me.profile.id);
         setPrefs(me.prefs);
         setPapers(papersRes.ok ? mine.papers ?? [] : []);
       } catch {
@@ -74,22 +81,6 @@ export default function AccountDashboard() {
       body: JSON.stringify({ [key]: next[key] }),
     });
     if (!res.ok) setPrefs(prefs); // revert
-  }
-
-  async function togglePaper(paperId: string, visible: boolean) {
-    setPapers((ps) =>
-      ps.map((p) => (p.paper_id === paperId ? { ...p, public_visible: visible } : p))
-    );
-    const res = await fetch("/api/account/papers", {
-      method: "PATCH",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ paperId, publicVisible: visible }),
-    });
-    if (!res.ok) {
-      setPapers((ps) =>
-        ps.map((p) => (p.paper_id === paperId ? { ...p, public_visible: !visible } : p))
-      );
-    }
   }
 
   async function signOut() {
@@ -127,24 +118,44 @@ export default function AccountDashboard() {
           className="rounded-sm divide-y"
           style={{ backgroundColor: "var(--card)", border: "1px solid var(--border)" }}
         >
-          {PREF_LABELS.map(({ key, label, detail }) => (
-            <label
-              key={key}
-              className="flex items-start gap-3 p-4 cursor-pointer"
-              style={{ borderColor: "var(--border)" }}
-            >
-              <input
-                type="checkbox"
-                checked={prefs?.[key] ?? false}
-                onChange={() => togglePref(key)}
-                className="mt-1"
-              />
-              <span>
-                <span className="block text-sm" style={sansInk}>{label}</span>
-                <span className="block text-xs mt-0.5" style={sansMuted}>{detail}</span>
-              </span>
-            </label>
-          ))}
+          {PREF_LABELS.map(({ key, label, detail }) => {
+            const expandable = key === "deadline_reminders";
+            const expanded = expandable && (prefs?.deadline_reminders ?? false);
+            return (
+              // The expandable row can't be one <label>: nesting the window
+              // checkboxes inside it would make clicking them toggle the parent.
+              <div key={key} style={{ borderColor: "var(--border)" }}>
+                <label className="flex items-start gap-3 p-4 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={prefs?.[key] ?? false}
+                    onChange={() => togglePref(key)}
+                    className="mt-1"
+                    aria-expanded={expandable ? expanded : undefined}
+                  />
+                  <span>
+                    <span className="block text-sm" style={sansInk}>{label}</span>
+                    <span className="block text-xs mt-0.5" style={sansMuted}>{detail}</span>
+                  </span>
+                </label>
+
+                {expanded && (
+                  <div className="pb-4 pl-12 pr-4 space-y-2" role="group" aria-label="Deadline reminder timing">
+                    {DEADLINE_WINDOWS.map((window) => (
+                      <label key={window.key} className="flex items-center gap-3 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={prefs?.[window.key] ?? false}
+                          onChange={() => togglePref(window.key)}
+                        />
+                        <span className="text-sm" style={sansInk}>{window.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       </section>
 
@@ -154,16 +165,8 @@ export default function AccountDashboard() {
           Your Papers
         </h2>
         <p className="text-xs mb-4" style={sansMuted}>
-          Papers attached to your profile. They are private by default — turning one on
-          lists it on your{" "}
-          {profileId ? (
-            <Link href={`/author/${profileId}`} className="underline">
-              anonymous author page
-            </Link>
-          ) : (
-            "anonymous author page"
-          )}
-          , still with no name.
+          Papers attached to your profile. This list is private — it is only
+          visible to you, here.
         </p>
         {papers.length === 0 ? (
           <p className="text-sm italic" style={{ color: "var(--muted)" }}>
@@ -176,26 +179,16 @@ export default function AccountDashboard() {
             style={{ backgroundColor: "var(--card)", border: "1px solid var(--border)" }}
           >
             {papers.map((entry) => (
-              <div key={entry.paper_id} className="flex items-center justify-between gap-3 p-4">
-                <div>
-                  <p className="text-sm" style={sansInk}>
-                    {entry.papers?.title || "Word paper"}
-                  </p>
-                  <p className="text-xs mt-0.5" style={sansMuted}>
-                    {entry.papers?.status ?? "unknown"} ·{" "}
-                    {entry.papers?.submitted_at
-                      ? new Date(entry.papers.submitted_at).toLocaleDateString()
-                      : ""}
-                  </p>
-                </div>
-                <label className="flex items-center gap-2 text-xs cursor-pointer" style={sansMuted}>
-                  <input
-                    type="checkbox"
-                    checked={entry.public_visible}
-                    onChange={(e) => togglePaper(entry.paper_id, e.target.checked)}
-                  />
-                  Show on author page
-                </label>
+              <div key={entry.paper_id} className="p-4">
+                <p className="text-sm" style={sansInk}>
+                  {entry.papers?.title || "Word paper"}
+                </p>
+                <p className="text-xs mt-0.5" style={sansMuted}>
+                  {entry.papers?.status ?? "unknown"} ·{" "}
+                  {entry.papers?.submitted_at
+                    ? new Date(entry.papers.submitted_at).toLocaleDateString()
+                    : ""}
+                </p>
               </div>
             ))}
           </div>

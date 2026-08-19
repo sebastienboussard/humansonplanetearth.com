@@ -1,53 +1,26 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
-type Message = {
-  id: string;
-  body: string;
-  reply_email: string | null;
-  read: boolean;
-  created_at: string;
-};
+import { useState } from "react";
+import { useAdminData } from "./AdminData";
 
 export default function MessagesInbox() {
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { messages, loading, setMessageRead, deleteMessage } = useAdminData();
   const [busy, setBusy] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetch("/api/admin/messages")
-      .then((r) => r.json())
-      .then((d) => {
-        setMessages(d.messages ?? []);
-        setLoading(false);
-      });
-  }, []);
 
   async function toggleRead(id: string, read: boolean) {
     setBusy(id);
-    await fetch("/api/admin/messages", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id, read }),
-    });
-    setMessages((prev) => prev.map((m) => (m.id === id ? { ...m, read } : m)));
+    await setMessageRead(id, read);
     setBusy(null);
   }
 
   async function remove(id: string) {
     if (!confirm("Permanently delete this message? This cannot be undone.")) return;
     setBusy(id);
-    await fetch("/api/admin/messages", {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id }),
-    });
-    setMessages((prev) => prev.filter((m) => m.id !== id));
+    await deleteMessage(id);
     setBusy(null);
   }
 
-  if (loading) {
+  if (loading.messages) {
     return (
       <p className="text-sm italic" style={{ color: "var(--muted)", fontFamily: "system-ui, sans-serif" }}>
         Loading…

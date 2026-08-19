@@ -2,7 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSessionUser, ensureProfile } from "@/lib/profile";
 import { getAdminClient } from "@/lib/supabase";
 
-const PREF_KEYS = ["new_word", "deadline_reminders", "paper_comments", "comment_replies"] as const;
+const PREF_KEYS = [
+  "new_word",
+  "deadline_reminders",
+  "deadline_14d",
+  "deadline_7d",
+  "deadline_1d",
+  "paper_comments",
+  "comment_replies",
+] as const;
 
 export async function PATCH(req: NextRequest) {
   const user = await getSessionUser();

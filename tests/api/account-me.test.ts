@@ -57,6 +57,9 @@ describe("GET /api/account/me", () => {
       profile_id: "prof-1",
       new_word: true,
       deadline_reminders: true,
+      deadline_14d: false,
+      deadline_7d: true,
+      deadline_1d: true,
       paper_comments: true,
       comment_replies: true,
     });

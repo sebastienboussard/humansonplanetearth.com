@@ -24,6 +24,7 @@ RESEND_API_KEY=                # Resend API key for notification emails
 NOTIFY_FROM_EMAIL=             # e.g. HOPE <notify@humansonplanetearth.com>
 UNSUBSCRIBE_SECRET=            # long random string signing one-click unsubscribe links
 CRON_SECRET=                   # Vercel Cron bearer token for /api/cron/deadline-reminders
+ADMIN_NOTIFY_EMAIL=            # where admin alerts go (new papers, contact messages); unset = alerts off
 ```
 
 3. Start the dev server:
@@ -52,8 +53,8 @@ Accounts are optional and anonymous (magic-link sign-in via Supabase Auth; email
 only, no username). They exist for email notifications — new words, deadline
 reminders, comments on your papers, replies to your comments — each an opt-out
 preference with a signed one-click unsubscribe link in every email. Signed-in
-users can attach submissions to their profile (private by default) and
-optionally share them on a public anonymous author page at `/author/[profileId]`.
+users can attach submissions to their profile as a private log of their own
+papers — the attachment is internal only and has no public surface.
 
 Manual setup:
 

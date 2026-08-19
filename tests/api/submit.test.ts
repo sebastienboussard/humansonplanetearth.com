@@ -16,7 +16,13 @@ vi.mock("@/lib/profile", async () =>
   (await import("../helpers/auth-mock")).profileModuleMock(profileHolder)
 );
 
+vi.mock("@/lib/admin-alerts", () => ({
+  notifyAdminNewPaper: vi.fn(async () => undefined),
+  notifyAdminNewMessage: vi.fn(async () => false),
+}));
+
 import { POST } from "@/app/api/submit/route";
+import { notifyAdminNewPaper } from "@/lib/admin-alerts";
 
 const URL = "http://localhost:3000/api/submit";
 
@@ -48,6 +54,8 @@ function successfulClient() {
 afterEach(() => {
   holder.current = null;
   profileHolder.current = null;
+  vi.mocked(notifyAdminNewPaper).mockClear();
+  vi.mocked(notifyAdminNewPaper).mockResolvedValue(undefined);
 });
 
 describe("POST /api/submit", () => {
@@ -168,6 +176,34 @@ describe("POST /api/submit", () => {
       status: "pending",
       tags: [],
     });
+  });
+
+  it("alerts the admin inbox after a successful submission", async () => {
+    holder.current = successfulClient();
+    const res = await POST(formRequest(URL, buildForm({ pdf: await makePdfFile(), word: "hope" })));
+
+    expect(res.status).toBe(200);
+    expect(notifyAdminNewPaper).toHaveBeenCalledWith({ type: "word", word: "hope", title: null });
+  });
+
+  it("does not alert the admin when the insert fails", async () => {
+    holder.current = createMockSupabase({
+      tables: {
+        words: { data: { id: "word-1" } },
+        papers: { error: { message: "insert failed" } },
+      },
+    });
+    await POST(formRequest(URL, buildForm({ pdf: await makePdfFile(), word: "hope" })));
+    expect(notifyAdminNewPaper).not.toHaveBeenCalled();
+  });
+
+  it("still succeeds when the admin alert rejects", async () => {
+    vi.mocked(notifyAdminNewPaper).mockRejectedValueOnce(new Error("resend down"));
+    holder.current = successfulClient();
+    const res = await POST(formRequest(URL, buildForm({ pdf: await makePdfFile(), word: "hope" })));
+
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ ok: true });
   });
 
   it("normalizes submitted hashtags server-side before storing them", async () => {
