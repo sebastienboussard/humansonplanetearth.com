@@ -6,7 +6,10 @@ checklist. Doubt's review predated the Vercel move and the metadata work — its
 Netlify references and its XMP item have been corrected against current code
 (verified 2026-07-28), not copied over as written.
 
-All feature branches are now collected on `integration`.
+Everything through §8 is shipped to `main` and live as of 2026-08-19.
+`integration` is **stale** — it sits behind `main` and is not the source of
+truth; do not merge from it. Remaining open work is §1a, §2 (deferred), §4/4a,
+§6, §9, §10 and §11.
 
 ---
 
@@ -124,6 +127,19 @@ storage cost, quota burn, flooded review queue.
       **Fails open** if the store is unreachable: the limiter sits behind the
       real checks, and a database blip must not close submissions. Contrast §9,
       where the check *is* the boundary and must fail closed
+- [x] Migration 0003 **applied to production and verified 2026-08-19** — three
+      calls against a cap of 2 returned allowed / allowed / denied through
+      PostgREST, the same path the app uses
+- [x] Oversized uploads now warn clearly. Both forms already rejected a large
+      file at selection, but the message rendered at the foot of the form while
+      the dropzone reset to its empty prompt — so the paper appeared to vanish.
+      The warning sits under the dropzone with `role="alert"` and names the
+      file's real size against the limit. Both limits moved to
+      `lib/upload-limits.ts`, shared by the forms and routes so they cannot
+      drift (they had been written out in four places)
+- [ ] **Not yet exercised in production.** `rate_limits` is still empty — no
+      upload or admin login has hit it since the deploy. The honest smoke test
+      is six submissions from one IP; the sixth should return 429
 - [x] `app/api/submit/long-form/route.ts` — `MAX_SIZE` lowered 10 MB → 4 MB, under
       Vercel's ~4.5 MB serverless body cap, so the limit is one we can actually
       enforce. Added a `content-length` pre-check that refuses oversized bodies
@@ -328,23 +344,31 @@ devices" was wrong and has been corrected.
       production an absent secret should reject.
 - [ ] Pass `remoteip` to siteverify
 
-## 10. "What's Changed" tab
+## 🟡 10. "What's Changed" — banner shipped, page still open
 
-A page where readers can see what's new — not a dev changelog, but a
+A place where readers can see what's new — not a dev changelog, but a
 human-readable "here's what changed since you last visited."
 
-`CHANGELOG.md` already exists with dated entries and Added/Changed/Removed
-sections, so the page can render that rather than maintaining a second list.
-The home page now has an expandable "What's new" banner fed by a hardcoded
-reader-facing list in `data/whats-new.ts` — that array is the natural seed
-content source for this page.
+**Shipped 2026-08-19:** the home page has an expandable "What's new on the
+site" banner (native `<details>`, no JavaScript required) fed by
+`data/whats-new.ts`, with a footer linking the full `CHANGELOG.md` and the
+repository and naming the project as open source.
 
-- [ ] `app/changes/page.tsx` — new route, linked from `components/Nav.tsx`
-- [ ] Decide the source: parse `CHANGELOG.md` at build time, or move entries
-      into a `changes` table so non-code updates (new word of the month, new
-      papers published) can appear without a deploy
-- [ ] Keep entries reader-facing — "you can now filter papers by hashtag",
-      not "refactored PaperCarousel"
+The division of labour is now settled and written into `data/whats-new.ts` as
+a rule: **What's New is only what a visitor would notice** — features and
+quality-of-life changes. Security work, refactors, dependency bumps and schema
+changes go in `CHANGELOG.md`, which stays the complete record. If a reader
+would not notice it while using the site, it does not go in the banner.
+
+- [x] Reader-facing entries, enforced by a documented rule rather than taste
+- [x] Linked to the changelog and the repo for anyone who wants the rest
+- [ ] `app/changes/page.tsx` — a full page, linked from `components/Nav.tsx`.
+      The banner only shows the most recent handful; there is still nowhere to
+      read the whole reader-facing history
+- [ ] Decide the source for that page: keep hand-editing `data/whats-new.ts`,
+      or move entries into a `changes` table so non-code updates (a new word of
+      the month, newly published papers) can appear without a deploy. The
+      hardcoded array is fine for the banner and will not stay fine for a page
 - [ ] Optional: a subtle "new" marker in the nav when there are entries newer
       than the visitor's last visit (localStorage timestamp, no account needed)
 
@@ -394,10 +418,23 @@ papers for the same word.
       email got through even when the insert fails — because of §1a, that
       insert *does* fail in production today, and this at least stops the
       message loss. Mitigation, not the fix; §1a stays open
-- [ ] Send a real end-to-end email once Resend DNS is verified (§5) — the
-      code path is live but unverified against the real API
+- [x] Sent a real end-to-end email — verified 2026-08-19: a live `/contact`
+      submission returned 200, the row landed in `messages`, and the admin
+      alert was delivered through Resend
 
 ---
+
+## Housekeeping
+
+- [ ] Delete the 12 branches already merged into `main`, plus `integration`
+      (stale, behind `main`) and `remove-netlify-config` (30 commits behind —
+      merging it would delete 8,325 lines including every test). Neither should
+      ever be merged; both should be deleted
+- [ ] `@netlify/plugin-nextjs` is still in `package.json` (3.9 MB installed)
+      and referenced nowhere. `netlify.toml` was removed; the dependency was not
+- [ ] `.env.local:18` — `NOTIFY_FROM_EMAIL=HOPE <notify@...>` is unquoted, so
+      `source`-ing the file in a shell breaks at that line. Next.js parses it
+      fine; only shell scripts care
 
 ## Checked, low risk
 
@@ -420,6 +457,15 @@ From Doubt's review, re-confirmed 2026-07-28:
 - **Branch consolidation** — everything collected onto `integration`
 - **PDF viewer SSR outage** — fixed, regression-tested, shipped to production
   and verified against the live domain (§1)
+- **Profiles & notifications** — live since 2026-08-18; every manual step
+  verified against production 2026-08-19 (§5)
+- **Magic-link sign-in** — the Supabase email templates had been overridden to
+  the `{{ .TokenHash }}` form, which cannot work while `@supabase/ssr` forces
+  PKCE. Reverted to `{{ .ConfirmationURL }}`; Site URL corrected from
+  `http://localhost:3000`. Confirmed working (§5)
+- **Upload rate limiting, admin session tokens, reject cleanup** — §3, §7, §8,
+  shipped 2026-08-19 with migration 0003 applied and verified
+- **What's new banner** — home page, linked to the changelog and the repo (§10)
 - **Papers confirmed rendering on the live site** in Brave/Chromium. A failed
   render on one hardened Firefox profile was traced to the browser, not the
   site — Firefox's own viewer fails on the same file, with no site code
