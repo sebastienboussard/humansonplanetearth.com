@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 import { getAdminClient } from "@/lib/supabase";
-import { notifyNewWord } from "@/lib/notifications";
 
 function getSessionToken() {
   return crypto
@@ -48,7 +47,7 @@ export async function POST(req: NextRequest) {
   }
 
   const admin = getAdminClient();
-  const { data: created, error } = await admin
+  const { error } = await admin
     .from("words")
     .insert({
       word: word.toLowerCase().trim(),
@@ -60,15 +59,6 @@ export async function POST(req: NextRequest) {
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-
-  // Notification failure must never fail word creation.
-  if (created) {
-    try {
-      await notifyNewWord(created);
-    } catch (err) {
-      console.error("New-word notification error:", err);
-    }
-  }
 
   return NextResponse.json({ ok: true });
 }

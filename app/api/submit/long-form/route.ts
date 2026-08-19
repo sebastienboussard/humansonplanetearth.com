@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { PDFDocument, PDFName, PDFRef } from "pdf-lib";
 import { getAdminClient } from "@/lib/supabase";
 import { parseTags } from "@/lib/tags";
-import { getSessionUser, ensureProfile } from "@/lib/profile";
 import { notifyAdminNewPaper } from "@/lib/admin-alerts";
 
 const MAX_SIZE = 10 * 1024 * 1024; // 10MB
@@ -86,7 +85,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Insert paper row
-    const { data: paper, error: insertErr } = await admin
+    const { error: insertErr } = await admin
       .from("papers")
       .insert({
         word_id: null,
@@ -109,23 +108,6 @@ export async function POST(req: NextRequest) {
       await notifyAdminNewPaper({ type: "long-form", word: null, title });
     } catch (err) {
       console.error("Admin alert error:", err);
-    }
-
-    // Optional profile attachment — always derived from the server-side session,
-    // never from a client-sent id. Failure must not fail the submission.
-    if (formData.get("attach") === "1" && paper) {
-      try {
-        const user = await getSessionUser();
-        const profile = user ? await ensureProfile(user) : null;
-        if (profile) {
-          const { error: attachErr } = await admin
-            .from("paper_authors")
-            .insert({ paper_id: paper.id, profile_id: profile.id, public_visible: false });
-          if (attachErr) console.error("Paper attach error:", attachErr);
-        }
-      } catch (err) {
-        console.error("Paper attach error:", err);
-      }
     }
 
     return NextResponse.json({ ok: true });

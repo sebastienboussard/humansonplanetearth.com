@@ -8,12 +8,7 @@ vi.mock("@/lib/supabase", async () =>
   (await import("../helpers/supabase-mock")).supabaseModuleMock(holder)
 );
 
-vi.mock("@/lib/notifications", () => ({
-  notifyNewWord: vi.fn(),
-}));
-
 import { GET, POST } from "@/app/api/admin/words/route";
-import { notifyNewWord } from "@/lib/notifications";
 import { getRequest } from "../helpers/request";
 
 const URL = "http://localhost:3000/api/admin/words";
@@ -22,7 +17,6 @@ const validBody = { word: "Hope", month: "8", year: "2026", deadline: "2026-08-3
 
 afterEach(() => {
   holder.current = null;
-  vi.mocked(notifyNewWord).mockClear();
 });
 
 describe("GET /api/admin/words", () => {
@@ -111,27 +105,5 @@ describe("POST /api/admin/words", () => {
     });
     const res = await POST(jsonRequest(URL, validBody, { cookies: adminCookies() }));
     expect(res.status).toBe(500);
-    expect(notifyNewWord).not.toHaveBeenCalled();
-  });
-
-  it("notifies subscribers after a successful insert", async () => {
-    const created = { id: "w1", word: "grace", deadline: "2026-08-31" };
-    holder.current = createMockSupabase({ tables: { words: { data: created } } });
-
-    const res = await POST(jsonRequest(URL, validBody, { cookies: adminCookies() }));
-
-    expect(res.status).toBe(200);
-    expect(notifyNewWord).toHaveBeenCalledWith(created);
-  });
-
-  it("still succeeds when notification fan-out throws", async () => {
-    vi.mocked(notifyNewWord).mockRejectedValueOnce(new Error("smtp down"));
-    holder.current = createMockSupabase({
-      tables: { words: { data: { id: "w1", word: "grace", deadline: "2026-08-31" } } },
-    });
-
-    const res = await POST(jsonRequest(URL, validBody, { cookies: adminCookies() }));
-    expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ ok: true });
   });
 });

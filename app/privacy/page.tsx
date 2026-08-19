@@ -27,22 +27,6 @@ export default function PrivacyPage() {
         <hr style={{ borderColor: "var(--border)" }} className="my-8" />
 
         <h2 className="text-xl font-normal" style={{ color: "var(--forest)" }}>
-          Optional accounts
-        </h2>
-        <p>
-          You may create an optional account (email only — no name, no public
-          username) to receive email notifications you choose: new words, deadline
-          reminders, comments on your papers, and replies to your comments. If you
-          are signed in, you can choose to attach a submission to your profile;
-          that link is private and never shown publicly. Your email is
-          never displayed anywhere, and deleting your account permanently removes
-          your email and all profile links while your papers remain published
-          anonymously.
-        </p>
-
-        <hr style={{ borderColor: "var(--border)" }} className="my-8" />
-
-        <h2 className="text-xl font-normal" style={{ color: "var(--forest)" }}>
           How your paper is published
         </h2>
         <p>

@@ -48,7 +48,7 @@ export default async function SubmitWordPage({
         style={{ borderTop: "1px solid var(--border)", fontFamily: "system-ui, sans-serif", color: "var(--muted)" }}
       >
         <p><strong style={{ color: "var(--ink)" }}>Format:</strong> PDF only · 1 page max · 2 MB max</p>
-        <p><strong style={{ color: "var(--ink)" }}>Privacy:</strong> No account required — you can submit with zero identifying information. If you sign in, you may optionally attach your paper to your anonymous profile (private by default).</p>
+        <p><strong style={{ color: "var(--ink)" }}>Privacy:</strong> No account required — you can submit with zero identifying information.</p>
         <p><strong style={{ color: "var(--ink)" }}>Authorship:</strong> All papers credited as <em>Human On Planet Earth</em>.</p>
         <p><strong style={{ color: "var(--ink)" }}>Moderation:</strong> Reviewed before publishing. Everything welcome except spam and hate.</p>
       </div>
