@@ -4,11 +4,27 @@ All notable changes to this project are documented here.
 
 ## Unreleased
 
-Built and tested, not yet on `main`. (User profiles & email notifications are
-also complete but are held back on the `integration` branch for a later
-release; this list covers everything else.)
+Built and tested, not yet on `main`. Collected on the `integration` branch.
 
 ### Added
+- Optional anonymous user profiles with email notifications. Passwordless
+  magic-link sign-in (Supabase Auth) — email only, no username, no password.
+  Four opt-out notification types: new word announced, deadline reminders
+  (7 days / 1 day, via a daily Vercel Cron job), comments on your papers, and
+  replies to your comments. Every email carries a signed one-click unsubscribe
+  link that works without logging in. Emails are sent through Resend.
+- Papers can optionally be attached to a profile at submission time (or
+  manually by the admin for old papers). Attachments are a private internal
+  log with no public surface — only the owner sees the list, on their account
+  page. (A public anonymous author page with per-paper sharing was built and
+  then taken out before release; the dormant `public_visible` column remains
+  in `paper_authors` for a possible future opt-in version.)
+- Account page (`/account`) with notification preferences, a private list of
+  your attached papers, sign-out, and permanent account deletion (removes the
+  email and all profile links; papers stay published anonymously).
+- Signed-in commenting silently records authorship in a private table so reply
+  notifications work — comments still render anonymously everywhere and the
+  comments API never returns author data.
 - **Invisible hashtags.** Authors can optionally tag a paper when they submit
   it. Tags are never displayed anywhere on the site — they exist only to power
   a filter box on word pages and the long-form index, so a reader can narrow
@@ -16,36 +32,31 @@ release; this list covers everything else.)
   normalized server-side (lowercased, `#` stripped, restricted to letters,
   digits, hyphens and underscores, max 10 tags of 30 characters) and stored in
   a new `papers.tags` column.
-- **Admin page rework.** `/admin/review` is now tabbed — Messages / Pending
-  papers / Published papers / Words — with unread and pending count badges,
-  and the active tab synced to the URL hash so reloads and email deep links
-  land on the right tab. The published tab gained a word/title search box and
-  sorts newest-first; the words tab lists existing words above the add form.
-  One shared client context owns all four datasets, so approving a paper
-  moves it to the published list immediately (previously it silently never
-  appeared there until a hard reload).
-- **Admin email alerts.** New paper submissions (both routes) and contact
-  messages email `ADMIN_NOTIFY_EMAIL` through Resend. Unset var = silent
-  no-op. Alerts carry no tags, storage paths or ids.
-- Test coverage: unit tests for the tag helpers, route tests asserting
-  hashtags are normalized server-side rather than trusted from the client,
-  suites for the contact email-first path, admin alerts, the admin queue
-  moves, and the Resend wrapper (`lib/email.ts` — batch chunking at 100,
-  failure handling).
+- Test coverage for both features: unit tests for the tag helpers, route tests
+  asserting hashtags are normalized server-side rather than trusted from the
+  client, suites for the account, unsubscribe, attach and cron routes, and
+  direct unit suites for the notification fan-out (`lib/notifications.ts` —
+  dedupe, self-notification skip, pref filtering, paper-URL resolution) and
+  the Resend wrapper (`lib/email.ts` — batch chunking at 100, failure
+  handling). 181 tests across 20 suites.
 
-### Fixed
-- **The contact form no longer loses messages.** The route now emails the
-  admin inbox *before* inserting into the database, and returns success if
-  the email got through even when the insert fails — the `messages` table is
-  currently missing in production, and every message sent through `/contact`
-  was silently lost.
-- Approved papers now appear in the admin published history immediately (see
-  the admin rework above).
+### Changed
+- Profile/paper and profile/comment links live in separate tables
+  (`paper_authors`, `comment_authors`) with RLS enabled and zero policies,
+  instead of author columns on the publicly readable `papers`/`comments`
+  tables — the links are invisible to the anon key by construction.
+- Submit-page privacy copy now reads "No account required" (previously
+  "No account, no email"), and the privacy page documents optional accounts.
+- `/api/admin/words` fans out new-word notification emails after a successful
+  insert; notification failures never fail word creation.
 
 ### Database
 - `papers.tags text[] not null default '{}'` plus a GIN index
   (`supabase/migrations/0001_paper_tags.sql`). **Already applied to
   production** — it is additive, so current live code is unaffected.
+- Profiles, notification preferences, `paper_authors`, `comment_authors` and
+  `notification_log` — the new sections of `supabase/schema.sql`. **Not yet
+  applied**; see TODO for the go-live checklist.
 
 ## 2026-07-28
 

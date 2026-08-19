@@ -21,25 +21,29 @@ tests/
 ├── setup.ts              # global env setup (runs before every suite)
 ├── helpers/
 │   ├── supabase-mock.ts  # chainable Supabase client mock + module mock
+│   ├── auth-mock.ts      # user-session + profile module mocks (holder pattern)
 │   ├── pdf.ts            # real PDF fixtures built with pdf-lib
 │   ├── request.ts        # NextRequest builders (JSON / FormData / GET)
 │   └── admin.ts          # admin session-cookie helpers
 ├── lib/                  # unit tests for lib/ functions
 │   ├── words.test.ts
 │   ├── tags.test.ts              # hashtag parsing / normalisation
-│   ├── papers.test.ts            # paper ordering helpers
-│   ├── admin-queue.test.ts       # admin queue moves / sorting / filtering
-│   ├── admin-alerts.test.ts      # admin email alerts (unset var = no-op)
-│   ├── email.test.ts             # Resend transport wrapper
-│   └── email-templates.test.ts   # admin alert templates
+│   ├── unsubscribe.test.ts       # signed unsubscribe tokens round-trip/forgery
+│   └── email-templates.test.ts   # every template carries its unsubscribe link
 └── api/                  # one suite per API route
     ├── submit.test.ts            # word-paper submissions (1 page, 2 MB, PDF-only)
     ├── submit-long-form.test.ts  # long-form submissions (10 MB, valid PDF)
-    ├── comments.test.ts          # comment length, trimming, honeypot
-    ├── contact.test.ts           # email-before-insert delivery guarantee
+    ├── comments.test.ts          # comment length, trimming, honeypot, authorship
     ├── admin-auth.test.ts        # login / logout, session cookie
     ├── admin-review.test.ts      # approve / reject / delete, auth on every verb
-    └── admin-words.test.ts       # word creation validation
+    ├── admin-words.test.ts       # word creation validation + new-word fan-out
+    ├── admin-attach.test.ts      # manual paper→profile attachment
+    ├── account-me.test.ts        # lazy profile creation, no user_id leakage
+    ├── account-prefs.test.ts     # notification preference validation
+    ├── account-papers.test.ts    # paper visibility, ownership guard
+    ├── account-delete.test.ts    # account deletion by session uid
+    ├── unsubscribe.test.ts       # one-click unsubscribe, forged-signature rejection
+    └── cron-deadline.test.ts     # cron auth, 7/1-day windows
 ```
 
 ## What the suite guards

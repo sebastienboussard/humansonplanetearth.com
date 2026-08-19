@@ -7,12 +7,29 @@ vi.mock("@/lib/supabase", async () =>
   (await import("../helpers/supabase-mock")).supabaseModuleMock(holder)
 );
 
+// Anonymous by default; individual tests sign a profile in.
+const profileHolder = vi.hoisted(
+  () => ({ current: null }) as import("../helpers/auth-mock").ProfileHolder
+);
+vi.mock("@/lib/profile", async () =>
+  (await import("../helpers/auth-mock")).profileModuleMock(profileHolder)
+);
+
+vi.mock("@/lib/notifications", () => ({
+  notifyPaperComment: vi.fn(),
+  notifyCommentReply: vi.fn(),
+}));
+
 import { GET, POST } from "@/app/api/comments/route";
+import { notifyPaperComment, notifyCommentReply } from "@/lib/notifications";
 
 const URL = "http://localhost:3000/api/comments";
 
 afterEach(() => {
   holder.current = null;
+  profileHolder.current = null;
+  vi.mocked(notifyPaperComment).mockClear();
+  vi.mocked(notifyCommentReply).mockClear();
 });
 
 describe("GET /api/comments", () => {
@@ -130,4 +147,62 @@ describe("POST /api/comments", () => {
     expect(res.status).toBe(500);
   });
 
+  it("records no authorship for anonymous comments", async () => {
+    holder.current = createMockSupabase({ tables: { comments: { data: comment } } });
+
+    await POST(jsonRequest(URL, { wordId: "w1", body: "hello" }));
+
+    expect(holder.current.query("comment_authors")).toBeUndefined();
+  });
+
+  it("records authorship privately from the server session when signed in", async () => {
+    profileHolder.current = { id: "prof-1", user_id: "user-1", email: "h@example.com" };
+    holder.current = createMockSupabase({
+      tables: { comments: { data: comment }, comment_authors: { data: null } },
+    });
+
+    const res = await POST(jsonRequest(URL, { wordId: "w1", body: "hello" }));
+
+    expect(holder.current.query("comment_authors")!.insert).toHaveBeenCalledWith({
+      comment_id: "c1",
+      profile_id: "prof-1",
+    });
+    // The response never carries author data — comments stay anonymous.
+    expect(await res.json()).toEqual({ comment });
+  });
+
+  it("still returns the comment when authorship recording fails", async () => {
+    profileHolder.current = { id: "prof-1", user_id: "user-1", email: "h@example.com" };
+    holder.current = createMockSupabase({
+      tables: {
+        comments: { data: comment },
+        comment_authors: { error: { message: "boom" } },
+      },
+    });
+
+    const res = await POST(jsonRequest(URL, { wordId: "w1", body: "hello" }));
+    expect(res.status).toBe(200);
+  });
+
+  it("notifies the paper owner for paper comments", async () => {
+    holder.current = createMockSupabase({ tables: { comments: { data: comment } } });
+
+    await POST(jsonRequest(URL, { wordId: "w1", paperId: "p1", body: "hello" }));
+
+    expect(notifyPaperComment).toHaveBeenCalledWith("p1", comment, null);
+    expect(notifyCommentReply).not.toHaveBeenCalled();
+  });
+
+  it("notifies the parent author for replies, passing the replier's profile", async () => {
+    profileHolder.current = { id: "prof-1", user_id: "user-1", email: "h@example.com" };
+    holder.current = createMockSupabase({
+      tables: { comments: { data: comment }, comment_authors: { data: null } },
+    });
+
+    await POST(
+      jsonRequest(URL, { wordId: "w1", paperId: "p1", parentCommentId: "c0", body: "hello" })
+    );
+
+    expect(notifyCommentReply).toHaveBeenCalledWith("c0", comment, "w1", "p1", "prof-1");
+  });
 });
