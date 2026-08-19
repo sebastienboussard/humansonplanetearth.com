@@ -8,6 +8,12 @@ Profiles & notifications. Code-complete and tested; ships once the remaining
 Supabase and Vercel setup is done (see TODO §5).
 
 ### Added
+- **Home page surfaces what's new.** An expandable "What's new on the site"
+  strip above the hero (native `<details>`, no JavaScript required) announces
+  reader-facing features from a hardcoded list in `data/whats-new.ts`. The hero
+  links to the newest approved paper for the current word, and the long-form
+  teaser links to the latest long-form paper by title and date. Home page ISR
+  lowered from 3600s to 60s so new papers appear promptly.
 - Optional anonymous user profiles with email notifications. Passwordless
   magic-link sign-in (Supabase Auth) — email only, no username, no password.
   Four opt-out notification types: new word announced, deadline reminders

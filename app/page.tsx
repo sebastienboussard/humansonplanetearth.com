@@ -1,13 +1,58 @@
 import Link from "next/link";
 import { getCurrentWord, getMonthName, formatDeadline, getDaysRemaining } from "@/lib/words";
+import { supabase } from "@/lib/supabase";
+import WhatsNewBanner from "@/components/WhatsNewBanner";
 
-export const revalidate = 3600;
+export const revalidate = 60;
+
+type LatestWordPaper = { id: string; submitted_at: string };
+type LatestLongFormPaper = { id: string; title: string; submitted_at: string };
+
+function formatPaperDate(submittedAt: string): string {
+  return new Date(submittedAt).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
 
 export default async function HomePage() {
   const current = await getCurrentWord();
 
+  // RLS only exposes approved papers to the anon client; the status filter
+  // keeps the intent explicit anyway.
+  const [wordPaperRes, longFormRes] = await Promise.all([
+    current
+      ? supabase
+          .from("papers")
+          .select("id, submitted_at")
+          .eq("word_id", current.id)
+          .eq("type", "word")
+          .eq("status", "approved")
+          .order("submitted_at", { ascending: false })
+          .limit(1)
+          .maybeSingle()
+      : Promise.resolve({ data: null, error: null }),
+    supabase
+      .from("papers")
+      .select("id, title, submitted_at")
+      .eq("type", "long-form")
+      .eq("status", "approved")
+      .order("submitted_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+  ]);
+
+  // Don't fail the page over the teaser lines — log and render without them
+  if (wordPaperRes.error) console.error("Latest word paper select error:", wordPaperRes.error);
+  if (longFormRes.error) console.error("Latest long-form select error:", longFormRes.error);
+  const latestWordPaper = (wordPaperRes.data as LatestWordPaper | null) ?? null;
+  const latestLongForm = (longFormRes.data as LatestLongFormPaper | null) ?? null;
+
   return (
     <div className="max-w-4xl mx-auto px-6 py-16">
+
+      <WhatsNewBanner />
 
       {/* Hero */}
       <section className="text-center mb-20">
@@ -60,6 +105,18 @@ export default async function HomePage() {
                 Read Submissions
               </Link>
             </div>
+
+            {latestWordPaper && (
+              <p className="mt-8 text-sm">
+                <Link
+                  href={`/words/${current.word}/${latestWordPaper.id}`}
+                  className="underline underline-offset-4"
+                  style={{ color: "var(--terracotta)", fontFamily: "system-ui, sans-serif" }}
+                >
+                  Newest paper · {formatPaperDate(latestWordPaper.submitted_at)} →
+                </Link>
+              </p>
+            )}
           </>
         ) : (
           <p style={{ color: "var(--muted)" }}>No word selected for this month yet.</p>
@@ -104,6 +161,21 @@ export default async function HomePage() {
           Have more to say? The long-form section is open to any length, any topic, any time.
           No monthly constraint.
         </p>
+        {latestLongForm && (
+          <p
+            className="text-sm mb-4"
+            style={{ fontFamily: "system-ui, sans-serif", color: "var(--muted)" }}
+          >
+            Latest:{" "}
+            <Link
+              href={`/long-form/${latestLongForm.id}`}
+              className="underline underline-offset-4"
+              style={{ color: "var(--terracotta)" }}
+            >
+              &ldquo;{latestLongForm.title}&rdquo; · {formatPaperDate(latestLongForm.submitted_at)} →
+            </Link>
+          </p>
+        )}
         <Link
           href="/long-form"
           className="text-sm underline underline-offset-4"

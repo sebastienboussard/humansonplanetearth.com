@@ -323,6 +323,9 @@ human-readable "here's what changed since you last visited."
 
 `CHANGELOG.md` already exists with dated entries and Added/Changed/Removed
 sections, so the page can render that rather than maintaining a second list.
+The home page now has an expandable "What's new" banner fed by a hardcoded
+reader-facing list in `data/whats-new.ts` — that array is the natural seed
+content source for this page.
 
 - [ ] `app/changes/page.tsx` — new route, linked from `components/Nav.tsx`
 - [ ] Decide the source: parse `CHANGELOG.md` at build time, or move entries
