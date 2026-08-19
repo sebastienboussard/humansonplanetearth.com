@@ -137,9 +137,14 @@ storage cost, quota burn, flooded review queue.
       file's real size against the limit. Both limits moved to
       `lib/upload-limits.ts`, shared by the forms and routes so they cannot
       drift (they had been written out in four places)
-- [ ] **Not yet exercised in production.** `rate_limits` is still empty — no
-      upload or admin login has hit it since the deploy. The honest smoke test
-      is six submissions from one IP; the sixth should return 429
+- [x] **Confirmed working in production** for the admin-login path — an
+      `admin-login:<ip>` row with a live counter appeared in `rate_limits`
+      after the post-deploy sign-in, so the shared store, the IP derivation
+      from `x-forwarded-for` and the atomic upsert are all doing their job
+- [ ] The **upload** path is still unexercised — no `submit:` key has appeared
+      yet. Same code and same store as the login path, so this is confirmation
+      rather than doubt. The smoke test is six submissions from one IP; the
+      sixth should return 429 with a `Retry-After`
 - [x] `app/api/submit/long-form/route.ts` — `MAX_SIZE` lowered 10 MB → 4 MB, under
       Vercel's ~4.5 MB serverless body cap, so the limit is one we can actually
       enforce. Added a `content-length` pre-check that refuses oversized bodies
@@ -431,15 +436,38 @@ papers for the same word.
 
 ## Housekeeping
 
-- [ ] Delete the 12 branches already merged into `main`, plus `integration`
-      (stale, behind `main`) and `remove-netlify-config` (30 commits behind —
-      merging it would delete 8,325 lines including every test). Neither should
-      ever be merged; both should be deleted
-- [ ] `@netlify/plugin-nextjs` is still in `package.json` (3.9 MB installed)
-      and referenced nowhere. `netlify.toml` was removed; the dependency was not
-- [ ] `.env.local:18` — `NOTIFY_FROM_EMAIL=HOPE <notify@...>` is unquoted, so
-      `source`-ing the file in a shell breaks at that line. Next.js parses it
-      fine; only shell scripts care
+Done 2026-08-19:
+
+- [x] Deleted all 14 local branches — 12 already merged into `main`, plus
+      `integration` and `remove-netlify-config`. Only `main` remains locally
+- [x] The two branches that held commits found nowhere else are preserved as
+      tags before deletion, so nothing was lost: `archive/integration`
+      (`72143db`, "Profiles and notifications work in progress") and
+      `archive/remove-netlify-config` (`b8349c0`, "Remove stale netlify.toml").
+      Both pushed to origin. Recover either with
+      `git checkout -b <name> archive/<name>`
+- [x] Removed the four `.claude/worktrees/*` checkouts that were pinning those
+      branches. The two `~/.cursor/worktrees/` checkouts are another tool's and
+      were left alone
+- [x] `@netlify/plugin-nextjs` uninstalled — 3.9 MB, referenced nowhere, left
+      behind when `netlify.toml` was removed. `package-lock.json` regenerated
+      in the same step (adding a dependency without the lockfile once broke
+      `npm ci`; removing one has the same hazard). Tests, typecheck and build
+      re-run clean afterwards
+- [x] `.env.local` — `NOTIFY_FROM_EMAIL` value quoted, so `set -a; . ./.env.local`
+      no longer fails at that line. Next.js is unaffected either way, since
+      dotenv strips surrounding quotes. Not a repo file; gitignored
+
+Still open:
+
+- [ ] **Delete the remote branches.** Local is clean but origin still carries
+      12. All are either merged into `main` or archived as tags above, so this
+      is safe:
+
+      git push origin --delete fix-magic-link harden-uploads-and-admin-auth \
+        home-whats-new integration release-profiles release-without-profiles \
+        remove-netlify-config ship-tests-and-netlify-cleanup testing-framework \
+        todo-whats-changed worktree-invisible-hashtags worktree-todo-review-notes
 
 ## Checked, low risk
 
