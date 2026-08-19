@@ -293,10 +293,15 @@ devices" was wrong and has been corrected.
       the existing `DELETE` handler, which had them the other way round. A stray
       file beats a live row pointing at a missing one. Removal failures are
       logged, never fatal: the database is the record of what is published
-- [ ] One-time cleanup: papers already rejected still have their PDFs in storage.
-      `scripts/cleanup-rejected-pdfs.mjs` does it — **dry run by default**, pass
-      `--apply` to delete. A dry run on 2026-08-19 found exactly **3** orphaned
-      files, all with old `Date.now()` names. Not deleted yet; needs Seb
+- [x] One-time cleanup done 2026-08-19 — the 3 orphaned PDFs from previously
+      rejected papers are gone from the bucket. Verified directly against
+      storage: all three now return `NoSuchKey` / "Object not found", while an
+      approved paper still serves 200, so nothing else was caught in the sweep
+- [x] `scripts/cleanup-rejected-pdfs.mjs` now checks storage before reporting.
+      It listed database rows, and a rejected row keeps its `pdf_url` after the
+      file is deleted — so it would have reported the same 3 files forever. It
+      uses the storage `list` API rather than a public URL so it keeps working
+      if the bucket is ever made private (§2)
 
 ## ✅ 8. Admin auth — DONE
 

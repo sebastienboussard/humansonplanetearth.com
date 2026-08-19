@@ -40,10 +40,39 @@ if (error) {
   process.exit(1);
 }
 
-const paths = (rejected ?? []).map((p) => p.pdf_url).filter(Boolean);
+const candidates = (rejected ?? []).map((p) => p.pdf_url).filter(Boolean);
+
+/**
+ * A rejected row keeps its pdf_url after the file is deleted, so the database
+ * alone cannot say what is still in the bucket — listing rows would report the
+ * same files forever, long after they were removed. Ask storage directly.
+ * `list` is used rather than a public URL fetch so this keeps working if the
+ * bucket is ever made private (TODO §2).
+ */
+async function existsInStorage(path) {
+  const slash = path.lastIndexOf("/");
+  const dir = slash === -1 ? "" : path.slice(0, slash);
+  const name = slash === -1 ? path : path.slice(slash + 1);
+  const { data, error: listErr } = await admin.storage
+    .from("papers")
+    .list(dir, { search: name, limit: 100 });
+  if (listErr) {
+    console.error(`Could not check ${path}:`, listErr.message);
+    return false;
+  }
+  return (data ?? []).some((o) => o.name === name);
+}
+
+const checks = await Promise.all(candidates.map(existsInStorage));
+const paths = candidates.filter((_, i) => checks[i]);
+const alreadyGone = candidates.length - paths.length;
+
+if (alreadyGone > 0) {
+  console.log(`${alreadyGone} rejected paper(s) already have no stored file — skipping.`);
+}
 
 if (paths.length === 0) {
-  console.log("No rejected papers with stored files. Nothing to do.");
+  console.log("Nothing left to clean up.");
   process.exit(0);
 }
 
