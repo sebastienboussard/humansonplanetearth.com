@@ -78,7 +78,8 @@ export default function WhatsNewBanner() {
             color: "var(--muted)",
           }}
         >
-          This site is an open source project. Read the{" "}
+          Above is what changed for you. This site is an open source project —
+          the{" "}
           <a
             href={CHANGELOG_URL}
             target="_blank"
@@ -88,7 +89,7 @@ export default function WhatsNewBanner() {
           >
             full changelog
           </a>{" "}
-          or browse the code{" "}
+          records everything else too, and you can browse the code{" "}
           <a
             href={REPO_URL}
             target="_blank"
