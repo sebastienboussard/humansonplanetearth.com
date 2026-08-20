@@ -131,8 +131,8 @@ export default async function HomePage() {
           What is this?
         </h2>
         <p className="text-base leading-relaxed mb-4" style={{ color: "var(--ink)" }}>
-          Each month, a word is chosen. Anyone can write up to one page about it — a reflection,
-          a memory, a question, an argument. Save it as a PDF and submit it here.
+          Each month, a word is chosen. Anyone can respond in up to one page — written, drawn,
+          or anything else that fits. Save it as a PDF and submit it here.
         </p>
         <p className="text-base leading-relaxed mb-6" style={{ color: "var(--ink)" }}>
           All papers are published anonymously, credited only as{" "}
@@ -152,14 +152,14 @@ export default async function HomePage() {
       {/* Long-form teaser */}
       <section className="text-center">
         <h2 className="text-2xl font-normal mb-4" style={{ color: "var(--forest)" }}>
-          Long-Form Writing
+          Long-Form
         </h2>
         <p
           className="text-base leading-relaxed mb-6 max-w-xl mx-auto"
           style={{ color: "var(--ink)" }}
         >
-          Have more to say? The long-form section is open to any length, any topic, any time.
-          No monthly constraint.
+          Have more to say? The long-form section is open to any length, any form, any topic,
+          any time. No monthly constraint.
         </p>
         {latestLongForm && (
           <p

@@ -57,7 +57,7 @@ export async function GET() {
   <channel>
     <title>Humans on Planet Earth</title>
     <link>${base}</link>
-    <description>A word is chosen each month. Anyone can write about it.</description>
+    <description>A word is chosen each month. Anyone can respond in one page — written, drawn, or anything else.</description>
     <language>en</language>
     <atom:link href="${base}/rss.xml" rel="self" type="application/rss+xml" />
 ${items.map((item) => `    <item>

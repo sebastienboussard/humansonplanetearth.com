@@ -1,6 +1,6 @@
 # Humans on Planet Earth
 
-A writing platform built around monthly word prompts. Each month a single word is chosen — anyone can submit a one-page PDF response, published anonymously as *Human On Planet Earth*. There is also a long-form section for writing of any length, any topic, at any time.
+A platform built around monthly word prompts. Each month a single word is chosen — anyone can submit a one-page PDF response, written, drawn, or anything else, published anonymously as *Human On Planet Earth*. There is also a long-form section for work of any length, any form, any topic, at any time.
 
 ## Local Development
 

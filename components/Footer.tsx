@@ -12,7 +12,7 @@ export default function Footer() {
     >
       <div className="max-w-4xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
         <p style={{ fontFamily: "Georgia, serif" }} className="text-sm italic">
-          Written by Humans on Planet Earth.
+          Made by Humans on Planet Earth.
         </p>
         <nav className="flex gap-5 text-xs" style={{ fontFamily: "system-ui, sans-serif" }}>
           <Link href="/about" className="hover:underline">About</Link>

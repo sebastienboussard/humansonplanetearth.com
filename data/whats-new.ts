@@ -23,6 +23,13 @@ export type WhatsNewEntry = {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    date: "2026-08-20",
+    title: "It was never only writing",
+    blurb:
+      "A page can be written, drawn, photographed, or anything else.",
+    href: "/submit",
+  },
+  {
     date: "2026-08-19",
     title: "Get notified — Introducing Accounts",
     blurb:

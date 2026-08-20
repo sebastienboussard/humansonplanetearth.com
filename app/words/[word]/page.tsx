@@ -125,6 +125,6 @@ export async function generateMetadata({
   if (!entry) return {};
   return {
     title: `${entry.word} — Humans on Planet Earth`,
-    description: `Read what humans wrote about "${entry.word}" — ${getMonthName(entry.month)} ${entry.year}.`,
+    description: `See what humans made of the word "${entry.word}" — ${getMonthName(entry.month)} ${entry.year}.`,
   };
 }

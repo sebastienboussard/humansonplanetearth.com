@@ -41,6 +41,22 @@ All notable changes to this project are documented here.
   lowered from 3600s to 60s so new papers appear promptly.
 
 ### Changed
+- **The site no longer says a submission has to be writing.** Nothing in the
+  code ever restricted the medium — the submit routes check MIME type, page
+  count and size, and a drawing has always been as valid as an essay — but the
+  copy said *write* nearly everywhere, from the meta description to the About
+  page's closing "Just a human, writing". Rewritten across the home, About,
+  submit, long-form, donate and privacy pages, the RSS feed and the new-word
+  email, around one phrase: written, drawn, or anything else that fits on one
+  page as a PDF. Both "Long-Form Writing" headings are now just "Long-Form".
+  The word *paper*, the nav labels and the routes are unchanged.
+- **Both submit pages stopped advertising a 2 MB limit.** The Format/Privacy/
+  Authorship/Moderation block was copy-pasted into `app/submit/page.tsx` and
+  `app/submit/[word]/page.tsx`, and neither copy was updated when the cap moved
+  to 4.5 MB — so the pages turned people away from files the server would have
+  accepted. The block is now one `components/SubmitTerms.tsx` that reads
+  `MAX_UPLOAD_SIZE` from `lib/upload-limits.ts` instead of spelling the number
+  out, which is what let it drift in the first place.
 - **Every submission now gets 4.5 MB** — word papers up from 2 MB, long-form up
   from 4 MB, one shared `MAX_UPLOAD_SIZE`. A scanned page or an image-heavy PDF
   in the 3–4 MB range used to be turned away; it goes through now. 4.5 MB is the

@@ -20,7 +20,7 @@ export default function PrivacyPage() {
         </h2>
         <p>
           No names, no tracking, and no account required. When you submit a paper
-          anonymously, we store only the PDF and the word you wrote about. Nothing
+          anonymously, we store only the PDF and the word you responded to. Nothing
           is attached to you.
         </p>
 
@@ -61,7 +61,7 @@ export default function PrivacyPage() {
           royalty-free license to publish, reproduce, distribute, and sell your
           paper — including in collected works such as books, anthologies, and
           printed editions — under the site&apos;s name and the shared byline{" "}
-          <em>Human On Planet Earth</em>. You keep authorship of your own writing;
+          <em>Human On Planet Earth</em>. You keep authorship of your own work;
           the site may compile and sell it.
         </p>
 

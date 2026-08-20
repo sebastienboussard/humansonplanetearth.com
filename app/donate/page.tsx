@@ -20,7 +20,7 @@ export default function DonatePage() {
         A way to support Humans on Planet Earth is on its way.
       </p>
       <p className="text-base leading-relaxed" style={{ color: "var(--ink)" }}>
-        For now, the best thing you can do is write something and submit it.
+        For now, the best thing you can do is make something and submit it.
       </p>
     </div>
   );

@@ -14,7 +14,7 @@ export default function LongFormSubmitPage() {
         className="text-sm mb-10"
         style={{ fontFamily: "system-ui, sans-serif", color: "var(--muted)" }}
       >
-        Any length. Any topic. Any time. Published anonymously as{" "}
+        Any length. Any form. Any topic. Any time. Published anonymously as{" "}
         <em>Human On Planet Earth</em>.
       </p>
 

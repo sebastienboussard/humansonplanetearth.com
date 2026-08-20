@@ -19,12 +19,13 @@ export default function AboutPage() {
           Humanity's greatest joy is to think creatively. The Word Of The Month is your invitation.
         </p>
         <p>
-          There is only one restriction, it has to fit on one page as a pdf.
+          There is only one restriction: it has to fit on one page as a PDF.
+          Write it, draw it, or make it however you like.
         </p>
         <p>
           Every submission is published anonymously, credited as{" "}
           <em>Human On Planet Earth</em>. No names. No credentials. No institution.
-          Just a human, writing.
+          Just a human, making something.
         </p>
         <p>
           Visitors can read the collection and anonymously discuss each paper in the comments. The conversation belongs to everyone.
@@ -33,11 +34,11 @@ export default function AboutPage() {
         <hr style={{ borderColor: "var(--border)" }} className="my-8" />
 
         <h2 className="text-xl font-normal" style={{ color: "var(--forest)" }}>
-          Long-Form Writing
+          Long-Form
         </h2>
         <p>
-          If one page isn&apos;t enough, the long-form section accepts writing of any length,
-          on any topic, at any time. No monthly word, no page limit.
+          If one page isn&apos;t enough, the long-form section accepts work of any length,
+          in any form, on any topic, at any time. No monthly word, no page limit.
         </p>
 
         <hr style={{ borderColor: "var(--border)" }} className="my-8" />
@@ -49,7 +50,10 @@ export default function AboutPage() {
           className="list-decimal list-inside space-y-2"
           style={{ fontFamily: "system-ui, sans-serif", fontSize: "0.9rem" }}
         >
-          <li>Write about the current word of the month — one page, saved as a PDF.</li>
+          <li>
+            Respond to the current word of the month — written, drawn, or anything else — on
+            one page, saved as a PDF.
+          </li>
           <li>
             Go to the{" "}
             <Link href="/submit" style={{ color: "var(--terracotta)" }} className="underline underline-offset-4">

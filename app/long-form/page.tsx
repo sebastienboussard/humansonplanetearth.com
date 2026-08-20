@@ -36,7 +36,7 @@ export default async function LongFormPage() {
         className="text-sm mb-12"
         style={{ fontFamily: "system-ui, sans-serif", color: "var(--muted)" }}
       >
-        Writing of any length, any topic, any time. No monthly word required.
+        Any length, any form, any topic, any time. No monthly word required.
       </p>
 
       {!papers || papers.length === 0 ? (

@@ -5,10 +5,10 @@ import Footer from "@/components/Footer";
 
 export const metadata: Metadata = {
   title: "Humans on Planet Earth",
-  description: "A word is chosen each month. Anyone can write about it.",
+  description: "A word is chosen each month. Anyone can respond in one page — written, drawn, or anything else.",
   openGraph: {
     title: "Humans on Planet Earth",
-    description: "A word is chosen each month. Anyone can write about it.",
+    description: "A word is chosen each month. Anyone can respond in one page — written, drawn, or anything else.",
     url: "https://humansonplanetearth.com",
     siteName: "Humans on Planet Earth",
     type: "website",

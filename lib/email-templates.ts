@@ -25,7 +25,7 @@ export function newWordEmail(
     text: [
       `The new word of the month is "${word}".`,
       "",
-      `Write one page on what it means to you and submit it by ${deadline}:`,
+      `Make one page on what it means to you — written, drawn, or anything else — and submit it by ${deadline}:`,
       `${siteUrl()}/submit`,
       footer(profileId, "new_word"),
     ].join("\n"),
