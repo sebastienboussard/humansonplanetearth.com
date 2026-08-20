@@ -9,7 +9,7 @@ Netlify references and its XMP item have been corrected against current code
 Everything through §8 is shipped to `main` and live as of 2026-08-19.
 `integration` is **stale** — it sits behind `main` and is not the source of
 truth; do not merge from it. Remaining open work is §1a, §2 (deferred), §4/4a,
-§6, §9, §10 and §11.
+§6, §9, §10, §11 and §13.
 
 ---
 
@@ -155,6 +155,21 @@ storage cost, quota burn, flooded review queue.
       derives an IP from `x-forwarded-for` on every upload. It is never stored
       (only a key like `submit:<ip>` with a counter, expiring within the hour),
       but the privacy page should say so plainly rather than leave it implicit
+- [x] Both routes now share one `MAX_UPLOAD_SIZE` of 4.5 MB (`lib/upload-limits.ts`)
+      — word papers raised from 2 MB, long-form from 4 MB, so a 3–4 MB scan or
+      image-heavy PDF goes through. **Open risk, deliberately accepted:** 4.5 MB
+      is Vercel's serverless body cap exactly, and multipart framing adds a few
+      hundred bytes on top of the file, so a PDF within a whisker of the limit
+      still 413s at the platform edge before our own content-length pre-check
+      runs. That path is now handled rather than hidden: `submitFailureMessage`
+      turns the platform's non-JSON 413 into a size message instead of the
+      "Network error" the forms used to show. If it turns out to bite in
+      practice, drop `MAX_UPLOAD_SIZE` to ~4.3 MB — one constant, one place
+- [ ] Note for later: `lib/rate-limit.ts` hits Supabase via RPC
+      (`rate_limit_hit`) on every single call — one DB round-trip per check, no
+      in-memory layer in front of it. Fine at current volume; worth moving to
+      an edge KV store (e.g. Upstash) only if traffic grows enough to make that
+      round-trip matter
 
 ## 🟠 4. The PDF viewer fails to a transparent hole
 
@@ -285,7 +300,64 @@ devices" was wrong and has been corrected.
 - [ ] Not covered by the current strip: embedded attachments, document-level
       JavaScript, annotations. Decide whether to drop them too.
 
-## ✅ 7. Upload paths + delete on reject — DONE
+## 🟠 7. Upload paths + delete on reject — reopened: the upload→insert race
+
+The rejection half is done (below). What was never covered is the **submission**
+half. Both submit routes upload the PDF to the bucket *before* they insert the
+`papers` row, and nothing undid the upload when the insert did not land:
+
+- **the insert returns an error** — the route logged it and returned 500,
+  leaving the object in the bucket referenced by nothing
+- **the function dies mid-flight** — Vercel timeout, cold-start kill, or a
+  PostgREST reply lost in transit. No in-process code runs at all, so no
+  compensating delete can help
+
+`scripts/cleanup-rejected-pdfs.mjs` cannot see either: it walks *rows* and asks
+storage about each one, so a file with no row is invisible to it by
+construction.
+
+The second case also constrains the fix for the first. A timed-out insert may
+have **committed** — the write succeeded and only the reply was lost — so
+deleting the file unconditionally would produce exactly the failure this
+section rules out below: a live row pointing at missing storage. The
+compensating delete therefore asks the database first, and on any uncertainty
+(a row found, or a lookup that itself failed) leaves the file for the sweeper.
+
+- [x] `lib/storage-cleanup.ts` — `removeStoredPdf` moved here from
+      `app/api/admin/review/route.ts` (behaviour unchanged, one definition
+      instead of one per caller), plus `discardOrphanedUpload`, which removes a
+      path only when the database confirms no row claims it
+- [x] Both submit routes track `uploadedPath` from the moment the upload
+      commits until the row exists, and discard on the insert-error branch and
+      in the outer `catch`. The catch is what covers an insert that *throws*
+      rather than returning an error — a socket timeout on the PostgREST call
+      never reaches the `insertErr` branch
+- [x] `scripts/cleanup-orphaned-pdfs.mjs` — the mirror image of the rejected
+      sweep: walks storage and asks the rows, rather than walking rows and
+      asking storage. Only files with no row **and** older than 7 days are
+      candidates, so a file whose row is still being written is never in scope.
+      Dry run by default, `--apply` to delete. This is the only thing that can
+      catch a killed function
+- [x] Regression-tested both routes: file removed when the insert fails, file
+      **kept** when a row already claims the path (the committed-but-timed-out
+      case), kept when the orphan check itself errors, and never removed on a
+      successful submission
+- [x] Dry-run against production 2026-08-19 — **no orphans**: 36 stored PDFs
+      against 39 paths referenced by rows. The gap of 3 is the rejected papers
+      whose files were removed in the sweep below, and `cleanup-rejected-pdfs.mjs`
+      independently reports exactly those 3 as already gone. The two scripts
+      agree, and neither has anything left to do
+- [x] The first dry run caught a bug in the sweeper itself: Supabase leaves a
+      `.emptyFolderPlaceholder` object in every folder, which has no paper row
+      by definition and was reported as an orphan. The sweep now only ever
+      considers `.pdf` files. Worth remembering that the dry run earned its keep
+      on its first use
+- [ ] Nothing to `--apply` yet. Re-run after the next stretch of live
+      submissions — that is when a killed function would actually leave
+      something behind
+
+### The rejection half — done
+
 
 - [x] `app/api/submit/route.ts` — `crypto.randomUUID()` instead of `Date.now()`
       in the filename. Timestamps collide under concurrent uploads and leak
@@ -432,6 +504,18 @@ papers for the same word.
       submission returned 200, the row landed in `messages`, and the admin
       alert was delivered through Resend
 
+## 13. No startup validation for environment variables
+
+Confirmed: no `@t3-oss/env-nextjs`, no zod schema, nothing validates
+`process.env` at boot. A missing or malformed critical var (e.g.
+`ADMIN_PASSWORD`, `UNSUBSCRIBE_SECRET`, `CRON_SECRET`, `TURNSTILE_SECRET_KEY`)
+only surfaces at first use — sometimes silently, as §9 already flags
+specifically for Turnstile.
+
+- [ ] Validate critical env vars at module load (a small zod schema, or
+      `@t3-oss/env-nextjs`) so the app fails loudly at boot instead of
+      degrading silently at request time
+
 ---
 
 ## Housekeeping
@@ -468,6 +552,14 @@ Still open:
         home-whats-new integration release-profiles release-without-profiles \
         remove-netlify-config ship-tests-and-netlify-cleanup testing-framework \
         todo-whats-changed worktree-invisible-hashtags worktree-todo-review-notes
+- [ ] `next.config.ts:3` — comment still reads "Netlify deployment — static
+      export not used; serverless functions handle API routes" despite the
+      site running on Vercel (`vercel.json`) and `netlify.toml` already
+      removed. Update or delete the comment
+- [ ] No pre-commit hooks exist (`.husky/` absent, no `prepare` script). Add
+      husky + lint-staged to run lint/typecheck before commit — this is the
+      same class of failure (`package.json`/`package-lock.json` drift) that
+      already broke `npm ci` once, per the done-items above
 
 ## Checked, low risk
 
@@ -497,7 +589,9 @@ From Doubt's review, re-confirmed 2026-07-28:
   PKCE. Reverted to `{{ .ConfirmationURL }}`; Site URL corrected from
   `http://localhost:3000`. Confirmed working (§5)
 - **Upload rate limiting, admin session tokens, reject cleanup** — §3, §7, §8,
-  shipped 2026-08-19 with migration 0003 applied and verified
+  shipped 2026-08-19 with migration 0003 applied and verified. §7 has since
+  been reopened for the upload→insert race, which the reject cleanup never
+  covered
 - **What's new banner** — home page, linked to the changelog and the repo (§10)
 - **Papers confirmed rendering on the live site** in Brave/Chromium. A failed
   render on one hardened Firefox profile was traced to the browser, not the

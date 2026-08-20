@@ -39,7 +39,7 @@ export const WHATS_NEW: WhatsNewEntry[] = [
     date: "2026-08-19",
     title: "Clearer upload limits",
     blurb:
-      "If your PDF is too large, the submit page now tells you straight away — how big it is, what the limit is, and what to do — instead of quietly clearing your file. Long-form papers cap at 4 MB, word papers at 2 MB.",
+      "If your PDF is too large, the submit page now tells you straight away — how big it is, what the limit is, and what to do — instead of quietly clearing your file. Both word papers and long-form papers cap at 4.5 MB.",
     href: "/submit",
   },
   {

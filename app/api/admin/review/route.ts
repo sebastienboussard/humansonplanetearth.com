@@ -1,20 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabase";
 import { isAdminRequest as isAuthed } from "@/lib/admin-auth";
-
-/**
- * Best-effort storage removal. The file may already be gone, and neither
- * deleting nor rejecting a paper should fail because the bucket did — the
- * database is the record of truth about what is published.
- */
-async function removeStoredPdf(path: string) {
-  try {
-    const { error } = await getAdminClient().storage.from("papers").remove([path]);
-    if (error) console.error("Storage removal failed:", path, error.message);
-  } catch (err) {
-    console.error("Storage removal failed:", path, err);
-  }
-}
+import { removeStoredPdf } from "@/lib/storage-cleanup";
 
 // GET — list papers by status (pending by default, or ?status=approved)
 export async function GET(req: NextRequest) {

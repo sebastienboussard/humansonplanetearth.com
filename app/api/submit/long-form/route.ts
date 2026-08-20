@@ -3,15 +3,17 @@ import crypto from "crypto";
 import { PDFDocument, PDFName, PDFRef } from "pdf-lib";
 import { getAdminClient } from "@/lib/supabase";
 import { clientIp, rateLimit, tooManyRequests } from "@/lib/rate-limit";
-import { LONG_FORM_MAX_SIZE } from "@/lib/upload-limits";
+import { LONG_FORM_MAX_SIZE, formatBytes, oversizeMessage } from "@/lib/upload-limits";
 import { parseTags } from "@/lib/tags";
 import { getSessionUser, ensureProfile } from "@/lib/profile";
 import { notifyAdminNewPaper } from "@/lib/admin-alerts";
+import { discardOrphanedUpload } from "@/lib/storage-cleanup";
 
-// 4 MB, not 10. Vercel caps a serverless request body at ~4.5 MB, and
+// 4.5 MB, the same allowance the word route gets. It is also the ceiling:
+// Vercel caps a serverless request body at roughly 4.5 MB, and
 // `req.formData()` buffers the entire request before any check below can run —
-// so a genuine 10 MB upload died at the platform boundary with a generic error
-// instead of ours. Shared with the form so the two cannot drift.
+// so anything larger dies at the platform boundary with an error that is not
+// ours. Shared with the form so the two cannot drift.
 const MAX_SIZE = LONG_FORM_MAX_SIZE;
 
 // Long-form papers are a bigger ask to review, so the hourly allowance is
@@ -20,6 +22,10 @@ const MAX_UPLOADS = 3;
 const WINDOW_SECONDS = 60 * 60;
 
 export async function POST(req: NextRequest) {
+  // Set once the file is in the bucket. The upload commits before the row is
+  // written, so from here on every failure path owes the bucket a cleanup.
+  let uploadedPath: string | null = null;
+
   try {
     const limit = await rateLimit(`submit-long-form:${clientIp(req)}`, MAX_UPLOADS, WINDOW_SECONDS);
     if (!limit.allowed) {
@@ -33,7 +39,10 @@ export async function POST(req: NextRequest) {
     // upload fails fast rather than after we have read all of it.
     const declared = Number(req.headers.get("content-length"));
     if (Number.isFinite(declared) && declared > MAX_SIZE) {
-      return NextResponse.json({ error: "File must be under 4 MB." }, { status: 413 });
+      return NextResponse.json(
+        { error: `That upload is over the ${formatBytes(MAX_SIZE)} limit. Compress the PDF and try again.` },
+        { status: 413 }
+      );
     }
 
     const formData = await req.formData();
@@ -53,7 +62,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (pdf.size > MAX_SIZE) {
-      return NextResponse.json({ error: "File must be under 4 MB." }, { status: 400 });
+      return NextResponse.json({ error: oversizeMessage(pdf.size, MAX_SIZE) }, { status: 413 });
     }
 
     // Validate it's actually a PDF
@@ -96,7 +105,14 @@ export async function POST(req: NextRequest) {
 
     // Re-check size — re-saving can grow the file past the limit
     if (cleanBuffer.length > MAX_SIZE) {
-      return NextResponse.json({ error: "File must be under 4 MB." }, { status: 400 });
+      return NextResponse.json(
+        {
+          error: `That file sits right at the ${formatBytes(
+            MAX_SIZE
+          )} limit and grew past it once its metadata was stripped. Compress it a little further and try again.`,
+        },
+        { status: 413 }
+      );
     }
 
     const admin = getAdminClient();
@@ -114,6 +130,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Upload failed. Please try again." }, { status: 500 });
     }
 
+    uploadedPath = filename;
+
     // Insert paper row
     const { data: paper, error: insertErr } = await admin
       .from("papers")
@@ -130,8 +148,15 @@ export async function POST(req: NextRequest) {
 
     if (insertErr) {
       console.error("DB insert error:", insertErr);
+      // The file is in the bucket with nothing pointing at it. Guarded, because
+      // a failed insert may still have committed — see discardOrphanedUpload.
+      await discardOrphanedUpload(filename);
       return NextResponse.json({ error: "Submission failed. Please try again." }, { status: 500 });
     }
+
+    // The row exists, so the file is no longer unreferenced: nothing after this
+    // point owes the bucket anything.
+    uploadedPath = null;
 
     // Alert the admin inbox — failure must not fail the submission.
     try {
@@ -160,6 +185,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true });
   } catch (err) {
     console.error("Long-form submit error:", err);
+    // A thrown insert — a socket timeout on the PostgREST call — never
+    // reaches the insertErr branch, so the same cleanup belongs here.
+    if (uploadedPath) await discardOrphanedUpload(uploadedPath);
     return NextResponse.json({ error: "Server error. Please try again." }, { status: 500 });
   }
 }

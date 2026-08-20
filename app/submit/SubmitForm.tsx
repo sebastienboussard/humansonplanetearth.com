@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { createBrowserSupabase } from "@/lib/supabase-browser";
-import { WORD_MAX_SIZE, oversizeMessage } from "@/lib/upload-limits";
+import { WORD_MAX_SIZE, oversizeMessage, submitFailureMessage } from "@/lib/upload-limits";
 
 type Status = "idle" | "submitting" | "success" | "error";
 
@@ -67,9 +67,11 @@ export default function SubmitForm({ word }: { word: string }) {
 
     try {
       const res = await fetch("/api/submit", { method: "POST", body });
-      const data = await res.json();
       if (!res.ok) {
-        setErrorMsg(data.error ?? "Something went wrong. Please try again.");
+        // Not res.json() directly: a size rejection at the platform edge answers
+        // with its own HTML, and parsing that threw into the catch below — which
+        // reported a too-large file as a network problem.
+        setErrorMsg(await submitFailureMessage(res, file.size));
         setStatus("error");
       } else {
         setStatus("success");
@@ -140,7 +142,7 @@ export default function SubmitForm({ word }: { word: string }) {
                 Drag and drop your PDF here, or click to browse
               </p>
               <p className="text-xs mt-1" style={{ color: "var(--muted)", fontFamily: "system-ui, sans-serif" }}>
-                1 page max · 2 MB max
+                1 page max · 4.5 MB max
               </p>
             </div>
           )}

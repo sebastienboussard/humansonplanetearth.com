@@ -79,15 +79,16 @@ describe("POST /api/submit/long-form", () => {
     expect(res.status).toBe(400);
   });
 
-  it("rejects files over 4 MB", async () => {
-    // 4 MB, not 10: Vercel refuses a serverless request body above ~4.5 MB
-    // before our handler runs at all, so a higher limit was unenforceable.
+  it("rejects files over 4.5 MB", async () => {
+    // 4.5 MB is the ceiling: Vercel refuses a serverless request body above
+    // roughly that before our handler runs at all, so nothing higher is
+    // enforceable here.
     holder.current = createMockSupabase();
-    const pdf = makeFileOfSize(4 * 1024 * 1024 + 1);
+    const pdf = makeFileOfSize(4.5 * 1024 * 1024 + 1);
     const res = await POST(formRequest(URL, buildForm({ pdf, title: "Essay" })));
 
-    expect(res.status).toBe(400);
-    expect((await res.json()).error).toMatch(/4 MB/);
+    expect(res.status).toBe(413);
+    expect((await res.json()).error).toMatch(/4\.5 MB/);
   });
 
   it("rejects files that claim to be PDFs but fail parsing", async () => {
@@ -119,6 +120,55 @@ describe("POST /api/submit/long-form", () => {
     });
     const res = await POST(formRequest(URL, buildForm({ pdf: await makePdfFile(), title: "Essay" })));
     expect(res.status).toBe(500);
+  });
+
+  // The upload commits before the insert, so a failed insert leaves a file in
+  // the bucket that nothing references — unless the route takes it back.
+  it("removes the uploaded file when the papers insert fails", async () => {
+    holder.current = createMockSupabase({
+      tables: { papers: [{ error: { message: "insert failed" } }, { data: [] }] },
+    });
+    const res = await POST(formRequest(URL, buildForm({ pdf: await makePdfFile(), title: "Essay" })));
+
+    expect(res.status).toBe(500);
+    const bucket = holder.current.bucket("papers")!;
+    const [filename] = bucket.upload.mock.calls[0];
+    expect(bucket.remove).toHaveBeenCalledWith([filename]);
+  });
+
+  // A timed-out insert may have committed and lost only the reply. Deleting
+  // the file then would leave a live row pointing at missing storage, which is
+  // the worse failure of the two.
+  it("keeps the uploaded file when a row already claims it", async () => {
+    holder.current = createMockSupabase({
+      tables: {
+        papers: [{ error: { message: "insert failed" } }, { data: [{ id: "paper-1" }] }],
+      },
+    });
+    const res = await POST(formRequest(URL, buildForm({ pdf: await makePdfFile(), title: "Essay" })));
+
+    expect(res.status).toBe(500);
+    expect(holder.current.bucket("papers")!.remove).not.toHaveBeenCalled();
+  });
+
+  it("keeps the uploaded file when the orphan check itself fails", async () => {
+    holder.current = createMockSupabase({
+      tables: {
+        papers: [{ error: { message: "insert failed" } }, { error: { message: "db unreachable" } }],
+      },
+    });
+    const res = await POST(formRequest(URL, buildForm({ pdf: await makePdfFile(), title: "Essay" })));
+
+    expect(res.status).toBe(500);
+    expect(holder.current.bucket("papers")!.remove).not.toHaveBeenCalled();
+  });
+
+  it("never removes the file on a successful submission", async () => {
+    holder.current = createMockSupabase({ tables: { papers: { data: null } } });
+    const res = await POST(formRequest(URL, buildForm({ pdf: await makePdfFile(), title: "Essay" })));
+
+    expect(res.status).toBe(200);
+    expect(holder.current.bucket("papers")!.remove).not.toHaveBeenCalled();
   });
 
   it("stores a valid submission as a pending long-form paper with a trimmed title", async () => {
@@ -229,6 +279,6 @@ describe("POST /api/submit/long-form", () => {
     );
 
     expect(res.status).toBe(413);
-    expect((await res.json()).error).toMatch(/4 MB/);
+    expect((await res.json()).error).toMatch(/4\.5 MB/);
   });
 });

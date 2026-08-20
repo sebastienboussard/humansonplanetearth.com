@@ -31,8 +31,8 @@ tests/
 │   ├── unsubscribe.test.ts       # signed unsubscribe tokens round-trip/forgery
 │   └── email-templates.test.ts   # every template carries its unsubscribe link
 └── api/                  # one suite per API route
-    ├── submit.test.ts            # word-paper submissions (1 page, 2 MB, PDF-only)
-    ├── submit-long-form.test.ts  # long-form submissions (4 MB, valid PDF)
+    ├── submit.test.ts            # word-paper submissions (1 page, 4.5 MB, PDF-only)
+    ├── submit-long-form.test.ts  # long-form submissions (4.5 MB, valid PDF)
     ├── comments.test.ts          # comment length, trimming, honeypot, authorship
     ├── admin-auth.test.ts        # login / logout, session cookie
     ├── admin-review.test.ts      # approve / reject / delete, auth on every verb
@@ -48,7 +48,7 @@ tests/
 
 ## What the suite guards
 
-- **Submission quality gates** — file type, size limits (2 MB word / 4 MB
+- **Submission quality gates** — file type, size limits (4.5 MB word and long-form alike
   long-form), one-page limit for word papers, PDF parseability, required
   fields, whitespace trimming.
 - **Spam defenses** — honeypot fields are silently discarded and never reach

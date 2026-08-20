@@ -91,13 +91,35 @@ describe("POST /api/submit", () => {
     expect((await res.json()).error).toMatch(/Only PDF/);
   });
 
-  it("rejects files over 2 MB", async () => {
+  it("rejects files over 4.5 MB", async () => {
     holder.current = successfulClient();
-    const pdf = makeFileOfSize(2 * 1024 * 1024 + 1);
+    const pdf = makeFileOfSize(4.5 * 1024 * 1024 + 1);
     const res = await POST(formRequest(URL, buildForm({ pdf, word: "hope" })));
 
-    expect(res.status).toBe(400);
-    expect((await res.json()).error).toMatch(/2 MB/);
+    expect(res.status).toBe(413);
+    expect((await res.json()).error).toMatch(/4\.5 MB/);
+  });
+
+  it("accepts a file comfortably under the limit", async () => {
+    // A 3.7 MB scan is a normal submission now, not a rejection.
+    holder.current = successfulClient();
+    const pdf = await makePdfFile();
+    const res = await POST(formRequest(URL, buildForm({ pdf, word: "hope" })));
+
+    expect(res.status).toBe(200);
+  });
+
+  it("rejects an oversized body on content-length before buffering it", async () => {
+    // req.formData() reads the whole request first, so the declared length is
+    // the only chance to refuse a large upload cheaply.
+    holder.current = successfulClient();
+    const form = buildForm({ pdf: await makePdfFile(), word: "hope" });
+    const res = await POST(
+      formRequest(URL, form, { headers: { "content-length": String(9 * 1024 * 1024) } })
+    );
+
+    expect(res.status).toBe(413);
+    expect((await res.json()).error).toMatch(/4\.5 MB/);
   });
 
   it("rejects PDFs with more than one page", async () => {
@@ -153,6 +175,60 @@ describe("POST /api/submit", () => {
     });
     const res = await POST(formRequest(URL, buildForm({ pdf: await makePdfFile(), word: "hope" })));
     expect(res.status).toBe(500);
+  });
+
+  // The upload commits before the insert, so a failed insert leaves a file in
+  // the bucket that nothing references — unless the route takes it back.
+  it("removes the uploaded file when the papers insert fails", async () => {
+    holder.current = createMockSupabase({
+      tables: {
+        words: { data: { id: "word-1" } },
+        papers: [{ error: { message: "insert failed" } }, { data: [] }],
+      },
+    });
+    const res = await POST(formRequest(URL, buildForm({ pdf: await makePdfFile(), word: "hope" })));
+
+    expect(res.status).toBe(500);
+    const bucket = holder.current.bucket("papers")!;
+    const [filename] = bucket.upload.mock.calls[0];
+    expect(bucket.remove).toHaveBeenCalledWith([filename]);
+  });
+
+  // A timed-out insert may have committed and lost only the reply. Deleting
+  // the file then would leave a live row pointing at missing storage, which is
+  // the worse failure of the two.
+  it("keeps the uploaded file when a row already claims it", async () => {
+    holder.current = createMockSupabase({
+      tables: {
+        words: { data: { id: "word-1" } },
+        papers: [{ error: { message: "insert failed" } }, { data: [{ id: "paper-1" }] }],
+      },
+    });
+    const res = await POST(formRequest(URL, buildForm({ pdf: await makePdfFile(), word: "hope" })));
+
+    expect(res.status).toBe(500);
+    expect(holder.current.bucket("papers")!.remove).not.toHaveBeenCalled();
+  });
+
+  it("keeps the uploaded file when the orphan check itself fails", async () => {
+    holder.current = createMockSupabase({
+      tables: {
+        words: { data: { id: "word-1" } },
+        papers: [{ error: { message: "insert failed" } }, { error: { message: "db unreachable" } }],
+      },
+    });
+    const res = await POST(formRequest(URL, buildForm({ pdf: await makePdfFile(), word: "hope" })));
+
+    expect(res.status).toBe(500);
+    expect(holder.current.bucket("papers")!.remove).not.toHaveBeenCalled();
+  });
+
+  it("never removes the file on a successful submission", async () => {
+    holder.current = successfulClient();
+    const res = await POST(formRequest(URL, buildForm({ pdf: await makePdfFile(), word: "hope" })));
+
+    expect(res.status).toBe(200);
+    expect(holder.current.bucket("papers")!.remove).not.toHaveBeenCalled();
   });
 
   it("accepts a valid one-page PDF and stores it as a pending paper", async () => {

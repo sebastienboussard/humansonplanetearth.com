@@ -41,17 +41,28 @@ All notable changes to this project are documented here.
   lowered from 3600s to 60s so new papers appear promptly.
 
 ### Changed
-- Long-form uploads are capped at **4 MB**, down from 10 MB. Vercel refuses a
-  serverless request body above ~4.5 MB before the handler runs, so the old
-  limit was never enforceable — a genuine 10 MB upload died at the platform
-  boundary with a generic error instead of ours. Oversized requests are now
-  refused on `content-length` before the body is buffered.
+- **Every submission now gets 4.5 MB** — word papers up from 2 MB, long-form up
+  from 4 MB, one shared `MAX_UPLOAD_SIZE`. A scanned page or an image-heavy PDF
+  in the 3–4 MB range used to be turned away; it goes through now. 4.5 MB is the
+  ceiling rather than a round number: Vercel refuses a serverless request body
+  above roughly that before the handler runs, so nothing higher could be
+  enforced or explained. Both routes refuse an oversized request on
+  `content-length` before the body is buffered, and the word route — which had
+  no such pre-check — now has one too.
+- **A size failure always says it was the size.** A file right at 4.5 MB can
+  still be refused at the platform edge, because multipart framing adds a little
+  on top of the file itself. That reply is the platform's HTML, not our JSON, so
+  the forms' `res.json()` threw and the visitor was told "Network error" —
+  sending them to check their wifi over a file that was simply too big. Failed
+  submissions now go through `submitFailureMessage`, which uses our own error
+  text when there is one and otherwise reads the status: a 413 names the size
+  and says to compress.
 - **Oversized uploads say so clearly.** Both submit forms rejected a too-large
   file at selection, but the message rendered at the foot of the form while the
   dropzone reset to its empty prompt — so an oversized paper appeared to vanish
   with no explanation. The warning now sits directly under the dropzone, is
   announced to screen readers, and names the file's actual size against the
-  limit ("That file is 6.4 MB — the limit is 4.0 MB") with advice on what to do,
+  limit ("That file is 6.4 MB — the limit is 4.5 MB") with advice on what to do,
   rather than restating the cap. Both limits now come from
   `lib/upload-limits.ts`, shared by the forms and the routes, so they cannot
   drift apart.
