@@ -3,13 +3,23 @@
 Single merged list. Sources folded in: the working list, the outage notes from
 `todo-whats-changed`, Doubt's 2026-07-21 review, and the profiles/notifications
 checklist. Doubt's review predated the Vercel move and the metadata work — its
-Netlify references and its XMP item have been corrected against current code
+hosting references and its XMP item have been corrected against current code
 (verified 2026-07-28), not copied over as written.
 
-Everything through §8 is shipped to `main` and live as of 2026-08-19.
-`integration` is **stale** — it sits behind `main` and is not the source of
-truth; do not merge from it. Remaining open work is §1a, §2 (deferred), §4/4a,
-§6, §9, §10, §11 and §13.
+Everything through §8 is shipped to `main` and live as of 2026-08-19. `main` is
+the only branch that matters; `integration` is gone, preserved as the tag
+`archive/integration`. Remaining open work is §1a (one item — automatic
+migrations), §2 (deferred), §4/4a, §6, §7, §9, §10, §11, §13 and §14.
+
+Last swept 2026-08-29: lint brought to zero, the last stale hosting comments
+removed, and an external review reconciled into the sections below. Later the
+same day: §14 filed (planned, not started), and a plan sheet written at
+`CLAUDE.md` — gitignored, a map to these files rather than a copy of them.
+
+**Correction (2026-08-29).** The open-work list above omitted §7, which has
+carried a 🟠 and an open item since it was reopened for the upload→insert race.
+The list said nine sections; ten were open. Added above rather than quietly
+fixed, per the habit this file already keeps.
 
 ---
 
@@ -83,13 +93,19 @@ sending domain was verified the same day).
 - [x] Create `messages` in production from the `schema.sql` definition
 - [x] Email-first ordering shipped, so a future insert failure no longer loses
       the message — the mitigation is live rather than theoretical
-- [ ] Check whether any messages were sent during the outage window; they are
-      not recoverable from the database, so the only trace would be in
-      Supabase request logs. Note the table held **only** the two test rows
-      afterwards, confirming nothing was ever stored
-- [ ] Decide whether `schema.sql` sections should become numbered migrations,
-      so this cannot drift again (see §5, which already lists the profiles
-      tables as a manual step — that step is what's missing here too)
+- [x] **Closed unanswerable 2026-08-29.** Whether any messages were sent during
+      the outage window can no longer be established: the only trace would have
+      been Supabase request logs, and retention is 1 day on free / 7 days on
+      Pro — the window shut well before this was checked. The real evidence
+      stands on its own: the table held **only** the two test rows afterwards,
+      so nothing was ever stored
+- [ ] Numbered migrations, *applied automatically*. The open item was written
+      as "decide whether `schema.sql` sections should become migrations", which
+      understates it — the outage was not caused by the schema being one file,
+      it was caused by nobody running it. The fix is `supabase db push` (or
+      equivalent) in CI on deploy, so prod cannot silently lag the repo. See
+      §5, which lists the profiles tables as a manual step; that same manual
+      step is what went missing here
 
 ## ⏸ 2. The papers bucket is public — DEFERRED
 
@@ -170,6 +186,17 @@ storage cost, quota burn, flooded review queue.
       in-memory layer in front of it. Fine at current volume; worth moving to
       an edge KV store (e.g. Upstash) only if traffic grows enough to make that
       round-trip matter
+- [ ] **Fail-open has no floor** (raised by the external review, 2026-08-29).
+      If Supabase is unreachable the limiter is not degraded, it is *absent* —
+      an attacker who can make the store time out gets unlimited uploads. The
+      review's fix was an in-memory `lru-cache` fallback; that is weaker here
+      than it sounds, because on Vercel each serverless instance has its own
+      memory and concurrent requests land on different instances, so a
+      per-instance counter bounds almost nothing. The fix that actually holds
+      is the edge KV move above — one store, no fail-open path, because the
+      round-trip is cheap enough to require. Recorded rather than actioned: the
+      fail-open choice was deliberate and stays until traffic justifies the
+      move
 
 ## 🟠 4. The PDF viewer fails to a transparent hole
 
@@ -355,6 +382,13 @@ compensating delete therefore asks the database first, and on any uncertainty
 - [ ] Nothing to `--apply` yet. Re-run after the next stretch of live
       submissions — that is when a killed function would actually leave
       something behind
+- [ ] **No automated retention** (raised by the external review, 2026-08-29).
+      Both sweeps are manual scripts someone has to remember to run. Rejected
+      papers keep their row forever and their file until a human runs the
+      cleanup. Candidate: a second entry in `vercel.json`'s `crons` that runs
+      the same sweep on a schedule past a grace window. Note this is only worth
+      wiring once there is enough submission volume for the queue to grow —
+      today the whole bucket is 36 files
 
 ### The rejection half — done
 
@@ -466,10 +500,19 @@ The site now has its own address: **weare.HumansOnPlanetEarth@gmail.com**
       stays on the site domain with this address as reply-to
 - [ ] Add it to the privacy page as the route for takedown or correction
       requests on published papers
+- [ ] **Unsubscribes don't reach Resend** (raised by the external review,
+      2026-08-29). `lib/unsubscribe.ts` flips our own `notification_prefs`,
+      which is enough to stop *us* sending — but nothing is recorded on
+      Resend's side, so there is no suppression list and no visibility into
+      bounces or complaints. That only starts to matter when deadline
+      reminders go out at volume, at which point a rising complaint rate would
+      quietly degrade delivery of the admin alerts too. Wire Resend's
+      bounce/complaint webhooks before that happens
 
 ## 12. Admin page — tabs, published history, admin alerts
 
-Done on `integration`, 2026-08-01. Three problems, one shape: `/admin/review`
+Shipped to `main`; the work was done 2026-08-01 on the since-deleted
+`integration` branch. Three problems, one shape: `/admin/review`
 stacked four sections that each fetched once on mount and owned their data
 privately.
 
@@ -518,6 +561,82 @@ specifically for Turnstile.
 
 ---
 
+## 14. Sign-in codes, and one proposed word per account — PLANNED, NOT STARTED
+
+Nothing below is built. This section records the design and the one open
+question so the reasoning is not lost when the plan file is; the plan itself is
+`~/.claude/plans/i-want-to-add-elegant-map.md`, which is unversioned and outside
+the repo.
+
+**Sign-in codes.** `/account` sends a magic link only, and the link works *only
+in the browser that requested it* — §5 records why: `@supabase/ssr` hard-codes
+`flowType: "pkce"`, so the verifier lives in a cookie in that browser. Request a
+link on a laptop, open the mail on a phone, and there is no way in and no
+recovery path. A 6-digit code typed back into the original tab closes that.
+Sign-in and account creation are already one action (`shouldCreateUser` defaults
+to `true`), so there is no second flow to build — only copy that says so.
+
+**One proposed word per account.** Words are admin-only today
+(`app/api/admin/words/route.ts`). One *lifetime* proposal per account — not one
+per month — is a self-limiting way to let readers feed the prompt queue. Paper
+submission stays anonymous and account-free; this is purely additive.
+
+- [ ] **Answer this before writing any code.** Add `{{ .Token }}` to the Magic
+      Link and Confirm signup templates *alongside* `{{ .ConfirmationURL }}`
+      (both may coexist; the link must stay — replacing it with
+      `{{ .TokenHash }}` broke sign-in entirely once already, §5). Then call
+      `verifyOtp({ email, token, type: "email" })` and see whether a session
+      comes back. If it does, the code and PKCE coexist and the request side
+      needs no change at all. If it does not, GoTrue is refusing the plain token
+      for a PKCE-issued OTP the same way it refuses `token_hash`, and the
+      fallback is to move the OTP *request* server-side to a client built with
+      `createClient` + `auth: { flowType: "implicit" }` (plain `supabase-js`
+      does not force PKCE). That fallback returns tokens in the URL *fragment*,
+      which a route handler cannot read, so `/auth/confirm` would also need a
+      small client component letting `detectSessionInUrl` consume the hash — but
+      it would make links work cross-device, closing §5's open limitation
+      outright. **Record the answer here either way.** This is the second time
+      the PKCE hard-coding has shaped a design; it should not be rediscovered a
+      third
+- [ ] `app/api/auth/verify-code/route.ts` — POST `{ email, token }`, token
+      matching `/^\d{6}$/`, rate-limited `verify-code:<ip>` at 10 per 15 min
+      like `app/api/admin/login/route.ts`. Note in a comment that Supabase's own
+      attempt cap is the real boundary against a 6-digit brute force, since
+      `rateLimit` fails open
+- [ ] `app/account/AccountLogin.tsx` — the `status === "sent"` panel is
+      currently a dead end. Give it a code input (`inputMode="numeric"`,
+      `autoComplete="one-time-code"`, `maxLength={6}`), a Verify button, and a
+      "use a different email" way back. Keep the honeypot and the `?error=link`
+      branch. Leave `app/auth/confirm/route.ts` alone unless the fallback lands
+- [ ] `supabase/migrations/0004_word_proposals.sql` — `word_proposals` with
+      `profile_id uuid not null unique references profiles(id) on delete
+      cascade`. The UNIQUE *is* the cap, enforced in the database rather than
+      the route, so a double-submit cannot slip two through. RLS on, zero
+      policies, like `profiles`. **Two consequences, deliberate:** a declined
+      proposal does not return the slot (the admin deletes the row to grant
+      another go), and deleting your account frees it via the cascade — the one
+      bypass. Mirror into `supabase/schema.sql`. **Manual to apply — see §1a**
+- [ ] `lib/word-format.ts` — `normalizeWord` (lowercase + trim, matching
+      `app/api/admin/words/route.ts:43`) and `isValidWord`. That file is
+      deliberately supabase-free so the client form and the server routes can
+      share one definition
+- [ ] `app/api/account/word/route.ts` — GET the caller's proposal, POST to
+      create. Reject a word already in `words`. Return 409 both from the
+      read-then-write check *and* from the unique-violation the check races
+- [ ] `app/account/AccountDashboard.tsx` — a "Your Word" section, loaded in the
+      existing `Promise.all`. Copy says plainly: one word, once, an editor
+      decides
+- [ ] `app/api/admin/word-proposals/route.ts` plus a fifth admin tab with a
+      pending badge. Accepting only marks it accepted — it does not create the
+      word, because month/year/deadline still have to be chosen in `AddWordForm`
+- [ ] Tests: `auth-verify-code`, `account-word`, `admin-word-proposals`, and
+      `normalizeWord`/`isValidWord` in `tests/lib/words.test.ts`
+- [ ] `README.md` — `word_proposals` in the tables list, and a line that the
+      auth templates must carry **both** `{{ .ConfirmationURL }}` and
+      `{{ .Token }}`
+
+---
+
 ## Housekeeping
 
 Done 2026-08-19:
@@ -527,14 +646,13 @@ Done 2026-08-19:
 - [x] The two branches that held commits found nowhere else are preserved as
       tags before deletion, so nothing was lost: `archive/integration`
       (`72143db`, "Profiles and notifications work in progress") and
-      `archive/remove-netlify-config` (`b8349c0`, "Remove stale netlify.toml").
-      Both pushed to origin. Recover either with
-      `git checkout -b <name> archive/<name>`
+      `archive/remove-netlify-config` (`b8349c0`). Both pushed to origin.
+      Recover either with `git checkout -b <name> archive/<name>`
 - [x] Removed the four `.claude/worktrees/*` checkouts that were pinning those
       branches. The two `~/.cursor/worktrees/` checkouts are another tool's and
       were left alone
-- [x] `@netlify/plugin-nextjs` uninstalled — 3.9 MB, referenced nowhere, left
-      behind when `netlify.toml` was removed. `package-lock.json` regenerated
+- [x] An unused 3.9 MB build plugin from an earlier host uninstalled —
+      referenced nowhere. `package-lock.json` regenerated
       in the same step (adding a dependency without the lockfile once broke
       `npm ci`; removing one has the same hazard). Tests, typecheck and build
       re-run clean afterwards
@@ -542,24 +660,91 @@ Done 2026-08-19:
       no longer fails at that line. Next.js is unaffected either way, since
       dotenv strips surrounding quotes. Not a repo file; gitignored
 
+Done 2026-08-29:
+
+- [x] **`npm run lint` was failing — 13 errors — and nothing recorded it.**
+      Now zero. Every `no-explicit-any` traced to one root: `getAdminClient()`
+      returns `any` (there are no generated database types), so each read path
+      annotated its callbacks `(p: any)` to keep the compiler quiet. Named the
+      row shapes instead — `ApprovedPaperRow` / `WordEmbed` in `lib/papers.ts`
+      for the shared `words(word)` embed, local types where the select is wider
+      (`app/api/admin/review/route.ts`, `app/words/[word]/page.tsx`). Also two
+      unescaped apostrophes and one internal `<a>` that should have been `<Link>`
+- [x] That retyping surfaced a real mismatch the `any` had been hiding:
+      `PaperCarousel`'s local `Paper.tags` was `string[] | undefined`, but the
+      column is nullable and delivers `null`. `matchesTagQuery` already
+      accepted `null` — only the component's type was narrower than reality.
+      Widened rather than laundered at the boundary
+- [x] `eslint.config.mjs` — added `coverage/**` to `globalIgnores`. Listing
+      eslint-config-next's defaults explicitly had replaced them wholesale, so
+      eslint was linting generated istanbul output that `.gitignore` excludes
+- [x] `next.config.ts` — the stale deployment comment is gone. The config
+      object is empty and `vercel.json` is the evidence of where this deploys
+- [x] `README.md` — a note pointing at a config file that no longer exists.
+      **This one was not on the list**; the TODO caught `next.config.ts` and
+      missed the README
+- [x] An external review of the repo reconciled — new points filed into §3,
+      §7, §11 and §1a, its two wrong claims answered below. The review itself
+      was a one-off document, not kept in the repo; everything worth keeping
+      from it is restated below in this file's own words
+- [x] **Correction (2026-08-30).** The entry above previously recorded that the
+      remaining host references in `CHANGELOG.md` and `doubt-log.md:35` were
+      *deliberately left* as dated records. That call was reversed on
+      2026-08-30: the host in question was used for two days at the start of the
+      project and naming it only invites the question of whether it is still
+      involved. The wording is gone from both files; the substance of each
+      record — what was cleaned up and why — was kept. Written down rather than
+      quietly applied, per the habit this file keeps. The branch and tag names
+      below still contain it because they name real objects on `origin`, and
+      the recovery and delete commands stop working if they do not match
+
 Still open:
 
-- [ ] **Delete the remote branches.** Local is clean but origin still carries
-      12. All are either merged into `main` or archived as tags above, so this
-      is safe:
+- [ ] **Delete the remote branches — command below, for Seb to run.** Verified
+      2026-08-29: 10 of the 12 have zero commits outside `main`, and the two
+      that carry unique work survive as tags confirmed present on origin via
+      `git ls-remote --tags` — `archive/integration` (`72143db`) and
+      `archive/remove-netlify-config` (`b8349c0`). Recover either with
+      `git checkout -b <name> archive/<name>`.
 
       git push origin --delete fix-magic-link harden-uploads-and-admin-auth \
         home-whats-new integration release-profiles release-without-profiles \
         remove-netlify-config ship-tests-and-netlify-cleanup testing-framework \
         todo-whats-changed worktree-invisible-hashtags worktree-todo-review-notes
-- [ ] `next.config.ts:3` — comment still reads "Netlify deployment — static
-      export not used; serverless functions handle API routes" despite the
-      site running on Vercel (`vercel.json`) and `netlify.toml` already
-      removed. Update or delete the comment
 - [ ] No pre-commit hooks exist (`.husky/` absent, no `prepare` script). Add
       husky + lint-staged to run lint/typecheck before commit — this is the
       same class of failure (`package.json`/`package-lock.json` drift) that
-      already broke `npm ci` once, per the done-items above
+      already broke `npm ci` once, per the done-items above. Deferred by
+      choice on 2026-08-29, but the blocker is gone: lint is at zero, so a hook
+      that runs it would pass today rather than failing on first use
+- [ ] `paper_authors.public_visible` is dormant — the public author page was
+      removed before release and the column was kept "in case sharing returns"
+      (§5). Give it a decision date or drop it; a column nothing reads is a
+      question every future reader of the schema has to re-answer
+
+## Raised and answered — the external review (2026-08-29)
+
+An outside review of the repo, not itself kept in the repo — this section is
+the record of it. Its useful points are filed in §1a, §3, §7 and §11 above, and
+its already-done points (the stale deployment comment, env-var validation §13,
+pre-commit hooks, the PDF sanitization gaps §6, the Upstash move §3) needed no
+new entry. Two headline claims were wrong; recorded so they are not raised
+again:
+
+- *"`next: 16.2.2` is likely a typo for `14.2.2` and will break `npm ci`."*
+  No — it is the real pinned version, matched by `eslint-config-next@16.2.2`.
+  `npm run build`, `tsc --noEmit` and 311 tests all pass on it.
+- *"long-form is capped at 4 MB; lower it to 3.5 MB for multipart overhead."*
+  Stale. Both routes have shared one `MAX_UPLOAD_SIZE` of 4.5 MB from
+  `lib/upload-limits.ts` since 2026-08-20. The overhead risk it describes is
+  real and §3 already records it, along with the mitigation
+  (`submitFailureMessage` turns the platform's non-JSON 413 into a size
+  message) and the fallback if it bites in practice — drop the one constant to
+  ~4.3 MB.
+
+Its sharpest correct observation was the one already known and least acted on:
+manual database migrations caused the §1a outage, and nothing has changed to
+stop that recurring. That is now §1a's only open item.
 
 ## Checked, low risk
 
@@ -571,14 +756,14 @@ From Doubt's review, re-confirmed 2026-07-28:
 ## Done
 
 - **PDF metadata stripping** — both routes, XMP stream included (§6)
-- **Testing framework** — vitest, now 155 tests across 18 suites, `npm test`
+- **Testing framework** — vitest, now 311 tests across 28 suites, `npm test`
 - **Invisible hashtags** — migration already applied to production
 - **Profiles & notifications** — code-complete, pending the manual steps in §5.
   2026-08-05: the public anonymous author page (`/author/[id]`) and the
   per-paper "show on author page" toggle were removed before release —
   profiles are an internal-only log for now. The `public_visible` column
   stays in `paper_authors` (dormant, default false) in case sharing returns.
-- **Stale `netlify.toml` removed** — the site runs on Vercel
+- **Stale host config removed** — the site runs on Vercel
 - **Branch consolidation** — everything collected onto `integration`
 - **PDF viewer SSR outage** — fixed, regression-tested, shipped to production
   and verified against the live domain (§1)

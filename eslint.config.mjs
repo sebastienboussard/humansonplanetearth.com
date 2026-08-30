@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Generated istanbul output. Already gitignored; listing the defaults
+    // above replaced them wholesale, so without this eslint lints it.
+    "coverage/**",
   ]),
 ]);
 

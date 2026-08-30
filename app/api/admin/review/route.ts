@@ -22,7 +22,19 @@ export async function GET(req: NextRequest) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  const enriched = (papers ?? []).map((p: any) => ({
+  // Wider than the shared ApprovedPaperRow: the review queue also needs the
+  // storage path and the word's deadline month/year.
+  type ReviewRow = {
+    id: string;
+    word_id: string | null;
+    type: string;
+    title: string | null;
+    pdf_url: string;
+    submitted_at: string;
+    words: { word: string; month: number; year: number } | null;
+  };
+
+  const enriched = ((papers ?? []) as ReviewRow[]).map((p) => ({
     ...p,
     signed_url: admin.storage.from("papers").getPublicUrl(p.pdf_url).data.publicUrl,
   }));

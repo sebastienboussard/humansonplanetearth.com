@@ -16,7 +16,7 @@ export default function AboutPage() {
 
       <div className="space-y-6 text-base leading-relaxed" style={{ color: "var(--ink)" }}>
         <p>
-          Humanity's greatest joy is to think creatively. The Word Of The Month is your invitation.
+          Humanity&rsquo;s greatest joy is to think creatively. The Word Of The Month is your invitation.
         </p>
         <p>
           There is only one restriction: it has to fit on one page as a PDF.

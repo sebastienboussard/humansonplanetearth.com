@@ -32,6 +32,6 @@
   - `save()` default `updateFieldAppearances: true` can silently alter form
     rendering — recommend `false`; post-save size can exceed the pre-check
     limit (re-check added in revised plan).
-  - Plan justifies avoiding exiftool/qpdf by claiming Netlify deployment —
+  - Plan justifies avoiding exiftool/qpdf by claiming a hosting constraint —
     unverified; conclusion holds either way but the rationale should be
     checked.

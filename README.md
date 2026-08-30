@@ -66,8 +66,7 @@ Manual setup:
    `/api/cron/deadline-reminders` daily at 09:00 UTC (sends at exactly 7 and
    1 days before the deadline; the `notification_log` table makes reruns safe).
 
-Note: `netlify.toml` is a leftover from previous hosting — the site deploys on
-Vercel and the cron config lives in `vercel.json`.
+Note: the site deploys on Vercel and the cron config lives in `vercel.json`.
 
 To enable comments on long-form papers, insert a sentinel row into `words`:
 

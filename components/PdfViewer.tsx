@@ -12,15 +12,17 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
 
 export type PdfViewerProps = {
   src: string;
-  title: string;
+  title: string; // accepted from callers, not rendered — see below
   height?: string; // kept for backwards compat, unused
   paperNumber?: number;
   paperHref?: string;
 };
 
+// `title` is deliberately not destructured: every call site passes one, but the
+// viewer has nowhere to show it — the page above it already carries the
+// heading. Kept in the props type so callers don't have to change.
 export default function PdfViewer({
   src,
-  title,
   paperNumber,
   paperHref,
 }: PdfViewerProps) {

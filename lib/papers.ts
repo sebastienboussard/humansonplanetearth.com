@@ -28,3 +28,19 @@ function timestamp(value: string): number {
   const ms = new Date(value).getTime();
   return Number.isNaN(ms) ? 0 : ms;
 }
+
+// Shapes for rows read through the admin client. `getAdminClient()` returns
+// `any` — there are no generated database types — so every read path used to
+// annotate its callbacks `(p: any)` to keep the compiler quiet. Naming the
+// shape once lets each call site narrow the array instead, which is what the
+// code was already assuming.
+
+// A many-to-one embed (`words(word)`) comes back as an object, not an array.
+export type WordEmbed = { word: string } | null;
+
+export type ApprovedPaperRow = {
+  id: string;
+  type: string;
+  submitted_at: string;
+  words: WordEmbed;
+};

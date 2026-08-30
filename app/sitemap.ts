@@ -1,5 +1,6 @@
 import { MetadataRoute } from "next";
 import { getAdminClient } from "@/lib/supabase";
+import type { ApprovedPaperRow } from "@/lib/papers";
 
 export const revalidate = 3600;
 
@@ -23,22 +24,32 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       .eq("status", "approved"),
   ]);
 
-  const wordUrls: MetadataRoute.Sitemap = (words ?? []).map((w: any) => ({
+  const wordRows = (words ?? []) as { word: string }[];
+  const paperRows = (papers ?? []) as ApprovedPaperRow[];
+
+  const wordUrls: MetadataRoute.Sitemap = wordRows.map((w) => ({
     url: `${base}/words/${w.word}`,
     priority: 0.8,
   }));
 
-  const paperUrls: MetadataRoute.Sitemap = (papers ?? [])
-    .filter((p: any) => p.type === "word" && p.words?.word)
-    .map((p: any) => ({
-      url: `${base}/words/${p.words.word}/${p.id}`,
-      lastModified: new Date(p.submitted_at),
-      priority: 0.6,
-    }));
+  // flatMap rather than filter+map: the filter would not narrow `words` away
+  // from null for the map that follows, and a word paper whose join came back
+  // empty has no URL to give.
+  const paperUrls: MetadataRoute.Sitemap = paperRows.flatMap((p) =>
+    p.type === "word" && p.words
+      ? [
+          {
+            url: `${base}/words/${p.words.word}/${p.id}`,
+            lastModified: new Date(p.submitted_at),
+            priority: 0.6,
+          },
+        ]
+      : []
+  );
 
-  const longFormUrls: MetadataRoute.Sitemap = (papers ?? [])
-    .filter((p: any) => p.type === "long-form")
-    .map((p: any) => ({
+  const longFormUrls: MetadataRoute.Sitemap = paperRows
+    .filter((p) => p.type === "long-form")
+    .map((p) => ({
       url: `${base}/long-form/${p.id}`,
       lastModified: new Date(p.submitted_at),
       priority: 0.7,

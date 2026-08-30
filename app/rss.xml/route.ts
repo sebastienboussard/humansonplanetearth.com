@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabase";
+import type { ApprovedPaperRow } from "@/lib/papers";
 
 export const revalidate = 3600;
 
@@ -33,16 +34,31 @@ export async function GET() {
       .limit(20),
   ]);
 
+  // Neither select includes `type` — each query already filters on it — so the
+  // word rows are the shared shape minus that column.
+  const wordRows = (wordPapers ?? []) as Omit<ApprovedPaperRow, "type">[];
+  const longFormRows = (longFormPapers ?? []) as {
+    id: string;
+    title: string | null;
+    submitted_at: string;
+  }[];
+
   const items = [
-    ...(wordPapers ?? [])
-      .filter((p: any) => p.words?.word)
-      .map((p: any) => ({
-        title: `A paper on "${p.words.word}"`,
-        link: `${base}/words/${p.words.word}/${p.id}`,
-        pubDate: new Date(p.submitted_at).toUTCString(),
-        description: `A one-page paper on the word "${p.words.word}", submitted by a human on planet Earth.`,
-      })),
-    ...(longFormPapers ?? []).map((p: any) => ({
+    // flatMap rather than filter+map: a filter on `p.words` does not narrow it
+    // away from null for the map that follows.
+    ...wordRows.flatMap((p) =>
+      p.words
+        ? [
+            {
+              title: `A paper on "${p.words.word}"`,
+              link: `${base}/words/${p.words.word}/${p.id}`,
+              pubDate: new Date(p.submitted_at).toUTCString(),
+              description: `A one-page paper on the word "${p.words.word}", submitted by a human on planet Earth.`,
+            },
+          ]
+        : []
+    ),
+    ...longFormRows.map((p) => ({
       title: p.title ?? "Long-Form Paper",
       link: `${base}/long-form/${p.id}`,
       pubDate: new Date(p.submitted_at).toUTCString(),

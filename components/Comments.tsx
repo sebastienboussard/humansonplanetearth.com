@@ -183,7 +183,7 @@ export default function Comments({
         </p>
       ) : fetchError ? (
         <p className="text-sm italic mb-8" style={{ color: "var(--muted)", fontFamily: "system-ui, sans-serif" }}>
-          Couldn't load comments. Please refresh to try again.
+          Couldn&rsquo;t load comments. Please refresh to try again.
         </p>
       ) : threaded.length === 0 ? (
         <p className="text-sm italic mb-8" style={{ color: "var(--muted)", fontFamily: "system-ui, sans-serif" }}>

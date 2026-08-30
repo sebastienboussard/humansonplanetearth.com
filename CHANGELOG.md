@@ -85,6 +85,35 @@ All notable changes to this project are documented here.
 - The account page's Email Notifications panel collapses, and remembers whether
   you left it open. Seven checkboxes had pushed everything else below the fold;
   the heading now summarises state ("3 of 4 on") when closed.
+- **`npm run lint` passes again** — it had been failing with 13 errors, and
+  nothing recorded that it was. Almost all of them were the same shape: the
+  admin Supabase client is untyped (`getAdminClient()` returns `any`, since the
+  project has no generated database types), so every read path annotated its
+  callbacks `(p: any)` to keep the compiler quiet. The row shapes are now named
+  once — `ApprovedPaperRow` and `WordEmbed` in `lib/papers.ts` for the
+  `words(word)` embed the sitemap and the RSS feed share, local types where a
+  route selects more — and each call site narrows the array instead of widening
+  every callback. The sitemap and feed also switched from `filter` + `map` to
+  `flatMap`, because a filter does not narrow a nullable join away for the map
+  that follows. Remaining: two unescaped apostrophes, and an internal `<a>` in
+  the long-form paper page that is now a `<Link>`.
+- **A type mismatch the `any` had been hiding.** Naming those shapes
+  immediately caught one: `PaperCarousel` declared `Paper.tags` as
+  `string[] | undefined`, but the column is nullable and PostgREST delivers
+  `null`. Nothing was broken for readers — `matchesTagQuery` already accepted
+  `null` and was the only consumer — so this was a latent inaccuracy rather
+  than a bug, and the fix is to widen the component's type to match what the
+  database actually sends, not to convert `null` at the boundary. Worth
+  recording as the concrete argument for not reaching for `any`: the cast was
+  not just untidy, it was wrong about the data.
+- **The last stale hosting references are gone.** `next.config.ts` still
+  carried a comment describing a deployment setup the project no longer uses,
+  and `README.md` still noted a config file that had already been deleted. The
+  site runs on Vercel and `vercel.json` says so, which is all the explanation
+  the config needs.
+- `eslint.config.mjs` ignores `coverage/**`. Listing eslint-config-next's
+  default ignores explicitly had replaced them wholesale, so eslint was linting
+  generated istanbul output that `.gitignore` already excludes.
 
 ### Database
 - `rate_limits` plus the atomic `rate_limit_hit()` and `prune_rate_limits()`
@@ -198,10 +227,6 @@ confirmed in place.
   environment and fails with the original error if the static import returns.
   Shipped to production and verified against the live domain: word pages, both
   paper routes and the long-form index all return 200, and papers render.
-
-### Removed
-- `netlify.toml`. The site deploys on Vercel; this was a leftover from an
-  earlier host and had no effect on builds.
 
 ### Security
 - Uploaded PDFs are stripped of identifying metadata before they reach storage.

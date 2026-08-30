@@ -11,7 +11,9 @@ type Paper = {
   id: string;
   submitted_at: string;
   publicUrl: string;
-  tags?: string[];
+  // Nullable, not optional: the column is nullable and comes back as null.
+  // matchesTagQuery already accepts null; only this type was narrower.
+  tags?: string[] | null;
 };
 
 export default function PaperCarousel({

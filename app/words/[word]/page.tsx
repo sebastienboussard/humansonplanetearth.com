@@ -38,7 +38,14 @@ export default async function WordPage({
   if (papersErr) console.error("Papers select error:", papersErr);
   const papers = papersData ?? [];
 
-  const papersWithUrls = papers.map((paper: any) => ({
+  type WordPaperRow = {
+    id: string;
+    submitted_at: string;
+    pdf_url: string;
+    tags: string[] | null;
+  };
+
+  const papersWithUrls = (papers as WordPaperRow[]).map((paper) => ({
     ...paper,
     publicUrl: admin.storage.from("papers").getPublicUrl(paper.pdf_url).data.publicUrl,
   }));

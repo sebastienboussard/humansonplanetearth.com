@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import { cache } from "react";
 import { getAdminClient } from "@/lib/supabase";
 import Comments from "@/components/Comments";
@@ -46,7 +47,7 @@ export default async function LongFormPaperPage({
         className="text-xs uppercase tracking-widest mb-4"
         style={{ fontFamily: "system-ui, sans-serif", color: "var(--muted)" }}
       >
-        <a href="/long-form" style={{ color: "var(--muted)" }}>Long-Form</a> / paper
+        <Link href="/long-form" style={{ color: "var(--muted)" }}>Long-Form</Link> / paper
       </p>
 
       <h1
