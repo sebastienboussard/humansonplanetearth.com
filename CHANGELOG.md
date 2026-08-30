@@ -114,6 +114,23 @@ All notable changes to this project are documented here.
 - `eslint.config.mjs` ignores `coverage/**`. Listing eslint-config-next's
   default ignores explicitly had replaced them wholesale, so eslint was linting
   generated istanbul output that `.gitignore` already excludes.
+- **`TODO.md` split into open work and a decision record.** It had reached 812
+  lines carrying 62 finished items against 44 open ones — four sections and four
+  trailing blocks were entirely done, and three more hid 7 open items behind 21
+  finished ones. You had to read past 40% dead weight to find the work. It is
+  now 359 lines of open and partial work only, and a finished section leaves
+  rather than earning a `✅`.
+  What moved: shipped work was already here, so nothing was copied into this
+  file. The reasoning a changelog cannot hold — retractions, ruled-out options,
+  and evidence from production — went to a new `DECISIONS.md`, along with the
+  six tripwires that had been living only in a gitignored working file and so
+  were neither versioned nor shared. `doubt-log.md` is folded into it and
+  deleted; its adversarial review of the PDF metadata strip keeps its 2026-07-22
+  date, and its open questions are cross-referenced from `TODO.md` §6.
+  A `COMPLETED.md` was considered and rejected: this file is already the record
+  of what shipped, and a second copy of it would be a second thing to keep true.
+  Section numbers did not change and must not — eight comments in shipped code,
+  tests and scripts cite them, and renumbering breaks all of them silently.
 
 ### Database
 - `rate_limits` plus the atomic `rate_limit_hit()` and `prune_rate_limits()`
