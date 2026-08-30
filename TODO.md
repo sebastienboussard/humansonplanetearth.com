@@ -6,15 +6,20 @@ checklist. Doubt's review predated the Vercel move and the metadata work — its
 hosting references and its XMP item have been corrected against current code
 (verified 2026-07-28), not copied over as written.
 
-Everything through §8 is shipped to `main` and live as of 2026-08-19. `main` is
-the only branch that matters; `integration` is gone, preserved as the tag
-`archive/integration`. Remaining open work is §1a (one item — automatic
-migrations), §2 (deferred), §4/4a, §6, §7, §9, §10, §11, §13 and §14.
+Everything through §8 is shipped to `main` and live as of 2026-08-19. As of
+2026-08-30 `main` is the only branch that exists — locally and on `origin` —
+with the two branches that held unique work preserved as `archive/*` tags.
+Remaining open work is §1a (one item — automatic migrations), §2 (deferred),
+§4/4a, §6, §7, §9, §10, §11, §13 and §14.
 
 Last swept 2026-08-29: lint brought to zero, the last stale hosting comments
 removed, and an external review reconciled into the sections below. Later the
 same day: §14 filed (planned, not started), and a plan sheet written at
 `CLAUDE.md` — gitignored, a map to these files rather than a copy of them.
+
+Swept again 2026-08-30: the lint work committed and pushed (`8dd7024`), the
+former host's name removed from the prose in this file, `CHANGELOG.md` and
+`doubt-log.md`, and the 12 remote branches deleted. See Housekeeping for both.
 
 **Correction (2026-08-29).** The open-work list above omitted §7, which has
 carried a 🟠 and an open item since it was reopened for the upload→insert race.
@@ -642,7 +647,8 @@ submission stays anonymous and account-free; this is purely additive.
 Done 2026-08-19:
 
 - [x] Deleted all 14 local branches — 12 already merged into `main`, plus
-      `integration` and `remove-netlify-config`. Only `main` remains locally
+      `integration` and the branch that removed the old host config. Only
+      `main` remains locally
 - [x] The two branches that held commits found nowhere else are preserved as
       tags before deletion, so nothing was lost: `archive/integration`
       (`72143db`, "Profiles and notifications work in progress") and
@@ -652,10 +658,10 @@ Done 2026-08-19:
       branches. The two `~/.cursor/worktrees/` checkouts are another tool's and
       were left alone
 - [x] An unused 3.9 MB build plugin from an earlier host uninstalled —
-      referenced nowhere. `package-lock.json` regenerated
-      in the same step (adding a dependency without the lockfile once broke
-      `npm ci`; removing one has the same hazard). Tests, typecheck and build
-      re-run clean afterwards
+      referenced nowhere. `package-lock.json` regenerated in the same step
+      (adding a dependency without the lockfile once broke `npm ci`; removing
+      one has the same hazard). Tests, typecheck and build re-run clean
+      afterwards
 - [x] `.env.local` — `NOTIFY_FROM_EMAIL` value quoted, so `set -a; . ./.env.local`
       no longer fails at that line. Next.js is unaffected either way, since
       dotenv strips surrounding quotes. Not a repo file; gitignored
@@ -698,19 +704,23 @@ Done 2026-08-29:
       below still contain it because they name real objects on `origin`, and
       the recovery and delete commands stop working if they do not match
 
+Done 2026-08-30:
+
+- [x] **The 12 remote branches are deleted.** `origin` now carries `main`
+      alone. The safety net held and was checked after the fact, not just
+      before: both archive tags are still on origin at the hashes recorded
+      above — `archive/integration` (`72143db`) and
+      `archive/remove-netlify-config` (`b8349c0`) — and both still resolve to
+      their commits. Recover either with
+      `git checkout -b <name> archive/<name>`. The delete command that used to
+      sit here is gone with the branches it named
+- [x] The former host's name removed from `CHANGELOG.md`, `doubt-log.md` and
+      this file — see the correction above. What still carries it is the
+      `archive/remove-netlify-config` tag, which names a live ref on `origin`
+      and cannot be reworded without retagging
+
 Still open:
 
-- [ ] **Delete the remote branches — command below, for Seb to run.** Verified
-      2026-08-29: 10 of the 12 have zero commits outside `main`, and the two
-      that carry unique work survive as tags confirmed present on origin via
-      `git ls-remote --tags` — `archive/integration` (`72143db`) and
-      `archive/remove-netlify-config` (`b8349c0`). Recover either with
-      `git checkout -b <name> archive/<name>`.
-
-      git push origin --delete fix-magic-link harden-uploads-and-admin-auth \
-        home-whats-new integration release-profiles release-without-profiles \
-        remove-netlify-config ship-tests-and-netlify-cleanup testing-framework \
-        todo-whats-changed worktree-invisible-hashtags worktree-todo-review-notes
 - [ ] No pre-commit hooks exist (`.husky/` absent, no `prepare` script). Add
       husky + lint-staged to run lint/typecheck before commit — this is the
       same class of failure (`package.json`/`package-lock.json` drift) that
