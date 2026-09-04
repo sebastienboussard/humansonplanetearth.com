@@ -10,6 +10,7 @@ import {
   getAllWords,
   getCurrentWord,
   getWordBySlug,
+  getPreviousWord,
   getMonthName,
   formatDeadline,
   getDaysRemaining,
@@ -95,6 +96,43 @@ describe("getAllWords", () => {
   it("returns an empty array when the query yields no data", async () => {
     holder.current = createMockSupabase({ tables: { words: { data: null } } });
     expect(await getAllWords()).toEqual([]);
+  });
+});
+
+describe("getPreviousWord", () => {
+  // getAllWords already returns newest first and drops the long-form sentinel,
+  // so these rows are what the helper actually sees.
+  const rows = [
+    { id: "w3", word: "silence", month: 1, year: 2027, deadline: "2027-01-31" },
+    { id: "w2", word: "hope", month: 12, year: 2026, deadline: "2026-12-31" },
+    { id: "w1", word: "trust", month: 6, year: 2026, deadline: "2026-06-30" },
+  ];
+
+  it("returns the word immediately before the one given", async () => {
+    holder.current = createMockSupabase({ tables: { words: { data: rows } } });
+    expect(await getPreviousWord({ month: 12, year: 2026 })).toEqual(rows[2]);
+  });
+
+  it("crosses the year boundary", async () => {
+    holder.current = createMockSupabase({ tables: { words: { data: rows } } });
+    // January 2027 → December 2026, not the other January.
+    expect(await getPreviousWord({ month: 1, year: 2027 })).toEqual(rows[1]);
+  });
+
+  it("returns null for the earliest word", async () => {
+    holder.current = createMockSupabase({ tables: { words: { data: rows } } });
+    expect(await getPreviousWord({ month: 6, year: 2026 })).toBeNull();
+  });
+
+  it("skips the long-form sentinel, because getAllWords filters it out", async () => {
+    holder.current = createMockSupabase({ tables: { words: { data: rows } } });
+    await getPreviousWord({ month: 12, year: 2026 });
+    expect(holder.current.query("words")!.neq).toHaveBeenCalledWith("word", "__long-form__");
+  });
+
+  it("returns null when there are no words at all", async () => {
+    holder.current = createMockSupabase({ tables: { words: { data: null } } });
+    expect(await getPreviousWord({ month: 7, year: 2026 })).toBeNull();
   });
 });
 

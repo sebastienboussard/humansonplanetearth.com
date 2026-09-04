@@ -55,6 +55,22 @@ export async function getWordBySlug(slug: string): Promise<WordEntry | null> {
 // recent submission leads instead; earlier words keep the order they shipped with.
 const NEWEST_FIRST_FROM = { year: 2026, month: 7 };
 
+// The word immediately before this one, or null if this is the first. Used
+// wherever a reader arrives at a word with nothing published yet — the first
+// days of a new month — so the page has somewhere to send them instead of
+// ending on "Be the first". Ordering is by month, never by deadline: a
+// deadline can be edited after the fact, the month cannot.
+export async function getPreviousWord(
+  entry: Pick<WordEntry, "month" | "year">
+): Promise<WordEntry | null> {
+  const rank = entry.year * 12 + entry.month;
+  // Fetched rather than compared in SQL because "year desc, month desc" cannot
+  // express "strictly before this year+month" in one PostgREST filter. The
+  // words table is one row a month; the whole list is small by construction.
+  const words = await getAllWords();
+  return words.find((w) => w.year * 12 + w.month < rank) ?? null;
+}
+
 export function showsNewestPapersFirst(entry: Pick<WordEntry, "month" | "year">): boolean {
   return (
     entry.year * 12 + entry.month >=

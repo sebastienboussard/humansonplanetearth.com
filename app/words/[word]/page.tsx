@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import {
   getWordBySlug,
+  getPreviousWord,
   getMonthName,
   getDaysRemaining,
   formatDeadline,
@@ -44,6 +45,9 @@ export default async function WordPage({
     pdf_url: string;
     tags: string[] | null;
   };
+
+  // Only the empty state uses this, so only the empty state pays for the query.
+  const previous = papers.length === 0 ? await getPreviousWord(entry) : null;
 
   const papersWithUrls = (papers as WordPaperRow[]).map((paper) => ({
     ...paper,
@@ -102,6 +106,19 @@ export default async function WordPage({
               Submit one →
             </Link>
           </p>
+          {previous && (
+            <p className="text-sm mt-6">
+              Or see what people made for{" "}
+              <Link
+                href={`/words/${previous.word}`}
+                style={{ color: "var(--forest)" }}
+                className="underline underline-offset-4"
+              >
+                &ldquo;{previous.word}&rdquo;
+              </Link>{" "}
+              in {getMonthName(previous.month)}.
+            </p>
+          )}
         </div>
       ) : (
         <PaperCarousel

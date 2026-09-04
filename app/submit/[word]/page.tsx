@@ -1,4 +1,5 @@
-import { getWordBySlug, getMonthName } from "@/lib/words";
+import Link from "next/link";
+import { getWordBySlug, getPreviousWord, getMonthName } from "@/lib/words";
 import SubmitForm from "../SubmitForm";
 import SubmitTerms from "@/components/SubmitTerms";
 
@@ -15,6 +16,7 @@ export default async function SubmitWordPage({
 }) {
   const { word: slug } = await params;
   const entry = await getWordBySlug(slug);
+  const previous = entry ? await getPreviousWord(entry) : null;
 
   return (
     <div className="max-w-2xl mx-auto px-6 py-16">
@@ -32,6 +34,18 @@ export default async function SubmitWordPage({
             <span style={{ color: "var(--forest)", fontWeight: 600 }}>{entry.word}</span>
             {" · "}
             {getMonthName(entry.month)} {entry.year}
+            {previous && (
+              <>
+                {" · "}
+                <Link
+                  href={`/words/${previous.word}`}
+                  style={{ color: "var(--terracotta)" }}
+                  className="underline underline-offset-4"
+                >
+                  see {getMonthName(previous.month)}&rsquo;s papers for &ldquo;{previous.word}&rdquo;
+                </Link>
+              </>
+            )}
           </p>
           <SubmitForm word={entry.word} />
         </>

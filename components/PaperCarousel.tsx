@@ -207,7 +207,12 @@ export default function PaperCarousel({
             ) : null
           )}
 
+          {/* Keyed by paper, and Comments depends on it: remounting is what
+              clears the previous paper's thread and any half-written reply.
+              Without the key, paging leaves the old comments on screen under
+              the new paper until its fetch returns. */}
           <Comments
+            key={current.id}
             wordId={wordId}
             paperId={current.id}
             title="Discuss this paper"

@@ -27,6 +27,20 @@ Last swept 2026-08-30: the lint work committed and pushed (`8dd7024`), the 12
 remote branches deleted, and this file split — 812 lines down to open work only,
 with the reasoning moved to `DECISIONS.md` rather than deleted.
 
+Added 2026-09-03: §16 (comments — the wrong paper's thread when paging fast, and
+no reply to a reply), §17 (no way to find the profile id the attach field wants),
+§18 (contact on the About page), §19 (a new word is a dead end until its first
+paper lands). All four are Seb's, from reading the live site.
+
+Swept again the same day, after the first wave shipped: §16, §18 and §19 are done
+and have left, along with two of §4's four mitigations and two of §11's items.
+§17 stays — it is Wave 2. One thing found while ordering the work is **not** here
+because it shipped in the same pass: `/api/contact` and `/api/comments` had no
+rate limit at all, and now do; it is in `CHANGELOG.md`, its fail-open reasoning
+is in `DECISIONS.md`, and §9's scope was widened to cover both routes. The
+running order lives in `~/.claude/plans/cheeky-yawning-lighthouse.md` until it is
+drained (§15).
+
 ---
 
 ## 🟠 1a. Migrations are manual, and nothing enforces them
@@ -93,7 +107,7 @@ Both upload routes are rate-limited through a shared Postgres store (word papers
       Recorded rather than actioned: the fail-open choice was deliberate and
       stays until traffic justifies the move
 
-## 🟠 4. The PDF viewer fails to a transparent hole
+## 🟡 4. The PDF viewer fails to a transparent hole
 
 When the canvas fails to paint for any reason, the viewer renders **nothing** —
 and because there is no opaque background behind it, the result is a see-through
@@ -108,12 +122,12 @@ and the site looks fine to everyone else.
 
 The cause is out of our control (§4a). These mitigations are the deliverable.
 
-- [ ] Opaque background behind the canvas, so a paint failure degrades to a
-      blank page instead of a hole
-- [ ] **Promote to primary fallback:** the Download link. It needs no canvas, it
-      already works, and it is the only path verified to work on a machine where
-      canvas paint fails. Surface it prominently whenever the empty-render case
-      is detected — not as a secondary nicety
+Two of the four mitigations shipped 2026-09-03: the canvas container now paints
+an opaque `var(--card)` ground, so a paint failure degrades to a blank page
+rather than a hole, and every viewer carries a plain "Can't see the paper?
+Download the PDF" line under it — the one path verified to work on a machine
+where canvas paint fails, no longer hidden in the header.
+
 - [ ] An `<object>`/`<iframe>` fallback to the browser's native PDF view is
       still worth having for the general case, but **cannot be the only
       fallback** — it fails identically on the affected profile. See
@@ -200,6 +214,10 @@ Rejection already deletes the stored PDF. Two sweep scripts exist, and
 - [ ] `app/api/submit/route.ts` — verify `cf-token` against siteverify
 - [ ] `app/long-form/submit/LongFormSubmitForm.tsx` + its route — the original
       plan covered only the word endpoint and left long-form unprotected
+- [ ] **`/contact` and `/comments` are in scope too.** Both were unthrottled
+      until 2026-09-03 and both send email; they now carry per-IP limits that
+      fail open, which makes Turnstile the real boundary on exactly those two
+      routes. The contact form is where traffic actually arrives
 - [ ] Fail **closed**, not open. "Verify only when `TURNSTILE_SECRET_KEY` is
       present" means a typo'd env var silently disables verification. In
       production an absent secret should reject. Contrast §3's limiter, which
@@ -233,12 +251,13 @@ The site has its own address: **weare.HumansOnPlanetEarth@gmail.com**. It
 already receives the admin alerts for new papers and contact messages via
 `ADMIN_NOTIFY_EMAIL`.
 
-- [ ] Use it as the public contact address instead of any personal address
+Published as the public address 2026-09-03 — on the About page's "Get in touch"
+close and on the privacy page as the route for takedown or correction requests.
+It lives in one place, `lib/site-contact.ts`, so the two pages cannot drift.
+
 - [ ] Use it as the `from`/reply-to for outbound notification email — note
       Resend can't send *from* a `gmail.com` address; `NOTIFY_FROM_EMAIL` stays
       on the site domain with this address as reply-to
-- [ ] Add it to the privacy page as the route for takedown or correction
-      requests on published papers
 - [ ] **Unsubscribes don't reach Resend.** `lib/unsubscribe.ts` flips our own
       `notification_prefs`, which is enough to stop *us* sending — but nothing
       is recorded on Resend's side, so there is no suppression list and no
@@ -344,6 +363,31 @@ record lived in another, and nothing reconciled them.
 - [ ] Read the 8 existing sheets for anything not yet promoted, promote it to
       `TODO.md` or `DECISIONS.md`, then delete them. Do this once; after that
       the rule keeps the directory empty on its own
+
+## 🟠 17. Nothing tells you the profile id an attachment needs
+
+The Published tab has "Attach to profile", posting to `/api/admin/attach`, which
+requires a raw profile UUID. Nothing in the app will tell you what that UUID is.
+The only route today is the Supabase dashboard — find the person in `auth.users`,
+then find their `profiles` row — which is why the feature goes unused.
+
+`profiles` carries `email`, so the lookup is one query away. It has to run behind
+`getAdminClient()`: RLS is on with zero policies, and `DECISIONS.md` records what
+that client's `any` return type costs.
+
+- [ ] Accept an **email** in the attach field and resolve it server-side in
+      `app/api/admin/attach/route.ts`, keeping the UUID path — take either
+- [ ] Or an admin lookup that takes an email and returns the profile id and
+      creation date. One endpoint can serve both; the lookup is the more useful
+      half, because it also answers "does this person have an account at all"
+- [ ] Whichever ships stays private. Attachment writes `public_visible: false`,
+      `papers` is deliberately author-free, and none of this gains a public
+      surface — see the tripwires in `DECISIONS.md`
+- [ ] **Question, not a plan:** should the submitter be able to claim a paper
+      themselves — a claim code shown once at submit time, entered later on
+      `/account`? It removes the admin step entirely, but it puts an identifier
+      linking a person to an anonymous paper into an inbox or a screenshot.
+      Decide before building either version
 
 ## Housekeeping
 

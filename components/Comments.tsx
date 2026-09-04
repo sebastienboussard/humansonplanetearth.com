@@ -138,18 +138,36 @@ export default function Comments({
   const [replyTo, setReplyTo] = useState<string | null>(null);
 
   useEffect(() => {
+    // Paging through the carousel changes paperId while a fetch is still in
+    // flight. Without this flag the response that lands last wins — which can
+    // be the paper you already left — and its thread renders under the paper
+    // you are now looking at.
+    //
+    // Clearing the *previous* thread is the other half of that fix, and it is
+    // not done here: React resets state by remounting, so every caller that
+    // can change paperId passes `key={paperId}` (see PaperCarousel). Setting
+    // it from inside this effect would cascade an extra render, and lint says
+    // so.
+    let ignore = false;
+
     const params = new URLSearchParams({ wordId });
     if (paperId) params.set("paperId", paperId);
     fetch(`/api/comments?${params}`)
       .then((r) => r.json())
       .then((d) => {
+        if (ignore) return;
         setComments(d.comments ?? []);
         setLoading(false);
       })
       .catch(() => {
+        if (ignore) return;
         setFetchError(true);
         setLoading(false);
       });
+
+    return () => {
+      ignore = true;
+    };
   }, [wordId, paperId]);
 
   async function postComment(body: string, parentCommentId?: string) {

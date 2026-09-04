@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { SITE_EMAIL } from "@/lib/site-contact";
 
 export const metadata = {
   title: "Privacy — Humans on Planet Earth",
@@ -87,6 +88,18 @@ export default function PrivacyPage() {
           </Link>{" "}
           page to reach the site. Sharing your email is optional and only used
           to reply to you.
+        </p>
+        <p>
+          To have a published paper taken down or corrected, write to{" "}
+          <a
+            href={`mailto:${SITE_EMAIL}`}
+            style={{ color: "var(--terracotta)" }}
+            className="underline underline-offset-4 break-all"
+          >
+            {SITE_EMAIL}
+          </a>
+          . Papers carry no author name anywhere on the site, so tell us which
+          paper you mean — its link, or the word and the date it appeared.
         </p>
 
         <hr style={{ borderColor: "var(--border)" }} className="my-8" />

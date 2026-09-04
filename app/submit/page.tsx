@@ -1,4 +1,5 @@
-import { getCurrentWord } from "@/lib/words";
+import Link from "next/link";
+import { getCurrentWord, getPreviousWord, getMonthName } from "@/lib/words";
 import SubmitForm from "./SubmitForm";
 import SubmitTerms from "@/components/SubmitTerms";
 
@@ -10,6 +11,9 @@ export const metadata = {
 
 export default async function SubmitPage() {
   const current = await getCurrentWord();
+  // What last month's responses looked like is the most useful thing we can
+  // show someone deciding whether to make one — see §19.
+  const previous = current ? await getPreviousWord(current) : null;
 
   return (
     <div className="max-w-2xl mx-auto px-6 py-16">
@@ -30,6 +34,18 @@ export default async function SubmitPage() {
         >
           This month&apos;s word:{" "}
           <span style={{ color: "var(--forest)", fontWeight: 600 }}>{current.word}</span>
+          {previous && (
+            <>
+              {" · "}
+              <Link
+                href={`/words/${previous.word}`}
+                style={{ color: "var(--terracotta)" }}
+                className="underline underline-offset-4"
+              >
+                see {getMonthName(previous.month)}&rsquo;s papers for &ldquo;{previous.word}&rdquo;
+              </Link>
+            </>
+          )}
         </p>
       ) : (
         <p

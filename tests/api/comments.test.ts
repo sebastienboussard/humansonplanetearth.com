@@ -103,8 +103,14 @@ describe("POST /api/comments", () => {
     expect(res.status).toBe(200);
   });
 
+  // A top-level comment on the same paper, returned by the parent lookup that
+  // now precedes every reply insert.
+  const parent = { id: "c0", word_id: "w1", paper_id: "p1", parent_comment_id: null };
+
   it("stores a trimmed comment and returns it", async () => {
-    holder.current = createMockSupabase({ tables: { comments: { data: comment } } });
+    holder.current = createMockSupabase({
+      tables: { comments: [{ data: parent }, { data: comment }] },
+    });
 
     const res = await POST(
       jsonRequest(URL, { wordId: "w1", paperId: "p1", parentCommentId: "c0", body: "  hello  " })
@@ -112,12 +118,72 @@ describe("POST /api/comments", () => {
 
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ comment });
-    expect(holder.current.query("comments")!.insert).toHaveBeenCalledWith({
+    expect(holder.current.query("comments", 1)!.insert).toHaveBeenCalledWith({
       word_id: "w1",
       paper_id: "p1",
       parent_comment_id: "c0",
       body: "hello",
     });
+  });
+
+  it("attaches a reply to a reply to its top-level ancestor", async () => {
+    // c1 is itself a reply to c0. Replying to it must land on c0, which is
+    // where the reader can actually see it — the UI only renders children of
+    // top-level comments.
+    const nested = { id: "c1", word_id: "w1", paper_id: "p1", parent_comment_id: "c0" };
+    holder.current = createMockSupabase({
+      tables: { comments: [{ data: nested }, { data: comment }] },
+    });
+
+    const res = await POST(
+      jsonRequest(URL, { wordId: "w1", paperId: "p1", parentCommentId: "c1", body: "hello" })
+    );
+
+    expect(res.status).toBe(200);
+    expect(holder.current.query("comments", 1)!.insert).toHaveBeenCalledWith({
+      word_id: "w1",
+      paper_id: "p1",
+      parent_comment_id: "c0",
+      body: "hello",
+    });
+    // The notification follows the comment, not the request.
+    expect(notifyCommentReply).toHaveBeenCalledWith("c0", comment, "w1", "p1", null);
+  });
+
+  it("rejects a reply to a comment that no longer exists", async () => {
+    holder.current = createMockSupabase({ tables: { comments: { data: null } } });
+
+    const res = await POST(
+      jsonRequest(URL, { wordId: "w1", paperId: "p1", parentCommentId: "gone", body: "hello" })
+    );
+
+    expect(res.status).toBe(400);
+    expect(holder.current.query("comments", 1)).toBeUndefined();
+  });
+
+  it("rejects a parent belonging to a different discussion", async () => {
+    // Same word, different paper: rendered nowhere if it were allowed through.
+    const elsewhere = { id: "c0", word_id: "w1", paper_id: "p2", parent_comment_id: null };
+    holder.current = createMockSupabase({ tables: { comments: { data: elsewhere } } });
+
+    const res = await POST(
+      jsonRequest(URL, { wordId: "w1", paperId: "p1", parentCommentId: "c0", body: "hello" })
+    );
+
+    expect(res.status).toBe(400);
+    expect(holder.current.query("comments", 1)).toBeUndefined();
+  });
+
+  it("rate-limits comments per IP", async () => {
+    holder.current = createMockSupabase({
+      rpcs: { rate_limit_hit: { data: { allowed: false, retry_after: 900 } } },
+    });
+
+    const res = await POST(jsonRequest(URL, { wordId: "w1", body: "hello" }));
+
+    expect(res.status).toBe(429);
+    expect(res.headers.get("Retry-After")).toBe("900");
+    expect(holder.current.from).not.toHaveBeenCalled();
   });
 
   it("defaults paperId and parentCommentId to null", async () => {
@@ -196,7 +262,10 @@ describe("POST /api/comments", () => {
   it("notifies the parent author for replies, passing the replier's profile", async () => {
     profileHolder.current = { id: "prof-1", user_id: "user-1", email: "h@example.com" };
     holder.current = createMockSupabase({
-      tables: { comments: { data: comment }, comment_authors: { data: null } },
+      tables: {
+        comments: [{ data: parent }, { data: comment }],
+        comment_authors: { data: null },
+      },
     });
 
     await POST(

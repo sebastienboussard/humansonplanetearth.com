@@ -1,10 +1,10 @@
 # Decisions
 
 What `CHANGELOG.md` cannot hold. The changelog says what shipped and when;
-`TODO.md` says what still needs doing. This file says what was **ruled out**,
-what was **retracted**, what was **corrected**, and what was **proved against
-production** — the reasoning that would otherwise be re-derived, or worse,
-re-investigated.
+`TODO.md` says what still needs doing. This file says what was **decided**, what
+was **ruled out**, what was **retracted**, what was **corrected**, and what was
+**proved against production** — the reasoning that would otherwise be
+re-derived, or worse, re-investigated.
 
 Three rules, inherited from `TODO.md`:
 
@@ -47,6 +47,49 @@ in a working file, so they survive a machine.
   This is how 13 lint errors hid, and how a real nullability mismatch hid behind
   them. Name the row shape; do not annotate a callback `any` to quiet the
   compiler.
+
+---
+
+## Decided
+
+Newest first. A choice that will be questioned again, written down once.
+
+### 2026-09-03 — replies are one level deep, and the server is what enforces it
+
+`comments.parent_comment_id` references `comments(id)`, so the database allows
+any depth. The reader has never rendered more than one: `buildTree` keeps only
+the children of top-level comments, and Reply is offered on top-level comments
+only. Nothing checked, so `POST /api/comments` would happily store a depth-3
+comment that no page could display, and would accept a parent belonging to a
+different word or paper.
+
+**Decided: one level, enforced in the route.** A reply to a reply is attached to
+its top-level ancestor rather than rejected — the person's words stay visible,
+which a 400 would not achieve — and a parent from another discussion is refused.
+The alternative, full nesting with a recursive render and an indent cap, was
+weighed and set aside: deep chains are cramped on a phone, and the flat shape is
+what the site has actually been running.
+
+If nesting is ever wanted, this normalisation is the thing to remove, and it is
+one block in `app/api/comments/route.ts`.
+
+### 2026-09-03 — the contact and comment limiters fail open, deliberately
+
+Both routes were unthrottled until this date; a honeypot field was the whole
+defence, and both send mail. They now use the same Postgres counter as the
+upload routes, and they **fail open** for the same reason recorded in
+`lib/rate-limit.ts`: if the store is unreachable the request is allowed.
+
+The uncomfortable half, written down rather than glossed: on `/contact` the
+limiter is the *only* thing in front of the admin inbox, so failing open means
+an attacker who can make the store time out gets an unlimited send — the §3
+"fail-open has no floor" problem, now on a second surface. Failing closed was
+rejected because a database blip would then silently swallow genuine contact
+messages, which is the §1a outage over again, and messages are the one thing
+this site cannot afford to drop twice.
+
+The real boundary is Turnstile, and §9's scope was widened to name both routes.
+Until it lands, the limiter is mitigation and is commented as such.
 
 ---
 

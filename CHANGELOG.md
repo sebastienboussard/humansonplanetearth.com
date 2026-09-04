@@ -5,6 +5,23 @@ All notable changes to this project are documented here.
 ## Unreleased
 
 ### Security
+- **The contact form and comments were unthrottled.** Both accepted unlimited
+  scripted posts behind nothing but a honeypot field, and both send mail —
+  `/api/contact` emails the admin inbox before it stores anything, and a comment
+  can trigger a notification to a paper's author. One script could therefore
+  spend the site's Resend reputation and fill two tables from a single endpoint.
+  Both now carry per-IP limits through the same Postgres counter as the upload
+  routes: 5 messages an hour, 10 comments an hour. They fail **open**, like the
+  upload limiter and for the same reason — a database blip must not silently
+  swallow genuine messages. §9's Turnstile scope now covers both routes, which
+  is where the real boundary belongs.
+- **Replies could be stored where nobody could read them.** `POST /api/comments`
+  accepted any `parentCommentId` at any depth, while the reader only renders
+  replies to top-level comments — so a reply to a reply was invisible, and a
+  parent from another word or paper was accepted outright. The route now
+  resolves a parent to its top-level ancestor and rejects one belonging to a
+  different discussion. The notification follows the comment to where it
+  actually landed.
 - **Upload rate limiting.** `/api/submit` and `/api/submit/long-form` accepted
   unlimited scripted uploads. Both are now capped per IP per hour (5 word
   papers, 3 long-form) using a shared Postgres counter, so the limit holds
@@ -33,12 +50,37 @@ All notable changes to this project are documented here.
   who could read a storage path.
 
 ### Added
+- **A word with no papers yet points at the month before.** Opening a word in
+  the first days of a month showed "No papers published yet. Be the first." and
+  nothing else — no sense of what a response even looks like, at exactly the
+  moment someone is deciding whether to make one. The empty state, `/submit` and
+  `/submit/[word]` now link the previous word, via `getPreviousWord` in
+  `lib/words.ts` (month order, long-form sentinel excluded).
+- **The About page says how to get in touch**, closing with the contact form and
+  the site's own address, and the privacy page names that address as the route
+  for takedown or correction requests. The address has one definition,
+  `lib/site-contact.ts`, so the two pages cannot drift.
 - **Home page surfaces what's new.** An expandable "What's new on the site"
   strip above the hero (native `<details>`, no JavaScript required) announces
   reader-facing features from a hardcoded list in `data/whats-new.ts`. The hero
   links to the newest approved paper for the current word, and the long-form
   teaser links to the latest long-form paper by title and date. Home page ISR
   lowered from 3600s to 60s so new papers appear promptly.
+
+### Fixed
+- **Paging through papers showed the wrong paper's comments.** The carousel
+  mounted one comment thread and swapped its `paperId` underneath, so a fetch
+  for the paper you had just left could land last and win, and the previous
+  thread stayed on screen in the meantime. The fetch now discards superseded
+  responses, and the thread is keyed by paper so a new paper remounts it —
+  which also clears a half-written reply that belonged to the paper before.
+- **The PDF viewer degraded to a transparent hole.** When a page failed to
+  paint — hardened browser profiles interfere with canvas, and this site draws
+  exactly those readers — there was no opaque ground behind the canvas, so one
+  machine showed the desktop through the browser window. The container now
+  paints `var(--card)`, and every viewer carries a plain "Can't see the paper?
+  Download the PDF" line, which is the only fallback verified to work on the
+  affected profile.
 
 ### Changed
 - **The site no longer says a submission has to be writing.** Nothing in the

@@ -34,6 +34,19 @@ describe("POST /api/contact", () => {
     expect(notifyAdminNewMessage).not.toHaveBeenCalled();
   });
 
+  it("rate-limits messages per IP", async () => {
+    holder.current = createMockSupabase({
+      rpcs: { rate_limit_hit: { data: { allowed: false, retry_after: 1800 } } },
+    });
+
+    const res = await POST(jsonRequest(URL, { body: "hello" }));
+
+    expect(res.status).toBe(429);
+    expect(res.headers.get("Retry-After")).toBe("1800");
+    expect(holder.current.from).not.toHaveBeenCalled();
+    expect(notifyAdminNewMessage).not.toHaveBeenCalled();
+  });
+
   it("rejects an empty or whitespace-only message", async () => {
     holder.current = createMockSupabase();
     expect((await POST(jsonRequest(URL, { body: "" }))).status).toBe(400);

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { SITE_EMAIL } from "@/lib/site-contact";
 
 export const metadata = {
   title: "About — Humans on Planet Earth",
@@ -63,6 +64,28 @@ export default function AboutPage() {
           </li>
           <li>Your paper will be reviewed and published anonymously.</li>
         </ol>
+
+        <hr style={{ borderColor: "var(--border)" }} className="my-8" />
+
+        <h2 className="text-xl font-normal" style={{ color: "var(--forest)" }}>
+          Get in touch
+        </h2>
+        <p>
+          Questions, corrections, or a paper you want taken down — write to us.
+          Use the{" "}
+          <Link href="/contact" style={{ color: "var(--terracotta)" }} className="underline underline-offset-4">
+            Contact
+          </Link>{" "}
+          page, where sharing your email is optional, or email{" "}
+          <a
+            href={`mailto:${SITE_EMAIL}`}
+            style={{ color: "var(--terracotta)" }}
+            className="underline underline-offset-4 break-all"
+          >
+            {SITE_EMAIL}
+          </a>
+          .
+        </p>
       </div>
     </div>
   );

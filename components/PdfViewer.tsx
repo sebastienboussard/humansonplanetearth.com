@@ -83,7 +83,15 @@ export default function PdfViewer({
         </div>
       )}
 
-      <div ref={containerRef} className="w-full">
+      {/* Opaque ground behind the canvas. When a page fails to paint — hardened
+          browser profiles interfere with canvas, and this site draws exactly
+          those readers (§4) — the reader gets a blank page instead of a
+          see-through hole showing whatever is behind the browser window. */}
+      <div
+        ref={containerRef}
+        className="w-full"
+        style={{ backgroundColor: "var(--card)" }}
+      >
         {error ? (
           <div
             className="flex items-center justify-center rounded-sm"
@@ -127,6 +135,16 @@ export default function PdfViewer({
           </Document>
         )}
       </div>
+
+      {/* The only fallback verified to work on a profile where canvas paint
+          fails, so it is stated plainly rather than left as a header link. */}
+      <p className="mt-2 text-xs" style={{ color: "var(--muted)" }}>
+        Can&rsquo;t see the paper?{" "}
+        <a href={src} download className="underline underline-offset-4">
+          Download the PDF
+        </a>
+        .
+      </p>
     </div>
   );
 }
