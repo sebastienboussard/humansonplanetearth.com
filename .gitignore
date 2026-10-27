@@ -45,3 +45,6 @@ CLAUDE.md
 AGENTS.md
 tmp/
 /.claude/
+
+# Supabase CLI local state
+supabase/.temp/

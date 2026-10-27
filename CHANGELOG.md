@@ -4,6 +4,19 @@ All notable changes to this project are documented here.
 
 ## Unreleased
 
+## 2026-10-26
+
+Released to production through the new deploy workflow, run
+[40451211912](https://github.com/sebastienboussard/humansonplanetearth.com/actions/runs/40451211912).
+It is the first deploy that migrated the database before going live.
+
+This section covers everything since 2026-08-19. Not all of it shipped on this
+date: pushes on 2026-08-20, 2026-08-30 and 2026-09-03 put parts of it live
+earlier, when Vercel still deployed on every push. `git log` has the exact
+dates. What reached production for the first time on 2026-10-26: the startup
+env check and the three secrets that now fail closed, the pre-commit hook, and
+the deploy workflow.
+
 ### Security
 - **A missing secret could open three security checks instead of closing
   them.** With `ADMIN_PASSWORD` unset, admin sessions were signed with the
@@ -70,14 +83,10 @@ All notable changes to this project are documented here.
   `supabase db push`, then a Vercel production deploy through a deploy hook.
   If a step fails, the steps after it don't run, and Vercel's own auto-deploy
   of `main` is off. Before, schema changes were applied by hand in the SQL
-  editor, and once six tables went missing for months. **Not live until the
-  one-time setup in `README.md` is done** (`TODO.md` §1a).
-
-  Pushed 2026-10-26 with everything above it in this section. The first run,
-  [40444461351](https://github.com/sebastienboussard/humansonplanetearth.com/actions/runs/40444461351),
-  passed its checks in CI (lint, typecheck, 342 tests) and then **stopped at
-  the migrate step**. The deploy was skipped and production did not change. It
-  failed closed, the way it was built to: none of this section is live yet.
+  editor, and once six tables went missing for months. The first two runs
+  stopped at the migrate step, one with no secret and one with a wrong
+  password. Each skipped the deploy and left production untouched, as
+  designed. The third ran all the way through. `DECISIONS.md` has all three.
 - **A pre-commit hook.** `.husky/pre-commit` runs four checks before every
   commit:
   - `scripts/check-lockfile.mjs` refuses a commit where the staged
