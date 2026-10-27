@@ -26,7 +26,20 @@ export type AdminWord = {
   deadline: string;
 };
 
-export type Dataset = "messages" | "pending" | "published" | "words" | "queue";
+export type Dataset = "messages" | "pending" | "published" | "words" | "queue" | "rooms";
+
+// Reading Rooms (TODO §21). Pages carry their room and section, never an author.
+export type AdminRoomPage = {
+  id: string;
+  title: string;
+  body: string;
+  quote: string | null;
+  locator: string | null;
+  submitted_at: string;
+  room_sections: { label: string; rooms: { title: string; slug: string } | null } | null;
+};
+
+export type AdminRoom = { id: string; slug: string; title: string; medium: string; created_at: string };
 
 export type NewWordInput = {
   word: string;
@@ -44,6 +57,8 @@ type AdminDataValue = {
   words: AdminWord[];
   /** Waiting proposals in fair order, with rounds and no proposer identity. */
   queue: QueuedWord[];
+  roomPages: AdminRoomPage[];
+  liveRooms: AdminRoom[];
   unread: number;
   loading: Record<Dataset, boolean>;
   error: string | null;
@@ -57,6 +72,8 @@ type AdminDataValue = {
   /** Resolves to an error message, or null on success. */
   addWord: (input: NewWordInput) => Promise<string | null>;
   declineQueued: (id: string) => Promise<void>;
+  decideRoomPage: (id: string, status: "approved" | "rejected") => Promise<void>;
+  removeRoom: (id: string) => Promise<void>;
 };
 
 const AdminDataContext = createContext<AdminDataValue | null>(null);
@@ -92,7 +109,7 @@ async function send(url: string, method: string, body: unknown): Promise<string 
   }
 }
 
-const ALL_DATASETS: Dataset[] = ["messages", "pending", "published", "words", "queue"];
+const ALL_DATASETS: Dataset[] = ["messages", "pending", "published", "words", "queue", "rooms"];
 
 export function AdminDataProvider({ children }: { children: React.ReactNode }) {
   const [messages, setMessages] = useState<AdminMessage[]>([]);
@@ -106,12 +123,15 @@ export function AdminDataProvider({ children }: { children: React.ReactNode }) {
   });
   const [words, setWords] = useState<AdminWord[]>([]);
   const [queue, setQueue] = useState<QueuedWord[]>([]);
+  // Pending pages and live rooms arrive together from one route.
+  const [rooms, setRooms] = useState<{ pages: AdminRoomPage[]; live: AdminRoom[] }>({ pages: [], live: [] });
   const [loading, setLoading] = useState<Record<Dataset, boolean>>({
     messages: true,
     pending: true,
     published: true,
     words: true,
     queue: true,
+    rooms: true,
   });
   const [error, setError] = useState<string | null>(null);
 
@@ -129,6 +149,11 @@ export function AdminDataProvider({ children }: { children: React.ReactNode }) {
           "/api/admin/review?status=approved"
         );
         setPapers((prev) => ({ ...prev, published: sortPublished(data.papers ?? []) }));
+      } else if (key === "rooms") {
+        const data = await getJson<{ pendingPages?: AdminRoomPage[]; liveRooms?: AdminRoom[] }>(
+          "/api/admin/rooms"
+        );
+        setRooms({ pages: data.pendingPages ?? [], live: data.liveRooms ?? [] });
       } else if (key === "queue") {
         const data = await getJson<{ queue?: QueuedWord[] }>("/api/admin/word-queue");
         setQueue(data.queue ?? []);
@@ -214,6 +239,24 @@ export function AdminDataProvider({ children }: { children: React.ReactNode }) {
     [refresh]
   );
 
+  const decideRoomPage = useCallback(async (id: string, status: "approved" | "rejected") => {
+    const failure = await send("/api/admin/rooms", "PATCH", { pageId: id, status });
+    if (failure) {
+      setError(failure);
+      return;
+    }
+    setRooms((prev) => ({ ...prev, pages: prev.pages.filter((p) => p.id !== id) }));
+  }, []);
+
+  const removeRoom = useCallback(async (id: string) => {
+    const failure = await send("/api/admin/rooms", "DELETE", { roomId: id });
+    if (failure) {
+      setError(failure);
+      return;
+    }
+    setRooms((prev) => ({ ...prev, live: prev.live.filter((r) => r.id !== id) }));
+  }, []);
+
   const declineQueued = useCallback(async (id: string) => {
     const failure = await send("/api/admin/word-queue", "PATCH", { id, status: "declined" });
     if (failure) {
@@ -230,6 +273,8 @@ export function AdminDataProvider({ children }: { children: React.ReactNode }) {
       published: papers.published,
       words,
       queue,
+      roomPages: rooms.pages,
+      liveRooms: rooms.live,
       unread: unreadCount(messages),
       loading,
       error,
@@ -242,12 +287,15 @@ export function AdminDataProvider({ children }: { children: React.ReactNode }) {
       deleteMessage,
       addWord,
       declineQueued,
+      decideRoomPage,
+      removeRoom,
     }),
     [
       messages,
       papers,
       words,
       queue,
+      rooms,
       loading,
       error,
       refresh,
@@ -258,6 +306,8 @@ export function AdminDataProvider({ children }: { children: React.ReactNode }) {
       deleteMessage,
       addWord,
       declineQueued,
+      decideRoomPage,
+      removeRoom,
     ]
   );
 

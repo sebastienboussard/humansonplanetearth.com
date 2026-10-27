@@ -74,7 +74,7 @@ export function paperCommentEmail(
 // profileId and must never use footer() — its unsubscribe link is signed
 // against a reader profile that doesn't exist here.
 
-function adminFooter(tab: "pending" | "messages"): string {
+function adminFooter(tab: "pending" | "messages" | "rooms"): string {
   return ["", "—", `Open the admin page: ${siteUrl()}/admin/review#${tab}`].join("\n");
 }
 
@@ -95,6 +95,19 @@ export function adminNewPaperEmail(paper: {
     text: [
       `A new ${label} is waiting for review.`,
       adminFooter("pending"),
+    ].join("\n"),
+  };
+}
+
+// A page written in a Reading Room (TODO §21), waiting for review. Carries the
+// room and section names only, never the page text or anything about who wrote
+// it.
+export function adminNewRoomPageEmail(page: { room: string; section: string }): EmailContent {
+  return {
+    subject: `New page in a Reading Room: ${page.room}`,
+    text: [
+      `A new page on "${page.section}" in the Reading Room "${page.room}" is waiting for review.`,
+      adminFooter("rooms"),
     ].join("\n"),
   };
 }

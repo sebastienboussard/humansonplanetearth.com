@@ -4,7 +4,7 @@
 // functions swallow everything and resolve void.
 
 import { sendEmail } from "@/lib/email";
-import { adminNewMessageEmail, adminNewPaperEmail } from "@/lib/email-templates";
+import { adminNewMessageEmail, adminNewPaperEmail, adminNewRoomPageEmail } from "@/lib/email-templates";
 
 // Unset means alerts are off (dev, tests) — a silent no-op, not an error.
 function adminAddress(): string | null {
@@ -23,6 +23,16 @@ export async function notifyAdminNewPaper(paper: {
     await sendEmail({ to, ...adminNewPaperEmail(paper) });
   } catch (err) {
     console.error("Admin paper alert error:", err);
+  }
+}
+
+export async function notifyAdminNewRoomPage(page: { room: string; section: string }): Promise<void> {
+  const to = adminAddress();
+  if (!to) return;
+  try {
+    await sendEmail({ to, ...adminNewRoomPageEmail(page) });
+  } catch (err) {
+    console.error("Admin room page alert error:", err);
   }
 }
 

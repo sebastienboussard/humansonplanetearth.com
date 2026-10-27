@@ -6,12 +6,14 @@ import MessagesInbox from "./MessagesInbox";
 import ReviewQueue from "./ReviewQueue";
 import PublishedPapers from "./PublishedPapers";
 import WordsPanel from "./WordsPanel";
+import RoomsPanel from "./RoomsPanel";
 
 const TABS = [
   { id: "messages", label: "Messages" },
   { id: "pending", label: "Pending papers" },
   { id: "published", label: "Published papers" },
   { id: "words", label: "Words" },
+  { id: "rooms", label: "Reading Rooms" },
 ] as const;
 
 type TabId = (typeof TABS)[number]["id"];
@@ -48,7 +50,7 @@ function Badge({ count }: { count: number }) {
 }
 
 function Tabs() {
-  const { pending, unread, error, dismissError, queue } = useAdminData();
+  const { pending, unread, error, dismissError, queue, roomPages } = useAdminData();
   const active = useSyncExternalStore(subscribeToHash, tabFromHash, () => "messages");
 
   function select(tab: TabId) {
@@ -62,6 +64,7 @@ function Tabs() {
     messages: unread,
     pending: pending.length,
     words: queue.length,
+    rooms: roomPages.length,
   };
 
   return (
@@ -124,6 +127,9 @@ function Tabs() {
       </div>
       <div id="panel-words" role="tabpanel" hidden={active !== "words"}>
         <WordsPanel />
+      </div>
+      <div id="panel-rooms" role="tabpanel" hidden={active !== "rooms"}>
+        <RoomsPanel />
       </div>
     </div>
   );

@@ -13,8 +13,9 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 //
 // Fails open, like the upload limiter and for the same reason: a database blip
 // must not silently swallow genuine messages, which is the §1a failure over
-// again. The real boundary here is Turnstile (§9), whose scope now includes
-// this route.
+// again. There is no stronger check behind it: Turnstile (§9) was ruled out on
+// 2026-10-26 (DECISIONS.md), so this limit and the honeypot are what stand
+// here, and a spam run is handled after the fact.
 const MAX_MESSAGES = 5;
 const WINDOW_SECONDS = 60 * 60;
 

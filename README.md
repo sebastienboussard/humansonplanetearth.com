@@ -47,6 +47,10 @@ Tables (full definitions in `supabase/schema.sql`):
 - `comments` — `id`, `word_id`, `paper_id`, `parent_comment_id`, `body`, `created_at`
 - `word_proposals` — words accounts propose for a future month (`0004`). RLS
   on, zero policies; the admin queue never sees who proposed what.
+- `rooms`, `room_sections`, `room_pages`, `room_margins` — Reading Rooms
+  (`0005`). Public read is limited to live rooms and approved pages. Who wrote
+  anything is in `room_authors`, `room_page_authors` and `room_margin_authors`,
+  RLS on, zero policies. Rooms are created only through `create_room()`.
 - `profiles`, `notification_prefs`, `paper_authors`, `comment_authors`,
   `notification_log` — optional anonymous accounts and email notifications.
   These have RLS enabled with **zero policies** on purpose: they are invisible

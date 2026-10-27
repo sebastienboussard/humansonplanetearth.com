@@ -31,6 +31,13 @@ export type WhatsNewEntry = {
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
     date: "2026-10-26",
+    title: "Reading Rooms",
+    blurb:
+      "Read a book or watch a film with everyone else, at your own pace. Each room is broken into parts that stay closed until you open them, so nothing ahead of you is spoiled. Write a page about the part you're on, or a few words in the margin.",
+    href: "/rooms",
+  },
+  {
+    date: "2026-10-26",
     title: "Suggest a word",
     blurb:
       "Signed in? You can now propose a word for a future month, from your account page. Everyone's first suggestion is considered before anyone's second.",
@@ -55,12 +62,5 @@ export const WHATS_NEW: WhatsNewEntry[] = [
     title: "Comments follow the paper you are looking at",
     blurb:
       "Paging quickly through papers could leave the previous paper's discussion on screen. Each paper now keeps its own thread, however fast you move.",
-  },
-  {
-    date: "2026-08-20",
-    title: "It was never only writing",
-    blurb:
-      "A page can be written, drawn, photographed, or anything else.",
-    href: "/submit",
   },
 ];

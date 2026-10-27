@@ -19,6 +19,21 @@ All notable changes to this project are documented here.
     login, and the admin API still returns 401.
 
 ### Added
+- **Reading Rooms.** Anyone signed in can open a room for a book or a film and
+  break it into parts, such as chapters, acts or timestamps. Every room ends
+  with "The whole work". Anyone can write a **page** about a part, typed and
+  anonymous, published as Human On Planet Earth after review. Anyone can
+  write a **margin** under a page; margins appear at once, with one level of
+  replies. Every section starts closed, and its pages are fetched only when a
+  reader opens it, so nothing ahead of where they are is in the page. Pages
+  can quote the passage they answer (300 characters) with a page or time.
+  Opening rooms is capped at three per account per day, inside the database
+  function `create_room()`, which also writes the room, its sections and the
+  private creator row in one step. Who wrote anything is kept only in three
+  private tables. The admin dashboard gets a Reading Rooms tab for approving
+  pages and removing rooms. Migration `0005_reading_rooms.sql` was proved in
+  real Postgres, including as the public role. The Open Library lookup
+  follows separately (`TODO.md` §21b).
 - **Propose a word for a future month.** Signed-in accounts can suggest
   words, with up to three waiting at a time, and withdraw a waiting one. The
   queue is fair rather than first-come-first-served: each word's round is its

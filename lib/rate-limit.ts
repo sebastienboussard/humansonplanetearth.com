@@ -30,8 +30,9 @@ export type RateLimitResult = { allowed: boolean; retryAfter: number };
  * login, and uploads are still validated and size-capped. Failing closed would
  * turn a database blip into a total outage of submissions, and would have
  * locked the site down completely during the window when this migration had
- * not been applied yet. Contrast §9 (Turnstile), which must fail closed
- * because there the check *is* the security boundary.
+ * not been applied yet. Contrast a check that *is* the security boundary,
+ * such as the room cap in create_room() (migration 0005), which must fail
+ * closed.
  */
 export async function rateLimit(
   key: string,

@@ -13,10 +13,11 @@ work is not kept here.
 
 Status markers: `🟠` open · `🟡` partial · `⏸` deferred.
 
-**Section numbers never change.** Eight comments in shipped code, tests and
+**Section numbers never change.** Comments in shipped code, tests and
 scripts cite them — `app/api/contact/route.ts` and `tests/api/contact.test.ts`
 (§1a), both cleanup scripts (§7, §2), `data/whats-new.ts` (§10),
-`lib/rate-limit.ts` (§9), `CHANGELOG.md` (§4). Renumbering breaks all of them
+`CHANGELOG.md` (§4), and the §14, §20 and §21 code added 2026-10-26.
+`lib/rate-limit.ts` cited §9 until §9 was ruled out on 2026-10-26. Renumbering breaks all of them
 silently; nothing would fail a build. The gaps where §1, §5, §8 and §12 used to
 sit are correct — those sections are done, and live in `CHANGELOG.md` and
 `DECISIONS.md` now.
@@ -51,7 +52,8 @@ decided with Seb on 2026-10-22 in a plan sheet. This section promotes that
 sheet, so the sheet can be deleted. Nothing was built. It adds a migration, so
 it queues behind §1a in the same way §20 does.
 
-Swept 2026-10-26: §15, §13 and §22 are done and have left. `DECISIONS.md` records what the
+Swept 2026-10-26: §15, §13 and §22 are done and have left. §9 has left too,
+ruled out rather than done. `DECISIONS.md` records what the
 drain found, which was not what §15 assumed. §13 was un-parked the same day by
 Seb's call, as part of the new running order below, and shipped. It also closed three
 places where a missing secret opened a security check instead of closing it.
@@ -67,10 +69,9 @@ size:
    bump, 16.2.2 → 16.4.3).
 3. **§1a**, before any feature that adds a migration. §20 and §21 both add
    one. **Live 2026-10-26.**
-4. **§14, then §9**, before the features rather than after them. §20 and §21
-   are account-only, and §14 is what fixes sign-in across devices. §21 adds
-   three public write routes, so Turnstile should land before them rather
-   than be retrofitted.
+4. **§14, before the features.** Live 2026-10-26. §9, Turnstile, was ruled
+   out the same day by Seb's call; `DECISIONS.md` has the reasoning, and the
+   work is kept as the tag `archive/turnstile`.
 5. **§20, then §21.** §20 is smaller, and §21 reuses its cap trigger and its
    admin-tab recipe. Whichever lands first takes migration `0004`.
 6. **§10's full page**, alongside §21, which is the first change a visitor
@@ -245,46 +246,6 @@ Rejection already deletes the stored PDF. Two sweep scripts exist, and
       grace window. Only worth wiring once there is enough submission volume for
       the queue to grow — today the whole bucket is 36 files
 
-## 🟡 9. Cloudflare Turnstile — built, waiting on the keys
-
-**Built 2026-10-26 on the local branch `turnstile`, never pushed, and it
-must not reach `main` before the keys exist.** It fails closed by design, and `lib/env.ts` now requires both keys at
-boot. A deploy without them in Vercel would return 500 on every page, loudly.
-The order is: keys in Vercel, then push.
-
-What exists:
-
-- `lib/turnstile.ts`, the server check. It fails closed on every path: no
-  secret, no or malformed token, Cloudflare unreachable or slow (5 s), or a
-  "no".
-- `components/TurnstileWidget.tsx`, written by hand rather than adding
-  `@marsidev/react-turnstile`. The API used is only render, reset and remove.
-- The check is wired into all four public write routes: word submit,
-  long-form submit, contact and comments. It runs after the honeypot and
-  before anything expensive, such as reading the PDF. `remoteip` is passed.
-- Each form disables its button until it holds a token and resets the widget
-  after every send, since tokens are single-use.
-- Tests cover the check against a fake Cloudflare and a refusal in every
-  route.
-- Proved against **Cloudflare's real siteverify** with its published test
-  keys: the always-pass secret let a request through, the always-fail secret
-  got 403 `invalid-input-response`, and a missing token got 403.
-
-**The accepted cost:** if Cloudflare's verify endpoint is down, nobody can
-submit, comment or send a message until it is back. That is what "fails
-closed" means here, and it is the point. The limiters in front of the check
-fail open, so this check is the boundary on these routes.
-
-- [ ] **Seb:** Cloudflare → Turnstile → Add widget. Name
-      `humansonplanetearth`, hostnames `humansonplanetearth.com` and
-      `localhost`, mode **Managed**
-- [ ] **Seb:** add `NEXT_PUBLIC_TURNSTILE_SITE_KEY` and
-      `TURNSTILE_SECRET_KEY` to Vercel for **Production and Preview**, and to
-      `.env.local`. Then tell Claude, which merges `turnstile` into `main`;
-      then push
-- [ ] After the deploy: send one real contact message and one real comment
-      through the live widget, and check both arrive
-
 ## 🟡 10. "What's Changed" — banner shipped, page still open
 
 The home page has an expandable "What's new on the site" banner (native
@@ -299,6 +260,11 @@ would not notice it while using the site, it does not go in the banner.
 - [ ] `app/changes/page.tsx` — a full page, linked from `components/Nav.tsx`.
       The banner only shows the most recent handful; there is still nowhere to
       read the whole reader-facing history
+- [ ] **Open question for Seb, 2026-10-26: where does this page's history
+      come from?** `CHANGELOG.md` was considered and set aside, because it is
+      written for developers (migration numbers, advisories). The remaining
+      options are an archive array beside `WHATS_NEW`, which would restore
+      the entries trimmed from the banner, or the `changes` table below
 - [ ] **Since 2026-10-26 `data/whats-new.ts` holds at most five entries**
       (Seb's call; a test enforces it), so it can no longer be the full
       history this page shows. The page needs its own source
@@ -508,7 +474,7 @@ author-free — see the tripwires in `DECISIONS.md`.
       third word must land exactly one row. PGlite has a single connection.
       This needs two real sessions against the real database
 
-## 🟠 21. Reading Rooms — an asynchronous book club — PLANNED, NOT STARTED
+## 🟡 21. Reading Rooms — 21a built on a branch, 21b open
 
 Nothing below is built. "Reading Rooms" is a working name. Scope was decided
 with Seb on 2026-10-22.
@@ -553,81 +519,79 @@ checked server-side is what gets stored: `ol_work_key` must match
 `^/works/OL\d+W$` and `cover_id` must be an integer, so a client cannot plant an
 arbitrary URL that the room page then renders.
 
-**Migration number clash.** §20 already claims `0004`. Whichever of the two
-ships first takes `0004`; the other takes `0005`. Since 2026-10-26 the deploy
-workflow applies both (§1a).
+**Migration:** `0005_reading_rooms.sql`, since §20 took `0004`. The deploy
+workflow applies it (§1a).
 
-- [ ] Migration `supabase/migrations/000N_reading_rooms.sql` (see the clash
-      above). Mirror into `supabase/schema.sql` per the `0003_rate_limits.sql`
-      precedent. The deploy workflow applies it (§1a); confirm the cap trigger exists,
-      not only the tables, via `pg_trigger`:
-  - `rooms` — id, slug, title, `creator_name` (author of the *work*, not of the
-    room), medium (book / film / series / play / other), year, intro,
-    `ol_work_key`, `cover_id`, `isbn` (all nullable), status (`live` /
-    `removed`), `created_at`. Public read where live
-  - `room_sections` — id, `room_id`, position, label, kind (`part` / `whole`).
-    Public read where the room is live
-  - `room_pages` — id, `section_id`, title, body (plain text, ~10k cap), quote,
-    locator, status (`pending` / `approved` / `rejected`). Public read where
-    approved
-  - `room_margins` — id, `page_id`, `parent_id`, body (2000 cap). Same shape as
-    `comments`
-  - `room_authors`, `room_page_authors`, `room_margin_authors` — RLS on, **zero
-    policies**. Public tables never hold an author; this is the `papers` tripwire
-    in `DECISIONS.md` carried over, not a new rule
-- [ ] `lib/rooms.ts` — pure: slugify, build sections (always appending
-      `whole`), validate labels
-- [ ] `lib/open-library.ts` — `searchWorks`, `parseSearch`, `parseToc`,
-      `coverUrl`, `isWorkKey`
-- [ ] `app/api/rooms/lookup/route.ts` — `GET ?q=`, the only thing that talks to
-      Open Library; the browser never calls it directly. IP rate-limited 30/min
-      (fails open). Queries `search.json` with `limit=8` and a `fields=` list,
-      sends a descriptive `User-Agent` with the site URL as Open Library asks,
-      4s `AbortController` timeout, `next: { revalidate: 86400 }`. Returns
-      `{workKey, title, authors, year, coverId, isbn}`
-- [ ] `app/api/rooms/lookup/toc/route.ts` — `GET ?edition=`, reads
-      `table_of_contents` from `books/{edition}.json`. Best effort: when present
-      it prefills the breakdown as editable chapters; when absent the creator
-      builds it by hand
-- [ ] `app/api/rooms/route.ts` (create, account required),
-      `app/api/rooms/pages/route.ts`, `app/api/rooms/margins/route.ts` — each
-      shaped like `app/api/submit/route.ts`: `rateLimit` + `clientIp`, the
-      `_trap` honeypot, length caps, `getSessionUser` / `ensureProfile`,
-      `notifyAdmin…` for new pages. 409 on the cap trigger's `check_violation`
-- [ ] Pages: `app/rooms/page.tsx` (list), `app/rooms/[slug]/page.tsx` (the work
-      and its sections), `app/rooms/[slug]/[section]/page.tsx` (that section's
-      pages and the write form), `app/rooms/new/` (create form with a section
-      builder and, for books, a search box with cover thumbnails that fills
-      title, creator, year and stores the Open Library ids)
-- [ ] Spoiler folding: on the room page each section is a collapsed `<details>`
-      showing only label and count ("Chapter 4 · 6 pages"). Pages load **lazily
-      on open**, so no page text is in the HTML for anyone to skim. The section
-      deep link counts as an explicit expand. No stored state
-- [ ] Covers from `covers.openlibrary.org/b/id/{cover_id}-M.jpg` — either add
-      the host to `images.remotePatterns` for `next/image`, or a plain `<img
-      loading="lazy">`. The room page credits "Book data from Open Library"
-- [ ] Margins: generalise `components/Comments.tsx` (`buildTree`,
-      `CommentForm`) rather than copying it
-- [ ] Nav: one entry in `components/Nav.tsx`'s `links`
-- [ ] Admin: a "Rooms" tab in `AdminDashboard.tsx` — pending pages (approve /
-      reject) and live rooms (remove), badged on pending pages. Datasets and
-      actions in `AdminData.tsx`, `useMemo` field *and* dependency.
-      `app/api/admin/rooms/route.ts` behind `isAdminRequest`, following §20's
-      recipe
-- [ ] Tests: `tests/lib/rooms.test.ts` (ordering, the `whole` section always
-      last), `tests/lib/open-library.test.ts` (recorded JSON fixtures; `isWorkKey`
-      rejects arbitrary input), `tests/api/rooms*.test.ts` (auth, rate limit,
-      honeypot, caps, and **that no response carries an author**),
-      `tests/api/rooms-lookup.test.ts` (mocked `fetch`: timeout, non-200, empty)
-- [ ] By hand on `npm run dev`: a 3-chapter room is live at once with "The whole
-      work" as a fourth section; a page with a quote is pending, then shows once
-      approved; a margin posts; every section is collapsed on load and no page
-      text is in the source until opened; "Middlemarch" fills cover, fields and
-      (where available) chapters; with openlibrary.org blocked, manual entry
-      still works; a removed room 404s; a 4th room inside 24h is refused
-- [ ] **The one thing unit tests cannot prove:** concurrent creates at the cap
-      must land exactly one row — the advisory lock, against a real database
-- [ ] On ship: `CHANGELOG.md`, `data/whats-new.ts`, `README.md` tables list
+**Three decisions from 2026-10-26** (`DECISIONS.md` has the reasoning):
+
+- **Pages and margins need no account.** Only opening a room does.
+- **Two parts.** 21a is the core; 21b is the Open Library lookup.
+- **No human check.** §9, Turnstile, was ruled out, and Seb kept margins as
+  designed: anyone can post and they show at once. The honeypot and the
+  per-IP limit are the only filters, so spam is cleared after the fact.
+
+**21a, built 2026-10-26 on the local branch `rooms`, from `main`, not yet
+pushed:**
+
+- **Migration 0005.** One `create_room()` function does the cap, the room,
+  its sections and the private author row, all or nothing, and it is revoked
+  from the public roles.
+- **Proved in PGlite (real Postgres),** as the public role with Supabase's
+  default grants: rerunnable; the cap leaves no orphan; RLS shows only live
+  rooms, approved pages and their margins; the author tables are invisible
+  with zero policies; a direct `create_room` call is denied.
+- **`lib/rooms.ts`** holds the rules. `lib/room-data.ts` holds the public
+  reads, all through the anon client, so RLS decides.
+- **Routes:**
+  - `app/api/rooms/` creates a room; account required.
+  - `pages/` takes a page from anyone; it waits for review and you get an
+    alert.
+  - `margins/` takes a margin from anyone, publishes at once, one level of
+    replies.
+  - `app/api/admin/rooms/` approves or rejects pages and removes rooms
+    (marked removed, not deleted).
+- **Screens:**
+  - `/rooms` lists rooms.
+  - `/rooms/[slug]` shows sections as collapsed `<details>`, whose pages are
+    fetched only on open.
+  - `/rooms/[slug]/[n]` is the deep link, which counts as opening the
+    section, with the page form.
+  - `/rooms/new` has a one-per-line section builder with a "chapters 1 to N"
+    filler.
+  - `components/Margins.tsx` reuses the comment thread's form and its now
+    generic `buildTree`.
+  - The admin dashboard gets a "Reading Rooms" tab.
+- **Checked:** 485 tests, build clean. A production build serves `/rooms`,
+  shows the sign-in prompt on `/rooms/new`, and returns 404 for an unknown
+  room. A signed-out create gets 401.
+
+- [ ] **Ship it:** merge `rooms` into `main`, and push. One deploy applies
+      0005
+- [ ] **Live walk-through** after that deploy:
+  - open a room with 3 parts and check "The whole work" is the 4th section
+  - write a page with a quote and check it is pending; approve it in admin
+    and check it shows
+  - add a margin and a reply
+  - check every section is closed on load, with no page text in view-source
+  - remove the room and check it 404s
+  - try a 4th room within 24h and check it is refused
+- [ ] **Two real sessions** creating a 4th room at once must land exactly
+      one. The advisory lock is for this, and PGlite has one connection
+
+**21b, the Open Library lookup, not started.** It is designed in the 22 Oct
+scope and is unchanged:
+
+- [ ] `lib/open-library.ts`: `searchWorks`, `parseSearch`, `parseToc`,
+      `coverUrl`, `isWorkKey`, with recorded-fixture tests
+- [ ] `app/api/rooms/lookup/route.ts` and `.../lookup/toc/route.ts`:
+      30/min, fails open, 4 s timeout, a day's cache, a descriptive
+      User-Agent. The migration already validates `ol_work_key`, `cover_id`
+      and `isbn`
+- [ ] The create form gets a search box for books with cover thumbnails as a
+      plain `<img loading="lazy">`, not `next/image`. When the edition has a
+      table of contents, chapters are prefilled. Manual entry still works
+      when the lookup fails
+- [ ] The room page credits "Book data from Open Library"
 
 ## 🟠 23. Sign-in emails hit a site-wide hourly cap
 

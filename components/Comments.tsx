@@ -10,7 +10,7 @@ type Comment = {
   replies?: Comment[];
 };
 
-function timeAgo(dateStr: string): string {
+export function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
   const mins = Math.floor(diff / 60000);
   if (mins < 1) return "just now";
@@ -22,15 +22,21 @@ function timeAgo(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
 
-function buildTree(flat: Comment[]): Comment[] {
-  const top = flat.filter((c) => !c.parent_comment_id);
-  return top.map((c) => ({
-    ...c,
-    replies: flat.filter((r) => r.parent_comment_id === c.id),
-  }));
+/**
+ * One level of replies under each top-level item. Shared with Reading Room
+ * margins (components/Margins.tsx), which name their parent field
+ * differently, hence `parentOf`.
+ */
+export function buildTree<T extends { id: string }>(
+  flat: T[],
+  parentOf: (item: T) => string | null
+): (T & { replies: T[] })[] {
+  return flat
+    .filter((c) => !parentOf(c))
+    .map((c) => ({ ...c, replies: flat.filter((r) => parentOf(r) === c.id) }));
 }
 
-function CommentForm({
+export function CommentForm({
   onSubmit,
   placeholder,
   buttonLabel,
@@ -187,7 +193,7 @@ export default function Comments({
     setReplyTo(null);
   }
 
-  const threaded = buildTree(comments);
+  const threaded = buildTree(comments, (c) => c.parent_comment_id);
 
   return (
     <div className="mt-16">

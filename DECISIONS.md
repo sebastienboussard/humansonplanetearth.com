@@ -54,6 +54,47 @@ in a working file, so they survive a machine.
 
 Newest first. A choice that will be questioned again, written down once.
 
+### 2026-10-26 — Reading Rooms: anyone writes, and room creation is one function
+
+**Pages and margins need no account. Seb's call.** The 22 Oct scope said rooms
+need an account but was silent on writing in them. The two options offered:
+pages tied to an account, which makes junk traceable to one person, or
+anyone, which is the lowest barrier and the same as word papers today. Seb
+chose anyone. The cost is a busier approval queue, filtered only by the
+honeypot and the per-IP limit. Margins were always going to be open, like comments.
+
+**Room creation is one database function, `create_room()`.** That wasn't in
+the 22 Oct sketch. Rooms are author-free, so the creator lives in
+`room_authors`, and the cap counts that table. With two separate inserts, a
+failure between them would leave a room with no recorded creator, one the cap
+could never count. The function locks, counts, inserts the room, the sections
+and the author row, and is all or nothing. It is revoked from the public
+roles, since otherwise the anon key could call it over PostgREST and skip the
+route.
+
+**First built stacked on `turnstile`, then rebuilt on `main`.** The first
+version sat on the Turnstile branch so the check would be in from the start.
+When Seb ruled Turnstile out the same evening (see "Ruled out"), the Reading
+Rooms changes were carried onto a fresh branch from `main` and the check was
+taken out. Seb then kept margins as designed, open and instant, over the two
+alternatives offered: margins needing an account, or margins waiting for
+approval.
+
+**Proved in PGlite, not just unit-tested.** The migration ran twice. Then,
+as an `anon` role holding Supabase's default grants:
+
+- only live rooms, approved pages and their margins were visible
+- the three author tables were empty to it, with zero policies
+- calling `create_room` returned `42501`
+- a fourth room within 24h was refused and left nothing behind
+
+The concurrency case is still owed, since PGlite has one connection.
+
+**§10's page was set aside rather than fed from `CHANGELOG.md`,** which the
+plan proposed. That file is the engineering record. Shown to readers it would
+be the wrong voice for the wrong audience. The question is back with Seb in
+§10.
+
 ### 2026-10-26 — the emailed code signs in across devices, despite PKCE
 
 §14 was gated on one question: does `{{ .Token }}` from an email requested the
@@ -380,6 +421,30 @@ Open follow-ups are in `TODO.md` §4a.
 ## Ruled out
 
 Recorded so none of these is investigated a second time.
+
+### 2026-10-26 — Cloudflare Turnstile, built and then not shipped
+
+**Ruled out by Seb's call.** `TODO.md` §9 had carried Turnstile since the
+start as "the real boundary" on the public forms, behind per-IP limits that
+fail open by design. It was built, tested against a fake Cloudflare and proved
+against Cloudflare's real siteverify with its test keys (pass, fail, no
+token). Then Seb decided not to ship it. No reason is recorded here because
+none was given, and none is needed: the site is his.
+
+**What that leaves.** Word and long-form submissions, the contact form,
+comments, and Reading Room pages and margins are guarded by a honeypot and a
+per-IP limit, and that limit fails open if its store is unreachable. Papers
+and Reading Room pages also pass through admin review. Comments and margins do
+not: they publish at once. So a spam run on those is cleared after the fact,
+not prevented. The comments in `app/api/contact/route.ts` and
+`lib/rate-limit.ts` that promised a stronger check behind them were corrected
+to say this.
+
+**Kept, not deleted.** The work is the annotated tag `archive/turnstile`, in
+this repo's `archive/*` convention: `lib/turnstile.ts` (fails closed on every
+path), a hand-written `components/TurnstileWidget.tsx`, the wiring into four
+routes and forms, and its tests. If the question comes back, that is the
+starting point. Rebuilding it from nothing would not be.
 
 ### The blank-render report (2026-07-28)
 
