@@ -65,6 +65,13 @@ All notable changes to this project are documented here.
   who could read a storage path.
 
 ### Added
+- **Deploys migrate the database first.** A push to `main` runs
+  `.github/workflows/deploy.yml`: lint, typecheck and tests, then
+  `supabase db push`, then a Vercel production deploy through a deploy hook.
+  If a step fails, the steps after it don't run, and Vercel's own auto-deploy
+  of `main` is off. Before, schema changes were applied by hand in the SQL
+  editor, and once six tables went missing for months. **Not live until the
+  one-time setup in `README.md` is done** (`TODO.md` §1a).
 - **A pre-commit hook.** `.husky/pre-commit` runs four checks before every
   commit:
   - `scripts/check-lockfile.mjs` refuses a commit where the staged

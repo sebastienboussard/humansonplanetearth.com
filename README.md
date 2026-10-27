@@ -52,6 +52,47 @@ Tables (full definitions in `supabase/schema.sql`):
 
 One Storage bucket named `papers` for PDF uploads.
 
+### Migrations and deploys
+
+Every schema change after `schema.sql` is a numbered file in
+`supabase/migrations/`. **Production is never changed by hand any more.** A push
+to `main` runs `.github/workflows/deploy.yml`, which does three things in
+order:
+
+1. Checks the code: lint, typecheck and tests.
+2. Applies any pending migrations with `supabase db push`.
+3. Triggers the Vercel production deploy through a deploy hook.
+
+If a step fails, the steps after it don't run, so new code never goes live
+against an old database. Vercel's own auto-deploy of `main` is switched off in
+`vercel.json` for this reason.
+
+Write every migration so it can run twice without harm: `if not exists`,
+`create or replace`, and `drop policy if exists` before `create policy`. A
+rerun should never be what breaks a deploy.
+
+**One-time setup** (`TODO.md` §1a tracks whether it is done):
+
+1. GitHub → repository → Settings → Secrets and variables → Actions. Add:
+   - `SUPABASE_DB_URL`: from Supabase → Connect, the **Session pooler**
+     string (port 5432), with the database password in place of
+     `[YOUR-PASSWORD]`.
+   - `VERCEL_DEPLOY_HOOK_URL`: from Vercel → Settings → Git → Deploy Hooks.
+     Create one for branch `main`.
+2. Record the migrations that were applied by hand, so `db push` doesn't
+   replay them. Replaying would be harmless, since all three are safe to
+   rerun, but the history should be true:
+   ```bash
+   npx supabase@2.122.0 migration repair --db-url "<same string>" --status applied 0001 0002 0003
+   npx supabase@2.122.0 migration list --db-url "<same string>"
+   ```
+3. Push `main`, then watch the run under the repository's **Actions** tab.
+
+Setting up from scratch: run `schema.sql`, then the migrations in order. That
+file is known to differ from production in places. The papers bucket is one
+(`TODO.md` §2), and §1a carries replacing it with a baseline dumped from the
+live database.
+
 ## Profiles & Notifications
 
 Accounts are optional and anonymous (magic-link sign-in via Supabase Auth; email
@@ -63,7 +104,7 @@ papers — the attachment is internal only and has no public surface.
 
 Manual setup:
 
-1. Run the new sections of `supabase/schema.sql` in the Supabase SQL editor.
+1. Create the tables. See "Migrations and deploys" above.
 2. Supabase dashboard → Authentication: enable email (magic link) sign-in and
    add `https://<site>/auth/confirm` to the redirect URLs; set the Site URL.
 3. Resend: verify the sending domain (DNS records) for `NOTIFY_FROM_EMAIL`.

@@ -67,7 +67,7 @@ size:
    security bump. It is small, and nothing below should wait on a known
    critical advisory.
 3. **§1a**, before any feature that adds a migration. §20 and §21 both add
-   one.
+   one. **Built 2026-10-26**; it goes live with Seb's one-time setup.
 4. **§14, then §9**, before the features rather than after them. §20 and §21
    are account-only, and §14 is what fixes sign-in across devices. §21 adds
    three public write routes, so Turnstile should land before them rather
@@ -89,21 +89,48 @@ proved on 2026-10-26, along with §3's upload 429; `DECISIONS.md` has the method
 
 ---
 
-## 🟠 1a. Migrations are manual, and nothing enforces them
+## 🟡 1a. Migrations are automatic in the repo, waiting on one-time setup
 
 **The most likely way to break production again.** Six tables the code used did
 not exist in production for months; every contact-form message sent in that
 window was lost, and `/contact` returned 500 the whole time. All nine tables now
 exist and the email-first contact route shipped 2026-08-19, so the immediate
-damage is closed — but the cause is not.
+damage is closed. The cause, migrations applied by hand that nobody ran, is
+what this section removes.
 
-- [ ] Numbered migrations, *applied automatically*. This was once written as
-      "decide whether `schema.sql` sections should become migrations", which
-      understates it — the outage was not caused by the schema being one file,
-      it was caused by nobody running it. The fix is `supabase db push` (or
-      equivalent) in CI on deploy, so prod cannot silently lag the repo. The
-      profiles work listed its tables as a manual step; that same manual step is
-      what went missing here
+**Built 2026-10-26, not yet live.** `.github/workflows/deploy.yml` runs three
+jobs in order on every push to `main`: check, migrate, deploy. `vercel.json`
+switches off Vercel's auto-deploy of `main`, so a failed migration blocks the
+deploy rather than racing it. The three shapes considered, and why this one
+won, are in `DECISIONS.md`. Setup steps are in `README.md` under "Migrations
+and deploys".
+
+**Until the setup is done, migrations are still applied by hand**, and
+pushing `main` deploys nothing: Vercel's auto-deploy is off and the hook secret
+is missing, so the deploy job fails with a red X. Do the setup before the
+first push.
+
+- [ ] **Seb:** add the `SUPABASE_DB_URL` and `VERCEL_DEPLOY_HOOK_URL` GitHub
+      secrets (README step 1)
+- [ ] **Seb:** run `migration repair` for 0001–0003, then `migration list`
+      to confirm production shows all three as applied (README step 2). This
+      is the one write to production that this section needs by hand
+- [ ] **Seb:** push, and watch the first run. Check three things: the
+      dry-run step lists **no** pending migrations, the deploy job is green,
+      and a new Production deployment appears in Vercel from the hook. That
+      last one is the claim this design rests on, and it is unverified: that
+      `git.deploymentEnabled: { main: false }` stops push deploys but not
+      deploy-hook deploys
+- [ ] After the first green run: change `CLAUDE.md`'s rule "Migrations are
+      applied by hand" to say the workflow applies them, and that a Claude
+      session still never runs `db push` or `migration repair` itself. Then
+      record the run in `DECISIONS.md` under "Verified against production"
+- [ ] **A baseline dumped from production**, so a from-scratch setup no
+      longer depends on `schema.sql`, which isn't safe to rerun and is known
+      to differ from production. Use `supabase db dump --schema public` into
+      `0000_baseline.sql`, then `migration repair --status applied 0000`. It
+      needs Docker or `pg_dump`, and this machine has neither. Not needed
+      for the automation to work
 
 ## ⏸ 2. The papers bucket is public — DEFERRED
 

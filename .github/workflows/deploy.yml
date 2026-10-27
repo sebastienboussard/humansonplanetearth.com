@@ -1,0 +1,85 @@
+# Production deploy: check, migrate, then deploy — in that order, and only in
+# that order (TODO §1a). Vercel's own auto-deploy of `main` is switched off in
+# vercel.json, so this workflow is the only way code reaches production.
+#
+# Why the order matters: six tables the code used did not exist in production
+# for months, because migrations were applied by hand and nobody ran them. A
+# migration step running *alongside* Vercel's deploy would only shorten that
+# window, not close it — new code could still go live before its schema.
+#
+# Fails closed at every step. A failed check blocks the migration; a failed
+# migration blocks the deploy. Each is a red X on the commit and an email from
+# GitHub, never a half-deployed site.
+#
+# Secrets (repository → Settings → Secrets and variables → Actions):
+#   SUPABASE_DB_URL         Session-pooler connection string, port 5432, with
+#                           the database password in it
+#   VERCEL_DEPLOY_HOOK_URL  Vercel → Settings → Git → Deploy Hooks, branch main
+
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# One deploy at a time, in push order. Never cancel a run midway: a cancelled
+# migration is worse than a slow one.
+concurrency:
+  group: production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      # --ignore-scripts skips `prepare` (husky has no use in CI). npm ci
+      # itself fails if package.json and the lockfile disagree.
+      - run: npm ci --ignore-scripts
+      - run: npm run lint
+      - run: npx tsc --noEmit
+      - run: npm test
+
+  migrate:
+    needs: check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.122.0
+      # Printed first so the log shows what is about to change before it does.
+      - name: Pending migrations
+        run: supabase db push --db-url "$SUPABASE_DB_URL" --dry-run
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+      # Applies only migrations newer than the last one production has
+      # recorded, each in its own transaction. Nothing pending → no-op.
+      - name: Apply
+        run: supabase db push --db-url "$SUPABASE_DB_URL"
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+
+  deploy:
+    needs: migrate
+    runs-on: ubuntu-latest
+    steps:
+      # The hook answers as soon as Vercel queues the build, so a green tick
+      # here means "queued", not "live". Vercel reports the build itself.
+      - name: Trigger Vercel production deploy
+        run: |
+          if [ -z "$VERCEL_DEPLOY_HOOK_URL" ]; then
+            echo "VERCEL_DEPLOY_HOOK_URL is not set; nothing would deploy" >&2
+            exit 1
+          fi
+          curl --fail --silent --show-error -X POST "$VERCEL_DEPLOY_HOOK_URL"
+        env:
+          VERCEL_DEPLOY_HOOK_URL: ${{ secrets.VERCEL_DEPLOY_HOOK_URL }}

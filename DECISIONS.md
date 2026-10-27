@@ -54,6 +54,46 @@ in a working file, so they survive a machine.
 
 Newest first. A choice that will be questioned again, written down once.
 
+### 2026-10-26 — migrations run before the deploy, not alongside it
+
+§1a had to choose how migrations reach production. Seb's call, from three
+options:
+
+| Shape | Why not / why |
+| --- | --- |
+| **Detect only.** Keep applying by hand, but have CI fail when production is behind | It stops the "silently" without the "by hand". A red X is still a reminder someone has to act on |
+| **Migrate alongside the deploy.** An Action runs `db push` while Vercel deploys on its own | It shortens the outage's window without closing it. New code can go live a minute before its schema, which is the original failure, only shorter |
+| **Migrate, then deploy.** Chosen | `check → migrate → deploy` on push to `main`, with Vercel's auto-deploy of `main` off. A failed step stops everything after it |
+
+**What it costs.** Vercel no longer decides when production deploys; the
+workflow does. That means two secrets to look after, and a deploy of `main`
+can't happen without GitHub Actions. Previews are untouched: other branches
+still auto-deploy.
+
+**The connection is a URL, not a link.** `db push --db-url` with the
+session-pooler string means one secret, no `supabase link`, and nothing
+project-specific in `supabase/config.toml`. The CLI is pinned to `2.122.0` in
+both the workflow and the README, so the two cannot run different versions.
+
+**`schema.sql` is not the baseline.** It isn't safe to rerun (plain `create
+table`, plain `create policy`) and is known to differ from production: it
+creates the papers bucket as private, and production's is public. The history
+starts at 0001, recorded as applied by hand. A real baseline needs a dump of
+production, which this machine has no tools for; §1a carries it.
+
+**Why skipping the repair step would still be safe.** All three existing
+migrations are rerunnable: `if not exists`, `create or replace`, and enabling
+RLS is idempotent. If production's history were never recorded, the first
+push would replay 0001–0003 and change nothing. That property is now a rule
+for every new migration, in `README.md`: a rerun must never be what breaks a
+deploy.
+
+**One claim is unverified until the first run.** That
+`git.deploymentEnabled: { main: false }` in `vercel.json` stops push-triggered
+deploys of `main` but not deploy-hook deploys. If it is wrong, the deploy job
+goes green and nothing deploys. §1a's checklist says to look for the new
+Production deployment, not just the green tick.
+
 ### 2026-10-26 — a new running order, and §13 and the hook un-parked
 
 On 2026-09-03 Seb parked §17, §13 and the pre-commit hook. The order then

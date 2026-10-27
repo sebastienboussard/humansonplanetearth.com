@@ -1,0 +1,6 @@
+# Minimal Supabase CLI config. It exists so `supabase db push` (run by
+# .github/workflows/deploy.yml) recognises this directory. Nothing here
+# configures the hosted project: every connection takes an explicit --db-url,
+# and there is no `supabase link`. Local-stack settings all keep the CLI's
+# defaults.
+project_id = "humansonplanetearth"
