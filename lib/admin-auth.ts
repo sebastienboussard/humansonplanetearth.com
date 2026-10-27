@@ -30,12 +30,21 @@ export const SESSION_TTL_SECONDS = 60 * 60 * 24 * 7;
 /** Tolerance for clock skew between the issuing and verifying instance. */
 const FUTURE_SKEW_SECONDS = 60;
 
-function signingKey(): string {
-  return process.env.ADMIN_PASSWORD ?? "unset";
+/**
+ * **Fails closed.** This key *is* the admin boundary. It used to fall back to
+ * the literal `"unset"`, which meant that with `ADMIN_PASSWORD` missing anyone
+ * who read this file could mint a valid session. Now a missing key throws on
+ * issue and rejects on verify. `lib/env.ts` also refuses to boot without it.
+ */
+function signingKey(): string | null {
+  // Trimmed only to test presence. The key itself is used byte for byte, so
+  // sessions issued before this change still verify.
+  const key = process.env.ADMIN_PASSWORD;
+  return key?.trim() ? key : null;
 }
 
-function sign(payload: string): string {
-  return crypto.createHmac("sha256", signingKey()).update(payload).digest("hex");
+function sign(payload: string, key: string): string {
+  return crypto.createHmac("sha256", key).update(payload).digest("hex");
 }
 
 /** Constant-time compare of two hex strings of any length. */
@@ -49,10 +58,12 @@ function hexEquals(a: string, b: string): boolean {
 
 /** A fresh token for a new login. */
 export function issueAdminSessionToken(now: number = Date.now()): string {
+  const key = signingKey();
+  if (!key) throw new Error("ADMIN_PASSWORD is not set; refusing to issue an admin session");
   const issuedAt = Math.floor(now / 1000);
   const nonce = crypto.randomBytes(16).toString("hex");
   const payload = `${issuedAt}.${nonce}`;
-  return `${payload}.${sign(payload)}`;
+  return `${payload}.${sign(payload, key)}`;
 }
 
 /** True if the token is well-formed, correctly signed, and not expired. */
@@ -61,13 +72,15 @@ export function verifyAdminSessionToken(
   now: number = Date.now()
 ): boolean {
   if (!token) return false;
+  const key = signingKey();
+  if (!key) return false;
 
   const lastDot = token.lastIndexOf(".");
   if (lastDot <= 0) return false;
 
   const payload = token.slice(0, lastDot);
   const signature = token.slice(lastDot + 1);
-  if (!hexEquals(sign(payload), signature)) return false;
+  if (!hexEquals(sign(payload, key), signature)) return false;
 
   const issuedAt = Number(payload.slice(0, payload.indexOf(".")));
   if (!Number.isFinite(issuedAt)) return false;

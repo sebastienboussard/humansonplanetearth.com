@@ -1,0 +1,13 @@
+# Runs before every commit. Any failing step stops the commit. These are the
+# floors CLAUDE.md asks to defend: lint at zero, every test passing, and
+# package.json and package-lock.json agreeing. `git commit --no-verify` skips
+# all of it — use it only when you mean to.
+#
+# Typecheck and tests run on the whole working tree, not only the staged
+# files, so an unstaged edit can still fail them. That costs a second; it's
+# cheaper than a commit that passes here and breaks on a clean checkout.
+
+node scripts/check-lockfile.mjs
+npx lint-staged
+npx tsc --noEmit
+npm test

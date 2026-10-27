@@ -6,8 +6,12 @@ import { notifyDeadline, isDeadlineWindow } from "@/lib/notifications";
 // Daily Vercel Cron (see vercel.json). Sends reminders when the current word's
 // deadline is exactly 14, 7 or 1 days away; the notification_log claim makes
 // reruns on the same day no-ops.
+//
+// Fails closed: with CRON_SECRET unset, the old check compared against
+// "Bearer undefined", which anyone could send.
 export async function GET(req: NextRequest) {
-  if (req.headers.get("authorization") !== `Bearer ${process.env.CRON_SECRET}`) {
+  const secret = process.env.CRON_SECRET;
+  if (!secret?.trim() || req.headers.get("authorization") !== `Bearer ${secret}`) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
 

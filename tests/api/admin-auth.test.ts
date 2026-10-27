@@ -1,8 +1,9 @@
+import crypto from "crypto";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createMockSupabase, type MockSupabase } from "../helpers/supabase-mock";
 import { jsonRequest } from "../helpers/request";
 import { expiredAdminSessionToken, legacyAdminSessionToken } from "../helpers/admin";
-import { verifyAdminSessionToken, SESSION_TTL_SECONDS } from "@/lib/admin-auth";
+import { issueAdminSessionToken, verifyAdminSessionToken, SESSION_TTL_SECONDS } from "@/lib/admin-auth";
 
 const holder = vi.hoisted(() => ({ current: null as unknown as MockSupabase | null }));
 vi.mock("@/lib/supabase", async () =>
@@ -125,6 +126,33 @@ describe("admin session tokens", () => {
     for (const bad of ["", "nonsense", "1.2.3", undefined, null]) {
       expect(verifyAdminSessionToken(bad as string | undefined)).toBe(false);
     }
+  });
+
+  describe("with ADMIN_PASSWORD unset", () => {
+    afterEach(() => {
+      vi.unstubAllEnvs();
+    });
+
+    it("rejects a token signed with the old \"unset\" fallback key", () => {
+      // The hole this closes: with the password missing, the key used to be
+      // the literal "unset", so anyone who read the source could mint a session.
+      vi.stubEnv("ADMIN_PASSWORD", "");
+      const payload = `${Math.floor(Date.now() / 1000)}.${"0".repeat(32)}`;
+      const forged = `${payload}.${crypto.createHmac("sha256", "unset").update(payload).digest("hex")}`;
+
+      expect(verifyAdminSessionToken(forged)).toBe(false);
+    });
+
+    it("rejects a token that was valid before the password went missing", () => {
+      const token = issueAdminSessionToken();
+      vi.stubEnv("ADMIN_PASSWORD", "");
+      expect(verifyAdminSessionToken(token)).toBe(false);
+    });
+
+    it("refuses to issue a token", () => {
+      vi.stubEnv("ADMIN_PASSWORD", "   ");
+      expect(() => issueAdminSessionToken()).toThrow(/ADMIN_PASSWORD/);
+    });
   });
 });
 

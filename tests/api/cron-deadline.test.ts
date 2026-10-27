@@ -42,6 +42,20 @@ describe("GET /api/cron/deadline-reminders", () => {
     expect(holder.current.from).not.toHaveBeenCalled();
   });
 
+  it("rejects \"Bearer undefined\" when CRON_SECRET is unset", async () => {
+    // The hole this closes: the old check built the expected header from the
+    // unset var, so the literal string "Bearer undefined" was accepted.
+    vi.stubEnv("CRON_SECRET", undefined);
+    try {
+      holder.current = createMockSupabase();
+      expect((await GET(cronRequest("undefined"))).status).toBe(401);
+      expect((await GET(cronRequest())).status).toBe(401);
+      expect(holder.current.from).not.toHaveBeenCalled();
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+
   it("does nothing when there is no current word", async () => {
     holder.current = createMockSupabase({ tables: { words: { data: null } } });
     const res = await GET(cronRequest("test-cron-secret"));

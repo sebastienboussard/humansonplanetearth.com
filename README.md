@@ -27,6 +27,11 @@ CRON_SECRET=                   # Vercel Cron bearer token for /api/cron/deadline
 ADMIN_NOTIFY_EMAIL=            # where admin alerts go (new papers, contact messages); unset = alerts off
 ```
 
+   Everything above is required except `NEXT_PUBLIC_SITE_URL`,
+   `NOTIFY_FROM_EMAIL` and `ADMIN_NOTIFY_EMAIL`. If a required variable is
+   missing, the server refuses to start and lists each one in the log. The
+   check is in `lib/env.ts`.
+
 3. Start the dev server:
 
 ```bash

@@ -5,6 +5,21 @@ All notable changes to this project are documented here.
 ## Unreleased
 
 ### Security
+- **A missing secret could open three security checks instead of closing
+  them.** With `ADMIN_PASSWORD` unset, admin sessions were signed with the
+  literal key `"unset"`, so anyone who read the source could mint a valid
+  admin cookie. With `CRON_SECRET` unset, the cron route accepted the header
+  `Bearer undefined`. With `UNSUBSCRIBE_SECRET` unset, unsubscribe links were
+  signed with `"unset"` and could be forged. All three now **fail closed**: no
+  key means nothing is issued and nothing verifies. Production had all three
+  set, so nothing was exposed. Keys are still used byte for byte, so existing
+  sessions and unsubscribe links already in inboxes keep working.
+- **The server checks its environment at startup.** `instrumentation.ts` runs
+  `lib/env.ts` once per instance. If a required variable is missing or blank,
+  or a URL variable isn't a valid URL, the instance refuses every request and
+  the log lists each problem at once. Before, a bad environment showed up only
+  when something first used the variable, and in the three cases above it
+  didn't show up at all.
 - **The contact form and comments were unthrottled.** Both accepted unlimited
   scripted posts behind nothing but a honeypot field, and both send mail —
   `/api/contact` emails the admin inbox before it stores anything, and a comment
@@ -50,6 +65,18 @@ All notable changes to this project are documented here.
   who could read a storage path.
 
 ### Added
+- **A pre-commit hook.** `.husky/pre-commit` runs four checks before every
+  commit:
+  - `scripts/check-lockfile.mjs` refuses a commit where the staged
+    `package.json` and `package-lock.json` declare different dependencies.
+    That drift is what broke `npm ci` once. A change to scripts or config
+    only, with no dependency change, passes.
+  - ESLint on staged files, with zero warnings allowed.
+  - A full typecheck.
+  - The test suite.
+
+  Lint at zero and all tests passing were floors that nothing enforced; now
+  something does. The `prepare` script installs the hook on `npm install`.
 - **A word with no papers yet points at the month before.** Opening a word in
   the first days of a month showed "No papers published yet. Be the first." and
   nothing else — no sense of what a response even looks like, at exactly the

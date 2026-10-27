@@ -1,4 +1,5 @@
-import { describe, expect, it } from "vitest";
+import crypto from "crypto";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { unsubscribeUrl, verifyUnsubscribe, UNSUB_PREFS } from "@/lib/unsubscribe";
 
 const PROFILE = "11111111-2222-3333-4444-555555555555";
@@ -43,5 +44,28 @@ describe("unsubscribe tokens", () => {
     expect(verifyUnsubscribe(PROFILE, "new_word", "")).toBe(false);
     expect(verifyUnsubscribe(PROFILE, "new_word", "zz-not-hex")).toBe(false);
     expect(verifyUnsubscribe(PROFILE, "new_word", "abcd")).toBe(false);
+  });
+
+  describe("with UNSUBSCRIBE_SECRET unset", () => {
+    afterEach(() => {
+      vi.unstubAllEnvs();
+    });
+
+    it("rejects a link signed with the old \"unset\" fallback key", () => {
+      vi.stubEnv("UNSUBSCRIBE_SECRET", "");
+      const sig = crypto.createHmac("sha256", "unset").update(`${PROFILE}:all`).digest("hex");
+      expect(verifyUnsubscribe(PROFILE, "all", sig)).toBe(false);
+    });
+
+    it("rejects a link that was valid before the secret went missing", () => {
+      const { pid, pref, sig } = parse(unsubscribeUrl(PROFILE, "all"));
+      vi.stubEnv("UNSUBSCRIBE_SECRET", "");
+      expect(verifyUnsubscribe(pid, pref, sig)).toBe(false);
+    });
+
+    it("refuses to build a link", () => {
+      vi.stubEnv("UNSUBSCRIBE_SECRET", "  ");
+      expect(() => unsubscribeUrl(PROFILE, "all")).toThrow(/UNSUBSCRIBE_SECRET/);
+    });
   });
 });
