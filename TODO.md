@@ -115,6 +115,16 @@ first push.
 - [ ] **Seb:** run `migration repair` for 0001–0003, then `migration list`
       to confirm production shows all three as applied (README step 2). This
       is the one write to production that this section needs by hand
+- [ ] **First push, 2026-10-26: the migrate job failed** at its first step,
+      the `--dry-run` (run `40444461351`). The check job passed; the deploy
+      was skipped, so production is unchanged and still on the 2026-09-03
+      build. The step log needs a signed-in account, and the public API
+      shows only the exit code. Likely causes, most likely first: the
+      `SUPABASE_DB_URL` secret is not set yet; or it holds the *direct*
+      connection string (IPv6-only, which GitHub runners lack) instead of the
+      Session pooler one; or the password placeholder is still in it.
+      **Every push to `main` deploys nothing until this is fixed.** Re-run
+      from the Actions tab once the secret is right; no new push is needed
 - [ ] **Seb:** push, and watch the first run. Check three things: the
       dry-run step lists **no** pending migrations, the deploy job is green,
       and a new Production deployment appears in Vercel from the hook. That

@@ -72,6 +72,12 @@ All notable changes to this project are documented here.
   of `main` is off. Before, schema changes were applied by hand in the SQL
   editor, and once six tables went missing for months. **Not live until the
   one-time setup in `README.md` is done** (`TODO.md` §1a).
+
+  Pushed 2026-10-26 with everything above it in this section. The first run,
+  [40444461351](https://github.com/sebastienboussard/humansonplanetearth.com/actions/runs/40444461351),
+  passed its checks in CI (lint, typecheck, 342 tests) and then **stopped at
+  the migrate step**. The deploy was skipped and production did not change. It
+  failed closed, the way it was built to: none of this section is live yet.
 - **A pre-commit hook.** `.husky/pre-commit` runs four checks before every
   commit:
   - `scripts/check-lockfile.mjs` refuses a commit where the staged
