@@ -4,6 +4,29 @@ All notable changes to this project are documented here.
 
 ## Unreleased
 
+### Security
+- **Next.js 16.2.2 → 16.4.3.** The old version had 33 published advisories,
+  6 of them critical, including unauthenticated remote code execution in the
+  Image Optimization API and proxy/middleware bypasses. The site uses none of
+  the riskiest features (`next/image`, `next/og`, `use cache`, server
+  actions), and every admin API route checks the session itself, so the
+  exposure was smaller than the count. It was still running vulnerable code.
+  `eslint-config-next` moved with it.
+  Checked on 16.4.3:
+  - build, typecheck, lint at zero, and 342 tests;
+  - the startup env check both ways (a var missing → 500, all present → 200);
+  - an admin page with no cookie, or a forged one, still redirects to the
+    login, and the admin API still returns 401.
+
+### Fixed
+- **The account page restores the notifications panel without an extra
+  render.** It used to read the saved open/closed state in an effect of its
+  own, which the stricter React lint rule in `eslint-config-next` 16.4
+  flags. It now reads it in the callback that finishes loading the account,
+  which is the first moment the panel can render. Sign-out and account
+  deletion keep their full page load on purpose, since that is what clears
+  the session from memory, and say why in a comment.
+
 ## 2026-10-26
 
 Released to production through the new deploy workflow, run

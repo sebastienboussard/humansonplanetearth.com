@@ -230,6 +230,33 @@ Until it lands, the limiter is mitigation and is commented as such.
 
 Newest first. Each keeps the original claim, not just the fix.
 
+### 2026-10-26 — §22 was 33 advisories, not one
+
+`TODO.md` §22, written the same day, said: "16 findings, 1 critical. **Only
+one affects the live site.** `next` 16.2.2 has a denial-of-service bug in
+Server Components." That came from a summary that showed only the first two
+advisory titles per package.
+
+The full list for `next` alone was **33 advisories: 6 critical**,
+including unauthenticated remote code execution through the Image
+Optimization API and through `use cache`, plus several proxy/middleware
+bypasses, server-side request forgery and cache poisoning. "One
+denial-of-service bug" understated it badly. The fix was the same, and so was
+the priority, but the record should not have said "only one".
+
+**What the site was actually exposed to,** checked before the upgrade:
+
+- It uses no `next/image`, no `next/og`, no `use cache` and no server
+  actions, which rules out most of the critical code paths.
+- Every admin API handler checks the session itself, one check per handler,
+  so a proxy bypass would have reached at most the admin page's empty shell,
+  never its data.
+- The `/_next/image` endpoint exists by default even when unused, so the
+  image-optimizer advisories can't be fully ruled out.
+
+None of that is a reason to have stayed on 16.2.2. It is what the lesson
+costs to know: **read the whole audit, not a summary of it.**
+
 ### 2026-10-26 — the plan sheets §15 meant to drain were mostly gone already
 
 `TODO.md` §15 said `~/.claude/plans/` held **8 sheets**, ~73 KB, waiting to be
@@ -382,6 +409,39 @@ stop that recurring.
 ## Verified against production
 
 The method matters as much as the result — it is the part that gets reused.
+
+### 2026-10-26 — the deploy workflow migrated, then deployed, through the hook
+
+The first green run was
+[40451211912](https://github.com/sebastienboussard/humansonplanetearth.com/actions/runs/40451211912),
+started by hand on commit `cd51547`: check ✅, migrate ✅, deploy ✅. Three
+things were proved, each by looking at the result and not the green tick:
+
+- **The history is true.** `migration list` against production, read-only,
+  showed 0001–0003 under both Local and Remote. Before the run, the Remote
+  column was empty.
+- **The hook deploys `main` with auto-deploy off.** Vercel shows `cd51547` as
+  the Production deployment. This was the one claim the design rested on that
+  nobody had checked, that `git.deploymentEnabled: { main: false }` blocks
+  push deploys but not hook deploys. It holds.
+- **The site survived it.** It serves 200, and the cron route still rejects
+  `Bearer undefined`. That deploy also put the startup env check live, so a
+  200 means production has every required var.
+
+**Two failures came first, both fail-closed.** Run `40444461351` was handed an
+empty `--db-url`, because no secrets had been added yet. The connection fell
+back to a local socket as the runner's own user,
+`host=/var/run/postgresql user=runner`, which is how an empty connection string
+looks. Run `40449669598` used a password that had been generated but never
+applied, and got `28P01 password authentication failed`. Both times the deploy
+was skipped and production stayed on the 2026-09-03 build. That is the design
+working, not luck.
+
+**What told the two apart** was testing the saved password from a local shell,
+read-only, against the same pooler host and user that the CI log printed. The
+same `28P01` locally meant the password, not GitHub. A clean list after the
+second reset meant the secret, not the database. Testing one link at a time
+beat guessing.
 
 ### 2026-10-26 — the upload and contact limiters are working live
 

@@ -44,8 +44,9 @@ const sansInk = { fontFamily: "system-ui, sans-serif", color: "var(--ink)" } as 
 
 // The notifications panel is seven checkboxes deep and pushed everything else
 // below the fold, so it collapses. Closed by default — the papers list is what
-// people come back for; prefs are set once. Read from localStorage in an effect
-// rather than in the initial state so the server and first client render agree.
+// people come back for; prefs are set once. The saved state is read when the
+// account finishes loading, not in the initial state: the panel only renders
+// after that, and the server and first client render then agree.
 const NOTIF_OPEN_KEY = "hope-account-notifications-open";
 
 export default function AccountDashboard() {
@@ -56,14 +57,6 @@ export default function AccountDashboard() {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
-
-  useEffect(() => {
-    try {
-      setNotifOpen(localStorage.getItem(NOTIF_OPEN_KEY) === "true");
-    } catch {
-      // Storage blocked (private mode, hardened browser) — stay closed.
-    }
-  }, []);
 
   function toggleNotifOpen() {
     setNotifOpen((open) => {
@@ -92,6 +85,11 @@ export default function AccountDashboard() {
       } catch {
         setErrorMsg("Could not load your account. Please refresh.");
       } finally {
+        try {
+          setNotifOpen(localStorage.getItem(NOTIF_OPEN_KEY) === "true");
+        } catch {
+          // Storage blocked (private mode, hardened browser) — stay closed.
+        }
         setLoading(false);
       }
     }
@@ -112,6 +110,9 @@ export default function AccountDashboard() {
 
   async function signOut() {
     await createBrowserSupabase().auth.signOut();
+    // A full page load is deliberate: it drops the signed-out session and every
+    // cached client component from memory, which router.push() would keep.
+    // eslint-disable-next-line @next/next/no-location-assign-relative-destination
     window.location.href = "/account";
   }
 
@@ -119,6 +120,8 @@ export default function AccountDashboard() {
     setDeleting(true);
     const res = await fetch("/api/account/delete", { method: "POST" });
     if (res.ok) {
+      // Full page load for the same reason as signOut().
+      // eslint-disable-next-line @next/next/no-location-assign-relative-destination
       window.location.href = "/";
     } else {
       setDeleting(false);

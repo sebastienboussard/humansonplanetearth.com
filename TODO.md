@@ -51,7 +51,7 @@ decided with Seb on 2026-10-22 in a plan sheet. This section promotes that
 sheet, so the sheet can be deleted. Nothing was built. It adds a migration, so
 it queues behind §1a in the same way §20 does.
 
-Swept 2026-10-26: §15 is done and has left. `DECISIONS.md` records what the
+Swept 2026-10-26: §15, §13 and §22 are done and have left. `DECISIONS.md` records what the
 drain found, which was not what §15 assumed. §13 was un-parked the same day by
 Seb's call, as part of the new running order below, and shipped. It also closed three
 places where a missing secret opened a security check instead of closing it.
@@ -63,11 +63,10 @@ sheet gets deleted and this file does not. The order follows dependencies, not
 size:
 
 1. **Done 2026-10-26:** the production rate-limit checks, §15, and §13.
-2. **Done 2026-10-26:** the pre-commit hook. **Next: §22**, the Next.js
-   security bump. It is small, and nothing below should wait on a known
-   critical advisory.
+2. **Done 2026-10-26:** the pre-commit hook, and §22 (the Next.js security
+   bump, 16.2.2 → 16.4.3).
 3. **§1a**, before any feature that adds a migration. §20 and §21 both add
-   one. **Built 2026-10-26**; it goes live with Seb's one-time setup.
+   one. **Live 2026-10-26.**
 4. **§14, then §9**, before the features rather than after them. §20 and §21
    are account-only, and §14 is what fixes sign-in across devices. §21 adds
    three public write routes, so Turnstile should land before them rather
@@ -89,58 +88,30 @@ proved on 2026-10-26, along with §3's upload 429; `DECISIONS.md` has the method
 
 ---
 
-## 🟡 1a. Migrations are automatic in the repo, waiting on one-time setup
+## 🟡 1a. Migrations are automatic — two loose ends
 
-**The most likely way to break production again.** Six tables the code used did
-not exist in production for months; every contact-form message sent in that
-window was lost, and `/contact` returned 500 the whole time. All nine tables now
-exist and the email-first contact route shipped 2026-08-19, so the immediate
-damage is closed. The cause, migrations applied by hand that nobody ran, is
-what this section removes.
+**Live 2026-10-26.** Every push to `main` runs `.github/workflows/deploy.yml`,
+which checks, then migrates, then deploys. Production can no longer lag the
+repo without a red X saying so. `DECISIONS.md` has the design and the proof
+from the first green run; `README.md` has the setup; `CHANGELOG.md` has what
+shipped. This was the cause of the six-missing-tables outage, and it is closed.
 
-**Built 2026-10-26, not yet live.** `.github/workflows/deploy.yml` runs three
-jobs in order on every push to `main`: check, migrate, deploy. `vercel.json`
-switches off Vercel's auto-deploy of `main`, so a failed migration blocks the
-deploy rather than racing it. The three shapes considered, and why this one
-won, are in `DECISIONS.md`. Setup steps are in `README.md` under "Migrations
-and deploys".
-
-**Until the setup is done, migrations are still applied by hand**, and
-pushing `main` deploys nothing: Vercel's auto-deploy is off and the hook secret
-is missing, so the deploy job fails with a red X. Do the setup before the
-first push.
-
-- [ ] **Seb:** add the `SUPABASE_DB_URL` and `VERCEL_DEPLOY_HOOK_URL` GitHub
-      secrets (README step 1)
-- [ ] **Seb:** run `migration repair` for 0001–0003, then `migration list`
-      to confirm production shows all three as applied (README step 2). This
-      is the one write to production that this section needs by hand
-- [ ] **First push, 2026-10-26: the migrate job failed** at its first step,
-      the `--dry-run` (run `40444461351`). The check job passed; the deploy
-      was skipped, so production is unchanged and still on the 2026-09-03
-      build. The step log needs a signed-in account, and the public API
-      shows only the exit code. Likely causes, most likely first: the
-      `SUPABASE_DB_URL` secret is not set yet; or it holds the *direct*
-      connection string (IPv6-only, which GitHub runners lack) instead of the
-      Session pooler one; or the password placeholder is still in it.
-      **Every push to `main` deploys nothing until this is fixed.** Re-run
-      from the Actions tab once the secret is right; no new push is needed
-- [ ] **Seb:** push, and watch the first run. Check three things: the
-      dry-run step lists **no** pending migrations, the deploy job is green,
-      and a new Production deployment appears in Vercel from the hook. That
-      last one is the claim this design rests on, and it is unverified: that
-      `git.deploymentEnabled: { main: false }` stops push deploys but not
-      deploy-hook deploys
-- [ ] After the first green run: change `CLAUDE.md`'s rule "Migrations are
-      applied by hand" to say the workflow applies them, and that a Claude
-      session still never runs `db push` or `migration repair` itself. Then
-      record the run in `DECISIONS.md` under "Verified against production"
 - [ ] **A baseline dumped from production**, so a from-scratch setup no
       longer depends on `schema.sql`, which isn't safe to rerun and is known
       to differ from production. Use `supabase db dump --schema public` into
       `0000_baseline.sql`, then `migration repair --status applied 0000`. It
-      needs Docker or `pg_dump`, and this machine has neither. Not needed
-      for the automation to work
+      needs Docker or `pg_dump`, and this machine has neither. The
+      automation doesn't need it
+- [ ] **Rotate the database password once more.** The current one was typed
+      into a Claude Code chat while the setup was being done, so it sits in
+      the local transcript. Reset it, save it with `read -rs` straight into
+      `~/.config/humansonplanetearth/supabase-db-password`, and update the
+      `SUPABASE_DB_URL` secret. Nothing in the site uses the password; only
+      the workflow and the CLI do
+- [ ] Housekeeping for the workflow: the run log warns that `actions/checkout@v4`
+      and `supabase/setup-cli@v1` target Node 20, which GitHub is retiring.
+      Bump them when their Node 24 versions are out. They are only warnings
+      today
 
 ## ⏸ 2. The papers bucket is public — DEFERRED
 
@@ -498,7 +469,7 @@ author-free — see the tripwires in `DECISIONS.md`.
       indexes, the trigger, RLS on with zero policies. Mirror into
       `supabase/schema.sql`, following the `0003_rate_limits.sql` precedent that
       tells a from-scratch setup to run the migration rather than copy from
-      there. **Manual to apply — see §1a.** Confirm the trigger exists, not just
+      there. Applied by the deploy workflow on push (§1a); write it to be safe to run twice. Confirm the trigger exists, not just
       the table: `select tgname from pg_trigger where tgrelid =
       'word_proposals'::regclass;`
 - [ ] `lib/word-format.ts` — `normalizeWord` (lowercase + trim, matching what
@@ -557,7 +528,7 @@ author-free — see the tripwires in `DECISIONS.md`.
       extension to `tests/api/admin-words.test.ts` for the `proposalId`
       transition
 - [ ] `README.md` — `word_proposals` in the tables list, and a line that
-      migration `0004` is applied by hand
+      migration `0004` is applied by the deploy workflow
 - [ ] **The one thing unit tests cannot prove:** two concurrent POSTs for a
       third word must land exactly one row. That is the advisory lock's whole
       purpose, and it needs a real database to check
@@ -608,12 +579,12 @@ checked server-side is what gets stored: `ol_work_key` must match
 arbitrary URL that the room page then renders.
 
 **Migration number clash.** §20 already claims `0004`. Whichever of the two
-ships first takes `0004`; the other takes `0005`. Both are manual to apply until
-§1a lands — which is one more reason §1a goes first.
+ships first takes `0004`; the other takes `0005`. Since 2026-10-26 the deploy
+workflow applies both (§1a).
 
 - [ ] Migration `supabase/migrations/000N_reading_rooms.sql` (see the clash
       above). Mirror into `supabase/schema.sql` per the `0003_rate_limits.sql`
-      precedent. **Manual to apply — see §1a**; confirm the cap trigger exists,
+      precedent. The deploy workflow applies it (§1a); confirm the cap trigger exists,
       not only the tables, via `pg_trigger`:
   - `rooms` — id, slug, title, `creator_name` (author of the *work*, not of the
     room), medium (book / film / series / play / other), year, intro,
@@ -683,33 +654,15 @@ ships first takes `0004`; the other takes `0005`. Both are manual to apply until
       must land exactly one row — the advisory lock, against a real database
 - [ ] On ship: `CHANGELOG.md`, `data/whats-new.ts`, `README.md` tables list
 
-## 🟠 22. Next.js 16.2.2 has a critical advisory
-
-Found 2026-10-26 by `npm audit`: 16 findings, 1 critical. **Only one affects
-the live site.** `next` 16.2.2 has a denial-of-service bug in Server
-Components, which this site uses. The fix is `next@16.4.3`, a minor bump
-within 16.x. It also clears the `postcss` and `sharp` findings, which come in
-through Next.
-
-The other 13 are development and build tooling: vitest, vite, babel, js-yaml,
-brace-expansion and others. None of them runs when a visitor loads a page.
-Plain `npm audit fix` covers all of them, with no major version jumps.
-
-Do this as a change of its own, not folded into another one. `proxy.ts` and
-`instrumentation.ts` both rely on Next conventions, and a minor bump can move
-those.
-
-- [ ] Bump `next` and `eslint-config-next` together to `16.4.3`. They are
-      pinned exactly, not with `^`, so this is a deliberate edit
-- [ ] `npm audit fix` for the tooling; never `--force`
-- [ ] Re-check: `npm run build`, test, lint, and the boot check started both
-      ways (a var missing → 500 with the problem listed; all vars present →
-      200), the way `DECISIONS.md` records it was proved for §13
-- [ ] `npm audit` afterwards. Record what is left and why, rather than
-      leaving it as a bare number
-
 ## Housekeeping
 
+- [ ] **Nine dev-tooling advisories are left** after §22 (4 moderate, 5 high):
+      vitest and `@vitest/mocker`, vite, js-yaml, brace-expansion, nanoid,
+      source-map-js and `@humanfs/node`. None of them runs in production. Each
+      has a non-major fix, but `npm audit fix` on npm 10.9.2 crashes with
+      `Cannot read properties of null (reading 'edgesOut')` before it writes
+      anything. Try a newer npm, or bump `vitest` and
+      `@vitest/coverage-v8` by hand, which covers most of them
 - [ ] `paper_authors.public_visible` is dormant — the public author page was
       removed before release and the column was kept "in case sharing returns".
       Give it a decision date or drop it; a column nothing reads is a question
