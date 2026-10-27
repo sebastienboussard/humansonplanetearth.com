@@ -45,6 +45,8 @@ Tables (full definitions in `supabase/schema.sql`):
 - `words` — `id`, `word`, `month`, `year`, `deadline`
 - `papers` — `id`, `word_id`, `type`, `title`, `pdf_url`, `status`, `submitted_at`
 - `comments` — `id`, `word_id`, `paper_id`, `parent_comment_id`, `body`, `created_at`
+- `word_proposals` — words accounts propose for a future month (`0004`). RLS
+  on, zero policies; the admin queue never sees who proposed what.
 - `profiles`, `notification_prefs`, `paper_authors`, `comment_authors`,
   `notification_log` — optional anonymous accounts and email notifications.
   These have RLS enabled with **zero policies** on purpose: they are invisible

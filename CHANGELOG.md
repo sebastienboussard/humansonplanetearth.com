@@ -19,6 +19,19 @@ All notable changes to this project are documented here.
     login, and the admin API still returns 401.
 
 ### Added
+- **Propose a word for a future month.** Signed-in accounts can suggest
+  words, with up to three waiting at a time, and withdraw a waiting one. The
+  queue is fair rather than first-come-first-served: each word's round is its
+  position among its author's waiting words, so everyone's first comes before
+  anyone's second. The round is derived when the queue is read, never stored.
+  The admin Words tab lists the queue with rounds, and "Use this word" fills
+  the add-word form; adding it marks the proposal used. The admin sees no
+  proposer identity, and proposers see status only. The cap of three is a
+  database trigger with an advisory lock, so it **fails closed** and is exact
+  under a double-click. The per-IP limit on top fails open. Migration
+  `0004_word_proposals.sql` ran twice cleanly in real Postgres (PGlite) and
+  is applied by the deploy pipeline before the code goes live. Adding a word
+  that already exists now returns 409, not a raw 500.
 - **Sign in with a code, on any device.** Sign-in emails now carry an 8-digit
   code under the link, and `/account`'s "check your inbox" screen has a box
   for it. The link only works in the browser that asked for it, because

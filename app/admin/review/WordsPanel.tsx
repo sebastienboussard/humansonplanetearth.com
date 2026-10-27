@@ -1,15 +1,26 @@
 "use client";
 
+import { useState } from "react";
 import AddWordForm from "./AddWordForm";
+import WordQueuePanel from "./WordQueuePanel";
 import { useAdminData } from "./AdminData";
 import { formatDeadline, getDaysRemaining, getMonthName } from "@/lib/word-format";
 
 export default function WordsPanel() {
   const { words, loading } = useAdminData();
+  // The proposal picked in the queue, if any. Keying the form on it remounts
+  // the form with that word filled in (TODO §20).
+  const [fromQueue, setFromQueue] = useState<{ id: string; word: string } | null>(null);
 
   return (
     <div className="space-y-10">
-      <AddWordForm />
+      <WordQueuePanel onUse={setFromQueue} />
+
+      <AddWordForm
+        key={fromQueue?.id ?? "by-hand"}
+        fromQueue={fromQueue ?? undefined}
+        onCancelQueue={() => setFromQueue(null)}
+      />
 
       {loading.words ? (
         <p className="text-sm italic" style={{ color: "var(--muted)", fontFamily: "system-ui, sans-serif" }}>

@@ -397,9 +397,9 @@ that client's `any` return type costs.
       linking a person to an anonymous paper into an inbox or a screenshot.
       Decide before building either version
 
-## 🟠 20. A word queue accounts can add to — PLANNED, NOT STARTED
+## 🟡 20. A word queue accounts can add to — built, waiting on the live check
 
-Nothing below is built. This replaces the word half of §14, which planned **one
+**Built 2026-10-26.** This replaces the word half of §14, which planned **one
 *lifetime* proposal per account** enforced by a `UNIQUE (profile_id)`. The
 reversal and its reasoning are dated in `DECISIONS.md`.
 
@@ -473,73 +473,40 @@ words via the cascade and erases that a used word came from you, while the
 author or anyone else. `word_proposals` is never joined to `papers`, which stays
 author-free — see the tripwires in `DECISIONS.md`.
 
-- [ ] `supabase/migrations/0004_word_proposals.sql` — the table, the three
-      indexes, the trigger, RLS on with zero policies. Mirror into
-      `supabase/schema.sql`, following the `0003_rate_limits.sql` precedent that
-      tells a from-scratch setup to run the migration rather than copy from
-      there. Applied by the deploy workflow on push (§1a); write it to be safe to run twice. Confirm the trigger exists, not just
-      the table: `select tgname from pg_trigger where tgrelid =
-      'word_proposals'::regclass;`
-- [ ] `lib/word-format.ts` — `normalizeWord` (lowercase + trim, matching what
-      `app/api/admin/words/route.ts` inlines today) and `isValidWord` (2–24
-      characters, `a-z` plus internal `'` or `-`, a letter at each end — which
-      rejects the `__long-form__` sentinel without a special case). That file is
-      deliberately supabase-free so the client form and the server routes share
-      one definition. Then **replace the inline `word.toLowerCase().trim()` in
-      `app/api/admin/words/route.ts`** with it, so there is one definition
-      rather than two that can drift
-- [ ] `lib/word-queue.ts` — `orderWordQueue`, pure, modelled on
-      `lib/admin-queue.ts` so the ordering is testable without a DOM or a
-      database. Tie-break on `id`; `created_at` carries no uniqueness
-- [ ] `app/api/account/words/route.ts` — GET own proposals, POST to add, DELETE
-      to withdraw a waiting one. Shaped like `app/api/account/prefs/route.ts`:
-      `getSessionUser()` → 401, `req.json()` in a try/catch → 400, hand-rolled
-      validation, `ensureProfile` → 500, then scoped by `.eq("profile_id",
-      profile.id)` — never a client-supplied id. Rate-limited
-      `word-proposal:<ip>` at 10/hour, commented as mitigation that **fails
-      open** with the trigger as the real cap. Return 409 from the
-      read-then-write checks *and* from the unique index and trigger those
-      checks race
-- [ ] DELETE is scoped `status = 'waiting'` as well as by profile, so a used or
-      declined row cannot be touched. It exists because a hard cap of 3 with no
-      way to take back a typo leaves a slot dead forever
-- [ ] `app/api/admin/word-queue/route.ts` — GET the ordered waiting list, PATCH
-      to decline (same shape as `app/api/admin/review/route.ts`'s PATCH; sets
-      `decided_at`). Returns **no proposer email and no profile id**: the admin
-      needs the round, not the identity, and nothing else on this site puts a
-      name next to a contribution
-- [ ] `app/api/admin/words/route.ts` — optional `proposalId` on POST; on a
-      successful word insert flip it to `used` with `used_word_id` and
-      `decided_at`. Do it **in this route**, so the word and the proposal cannot
-      end up disagreeing, wrapped in `try/catch` + `console.error` like the
-      existing `notifyNewWord(created)` call so it can never fail word creation
-- [ ] Same route: return **409** on the `words.word` unique violation instead of
-      today's 500 with a raw Postgres message. A queued word can be added by
-      hand in the meantime, and that is a real collision, not a server fault
-- [ ] Admin UI goes **inside the existing Words tab, not a fifth one** — §14
-      specified a fifth tab, and the prefill decision makes that wrong: the
-      queue and the form it fills belong on one screen. New `WordQueuePanel.tsx`
-      above `AddWordForm`; `AdminData.tsx` gains a `"queue"` dataset (type,
-      state, `refresh` branch, `ALL_DATASETS` entry, `useMemo` field *and*
-      dependency) plus `declineQueued` and `useQueued`; `AdminDashboard.tsx`
-      gains one line, `words: queue.length` in `badges`
-- [ ] `app/account/AccountDashboard.tsx` — a "Your Words" section loaded in the
-      existing `Promise.all`. Status only, a withdraw link on waiting rows, and
-      `2 of 3 waiting` — which is what makes a 409 comprehensible. Copy says
-      everyone's first word is considered before anyone's second, and that an
-      editor decides which are used and when
-- [ ] Tests: `tests/lib/word-queue.test.ts` (the worked example above, an empty
-      queue, one account holding all three rounds, a `created_at` tie),
-      `normalizeWord`/`isValidWord` in `tests/lib/words.test.ts`,
-      `tests/api/account-word.test.ts`, `tests/api/admin-word-queue.test.ts` —
-      including that the response carries no email or profile id — and an
-      extension to `tests/api/admin-words.test.ts` for the `proposalId`
-      transition
-- [ ] `README.md` — `word_proposals` in the tables list, and a line that
-      migration `0004` is applied by the deploy workflow
-- [ ] **The one thing unit tests cannot prove:** two concurrent POSTs for a
-      third word must land exactly one row. That is the advisory lock's whole
-      purpose, and it needs a real database to check
+**What was built**, all of it to the design above:
+
+- **Migration `0004_word_proposals.sql`.** It ran **twice** in real Postgres
+  (PGlite) without error. It enforced the cap, freed a slot when a word was
+  used or declined, refused the same word waiting twice, allowed a declined
+  word again, refused bad words at the database, kept the trigger and RLS
+  present, and cascaded an account deletion. The pipeline applies it before
+  the deploy.
+- **The rules and the order.** `normalizeWord` and `isValidWord` live in
+  `lib/word-format.ts`; `orderWordQueue` and `MAX_WAITING` in
+  `lib/word-queue.ts`.
+- **The routes.** `app/api/account/words/route.ts` lists, proposes and
+  withdraws. `app/api/admin/word-queue/route.ts` lists and declines, and
+  sends no identity. `app/api/admin/words/route.ts` takes `proposalId`,
+  returns 409 on a duplicate, and uses `normalizeWord`.
+- **The screens.** `WordQueuePanel` sits in the Words tab, where "Use this
+  word" remounts `AddWordForm` keyed on the proposal; the tab is badged with
+  the waiting count. `app/account/YourWords.tsx` is on the account page.
+
+**Two deliberate departures from the plan above:**
+
+- `YourWords` loads on its own rather than inside the dashboard's
+  `Promise.all`, so a word-queue failure can't blank the account page.
+- The admin route uses `normalizeWord` but **not** `isValidWord`. The strict
+  rule is for proposals. Applying it to Seb's own word form could refuse a
+  word he meant to publish.
+
+- [ ] **Live check after the push.** Propose a word from an account; see it
+      in the admin Words tab with its round; use it from the queue and check
+      it shows as "Used" on the account page; decline another and check it
+      shows "Not used"; withdraw a third
+- [ ] **The one thing no test here can prove:** two concurrent POSTs for a
+      third word must land exactly one row. PGlite has a single connection.
+      This needs two real sessions against the real database
 
 ## 🟠 21. Reading Rooms — an asynchronous book club — PLANNED, NOT STARTED
 

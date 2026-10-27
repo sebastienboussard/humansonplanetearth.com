@@ -1,6 +1,6 @@
 import { supabase } from "@/lib/supabase";
 
-export { getMonthName, formatDeadline, getDaysRemaining } from "@/lib/word-format";
+export { getMonthName, formatDeadline, getDaysRemaining, normalizeWord, isValidWord } from "@/lib/word-format";
 
 export type WordEntry = {
   id: string;

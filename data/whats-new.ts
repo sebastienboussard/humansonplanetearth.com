@@ -31,6 +31,13 @@ export type WhatsNewEntry = {
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
     date: "2026-10-26",
+    title: "Suggest a word",
+    blurb:
+      "Signed in? You can now propose a word for a future month, from your account page. Everyone's first suggestion is considered before anyone's second.",
+    href: "/account",
+  },
+  {
+    date: "2026-10-26",
     title: "Sign in with a code, on any device",
     blurb:
       "The sign-in email now has a code as well as a link. Asked for it on your laptop but opened the email on your phone? Type the code into the page you started on and you're in.",
@@ -55,12 +62,5 @@ export const WHATS_NEW: WhatsNewEntry[] = [
     blurb:
       "A page can be written, drawn, photographed, or anything else.",
     href: "/submit",
-  },
-  {
-    date: "2026-08-19",
-    title: "Get notified — Introducing Accounts",
-    blurb:
-      "Create an account and choose what you want to hear about: a new word announced, a deadline coming up, comments on your papers, replies to your comments. An account only requires your email.  Papers stay anonymous credited only to Human On Planet Earth. This is to encourage discussions and responses. If you do not want an account there is no change. You can still submit without an account.",
-    href: "/account",
   },
 ];

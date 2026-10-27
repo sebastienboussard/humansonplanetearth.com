@@ -16,6 +16,7 @@ import {
   type AdminMessage,
   type AdminPaper,
 } from "@/lib/admin-queue";
+import type { QueuedWord } from "@/lib/word-queue";
 
 export type AdminWord = {
   id: string;
@@ -25,13 +26,15 @@ export type AdminWord = {
   deadline: string;
 };
 
-export type Dataset = "messages" | "pending" | "published" | "words";
+export type Dataset = "messages" | "pending" | "published" | "words" | "queue";
 
 export type NewWordInput = {
   word: string;
   month: string;
   year: string;
   deadline: string;
+  /** Set when the word came from the queue (TODO §20); marks it used. */
+  proposalId?: string;
 };
 
 type AdminDataValue = {
@@ -39,6 +42,8 @@ type AdminDataValue = {
   pending: AdminPaper[];
   published: AdminPaper[];
   words: AdminWord[];
+  /** Waiting proposals in fair order, with rounds and no proposer identity. */
+  queue: QueuedWord[];
   unread: number;
   loading: Record<Dataset, boolean>;
   error: string | null;
@@ -51,6 +56,7 @@ type AdminDataValue = {
   deleteMessage: (id: string) => Promise<void>;
   /** Resolves to an error message, or null on success. */
   addWord: (input: NewWordInput) => Promise<string | null>;
+  declineQueued: (id: string) => Promise<void>;
 };
 
 const AdminDataContext = createContext<AdminDataValue | null>(null);
@@ -86,7 +92,7 @@ async function send(url: string, method: string, body: unknown): Promise<string 
   }
 }
 
-const ALL_DATASETS: Dataset[] = ["messages", "pending", "published", "words"];
+const ALL_DATASETS: Dataset[] = ["messages", "pending", "published", "words", "queue"];
 
 export function AdminDataProvider({ children }: { children: React.ReactNode }) {
   const [messages, setMessages] = useState<AdminMessage[]>([]);
@@ -99,11 +105,13 @@ export function AdminDataProvider({ children }: { children: React.ReactNode }) {
     published: [],
   });
   const [words, setWords] = useState<AdminWord[]>([]);
+  const [queue, setQueue] = useState<QueuedWord[]>([]);
   const [loading, setLoading] = useState<Record<Dataset, boolean>>({
     messages: true,
     pending: true,
     published: true,
     words: true,
+    queue: true,
   });
   const [error, setError] = useState<string | null>(null);
 
@@ -121,6 +129,9 @@ export function AdminDataProvider({ children }: { children: React.ReactNode }) {
           "/api/admin/review?status=approved"
         );
         setPapers((prev) => ({ ...prev, published: sortPublished(data.papers ?? []) }));
+      } else if (key === "queue") {
+        const data = await getJson<{ queue?: QueuedWord[] }>("/api/admin/word-queue");
+        setQueue(data.queue ?? []);
       } else {
         const data = await getJson<{ words?: AdminWord[] }>("/api/admin/words");
         setWords(data.words ?? []);
@@ -193,11 +204,24 @@ export function AdminDataProvider({ children }: { children: React.ReactNode }) {
   const addWord = useCallback(
     async (input: NewWordInput) => {
       const failure = await send("/api/admin/words", "POST", input);
-      if (!failure) void refresh("words");
+      if (!failure) {
+        void refresh("words");
+        // A word from the queue leaves it once it has been used.
+        if (input.proposalId) void refresh("queue");
+      }
       return failure;
     },
     [refresh]
   );
+
+  const declineQueued = useCallback(async (id: string) => {
+    const failure = await send("/api/admin/word-queue", "PATCH", { id, status: "declined" });
+    if (failure) {
+      setError(failure);
+      return;
+    }
+    setQueue((prev) => prev.filter((q) => q.id !== id));
+  }, []);
 
   const value = useMemo<AdminDataValue>(
     () => ({
@@ -205,6 +229,7 @@ export function AdminDataProvider({ children }: { children: React.ReactNode }) {
       pending: papers.pending,
       published: papers.published,
       words,
+      queue,
       unread: unreadCount(messages),
       loading,
       error,
@@ -216,11 +241,13 @@ export function AdminDataProvider({ children }: { children: React.ReactNode }) {
       setMessageRead,
       deleteMessage,
       addWord,
+      declineQueued,
     }),
     [
       messages,
       papers,
       words,
+      queue,
       loading,
       error,
       refresh,
@@ -230,6 +257,7 @@ export function AdminDataProvider({ children }: { children: React.ReactNode }) {
       setMessageRead,
       deleteMessage,
       addWord,
+      declineQueued,
     ]
   );
 

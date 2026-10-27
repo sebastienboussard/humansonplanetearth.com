@@ -23,3 +23,24 @@ export function getDaysRemaining(deadline: string): number {
   const diff = end.getTime() - now.getTime();
   return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
 }
+
+// Word rules, shared by the admin word form, the account word queue (TODO §20)
+// and their routes, so all of them agree on what a word is. The same rule is a
+// CHECK on word_proposals.word (migration 0004).
+
+/** Lowercase and trim: how every word is stored. */
+export function normalizeWord(input: unknown): string {
+  return typeof input === "string" ? input.toLowerCase().trim() : "";
+}
+
+const WORD_PATTERN = /^[a-z][a-z'-]*[a-z]$/;
+
+/**
+ * 2-24 characters, a-z with internal ' or -, a letter at each end. Checked on
+ * the normalized form. This also rejects the `__long-form__` sentinel row
+ * without needing a special case.
+ */
+export function isValidWord(input: unknown): boolean {
+  const word = normalizeWord(input);
+  return word.length >= 2 && word.length <= 24 && WORD_PATTERN.test(word);
+}

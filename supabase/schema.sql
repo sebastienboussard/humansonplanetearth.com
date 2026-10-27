@@ -156,3 +156,21 @@ alter table notification_log enable row level security;
 --   window_start timestamptz not null default now()
 -- );
 -- alter table rate_limits enable row level security;
+
+-- ============ Word proposals ============
+
+-- The word queue accounts can add to (TODO §20). Defined in full, with the
+-- three-waiting cap trigger, in supabase/migrations/0004_word_proposals.sql.
+-- Run that migration rather than copying from here; this section exists so a
+-- from-scratch setup knows the table belongs to the schema.
+--
+-- create table word_proposals (
+--   id uuid primary key default gen_random_uuid(),
+--   profile_id uuid not null references profiles(id) on delete cascade,
+--   word text not null,          -- isValidWord(), also a CHECK
+--   status text not null default 'waiting',  -- waiting | used | declined
+--   used_word_id uuid references words(id) on delete set null,
+--   created_at timestamptz not null default now(),
+--   decided_at timestamptz
+-- );
+-- alter table word_proposals enable row level security;  -- zero policies

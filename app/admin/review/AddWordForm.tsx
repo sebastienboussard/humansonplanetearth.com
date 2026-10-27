@@ -13,10 +13,19 @@ function lastDayOfMonth(year: number, month: number): string {
   return d.toISOString().split("T")[0];
 }
 
-export default function AddWordForm() {
+// `fromQueue` is set when the admin picked a proposal in the queue above
+// (TODO §20). WordsPanel remounts this form, keyed on the proposal, so the
+// word arrives as initial state rather than being synced in an effect.
+export default function AddWordForm({
+  fromQueue,
+  onCancelQueue,
+}: {
+  fromQueue?: { id: string; word: string };
+  onCancelQueue?: () => void;
+}) {
   const { addWord } = useAdminData();
   const now = new Date();
-  const [word, setWord] = useState("");
+  const [word, setWord] = useState(fromQueue?.word ?? "");
   const [month, setMonth] = useState(String(now.getMonth() + 1));
   const [year, setYear] = useState(String(now.getFullYear()));
   const [deadline, setDeadline] = useState(lastDayOfMonth(now.getFullYear(), now.getMonth() + 1));
@@ -36,11 +45,13 @@ export default function AddWordForm() {
     setStatus("loading");
     setError("");
 
-    const failure = await addWord({ word, month, year, deadline });
+    const failure = await addWord({ word, month, year, deadline, proposalId: fromQueue?.id });
 
     if (!failure) {
       setStatus("success");
       setWord("");
+      // The proposal is used now; the form goes back to adding by hand.
+      onCancelQueue?.();
     } else {
       setError(failure);
       setStatus("error");
@@ -63,6 +74,18 @@ export default function AddWordForm() {
       <h2 className="text-lg font-normal mb-6" style={{ color: "var(--forest)" }}>
         Add a Word
       </h2>
+
+      {fromQueue && (
+        <p
+          className="text-sm mb-4"
+          style={{ color: "var(--muted)", fontFamily: "system-ui, sans-serif" }}
+        >
+          From the queue. Adding it marks the proposal as used.{" "}
+          <button type="button" onClick={onCancelQueue} className="underline">
+            Add a different word instead
+          </button>
+        </p>
+      )}
 
       {status === "success" && (
         <p

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createBrowserSupabase } from "@/lib/supabase-browser";
+import YourWords from "./YourWords";
 
 type Prefs = {
   new_word: boolean;
@@ -264,6 +265,8 @@ export default function AccountDashboard() {
           </div>
         )}
       </section>
+
+      <YourWords />
 
       {/* Session + danger zone */}
       <section

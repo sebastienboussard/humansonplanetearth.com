@@ -48,7 +48,7 @@ function Badge({ count }: { count: number }) {
 }
 
 function Tabs() {
-  const { pending, unread, error, dismissError } = useAdminData();
+  const { pending, unread, error, dismissError, queue } = useAdminData();
   const active = useSyncExternalStore(subscribeToHash, tabFromHash, () => "messages");
 
   function select(tab: TabId) {
@@ -61,6 +61,7 @@ function Tabs() {
   const badges: Partial<Record<TabId, number>> = {
     messages: unread,
     pending: pending.length,
+    words: queue.length,
   };
 
   return (
