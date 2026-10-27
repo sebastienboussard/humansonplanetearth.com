@@ -34,12 +34,58 @@ paper lands). All four are Seb's, from reading the live site.
 
 Swept again the same day, after the first wave shipped: §16, §18 and §19 are done
 and have left, along with two of §4's four mitigations and two of §11's items.
-§17 stays — it is Wave 2. One thing found while ordering the work is **not** here
-because it shipped in the same pass: `/api/contact` and `/api/comments` had no
-rate limit at all, and now do; it is in `CHANGELOG.md`, its fail-open reasoning
-is in `DECISIONS.md`, and §9's scope was widened to cover both routes. The
-running order lives in `~/.claude/plans/cheeky-yawning-lighthouse.md` until it is
-drained (§15).
+One thing found while ordering the work is **not** here because it shipped in the
+same pass: `/api/contact` and `/api/comments` had no rate limit at all, and now
+do; it is in `CHANGELOG.md`, its fail-open reasoning is in `DECISIONS.md`, and
+§9's scope was widened to cover both routes. Pushed as `f832bf0`.
+
+Added 2026-09-15: §20, a word queue that accounts can add to, ordered so that
+everyone's first waiting word is considered before anyone's second. §14 was
+split in the same pass — it carried two unrelated jobs, and its word half is
+replaced wholesale by §20's different design. The reversal of "one *lifetime*
+proposal per account" is dated in `DECISIONS.md` rather than quietly applied.
+Nothing was built; this is the design, recorded.
+
+Added 2026-10-26: §21, Reading Rooms, an asynchronous book club. Its scope was
+decided with Seb on 2026-10-22 in a plan sheet. This section promotes that
+sheet, so the sheet can be deleted. Nothing was built. It adds a migration, so
+it queues behind §1a in the same way §20 does.
+
+Swept 2026-10-26: §15 is done and has left. `DECISIONS.md` records what the
+drain found, which was not what §15 assumed. §13 was un-parked the same day by
+Seb's call, as part of the new running order below, and shipped. It also closed three
+places where a missing secret opened a security check instead of closing it.
+`CHANGELOG.md` has those; the un-parking is dated in `DECISIONS.md`.
+
+**The running order, set 2026-10-26.** It replaces the 2026-09-03 order, which
+`DECISIONS.md` keeps. It is recorded here, not in a plan sheet, because the
+sheet gets deleted and this file does not. The order follows dependencies, not
+size:
+
+1. **Done 2026-10-26:** the production rate-limit checks, §15, and §13.
+2. **Done 2026-10-26:** the pre-commit hook. **Next: §22**, the Next.js
+   security bump. It is small, and nothing below should wait on a known
+   critical advisory.
+3. **§1a**, before any feature that adds a migration. §20 and §21 both add
+   one.
+4. **§14, then §9**, before the features rather than after them. §20 and §21
+   are account-only, and §14 is what fixes sign-in across devices. §21 adds
+   three public write routes, so Turnstile should land before them rather
+   than be retrofitted.
+5. **§20, then §21.** §20 is smaller, and §21 reuses its cap trigger and its
+   admin-tab recipe. Whichever lands first takes migration `0004`.
+6. **§10's full page**, alongside §21, which is the first change a visitor
+   will really notice.
+7. **Any time, in any order:** §17 (still parked by Seb's call, 2026-09-03),
+   §6's UI copy, §4's fallbacks, §11's Resend webhooks (before §20 and §21
+   raise email volume), and §3's privacy-page wording.
+8. **Waiting on something outside the code:** §2 (a decision), §4a (a person
+   at the hardened Firefox profile), §7's automation (submission volume), and
+   §3's edge KV move (traffic).
+
+One verification is still owed from production: that comment threads follow
+the paper when paging fast. It needs a person at a browser. The contact 429 was
+proved on 2026-10-26, along with §3's upload 429; `DECISIONS.md` has the method.
 
 ---
 
@@ -78,17 +124,13 @@ download `pending` and `rejected` PDFs today.
 - [ ] Fix the false comment in `supabase/schema.sql` — the one claiming PDFs are
       served via signed URLs — either way
 
-## 🟡 3. Upload hardening — shipped, with four open threads
+## 🟡 3. Upload hardening — shipped, with three open threads
 
 Both upload routes are rate-limited through a shared Postgres store (word papers
 5/hour/IP, long-form 3/hour/IP), both share one `MAX_UPLOAD_SIZE` of 4.5 MB from
 `lib/upload-limits.ts`, and oversized uploads warn clearly under the dropzone.
 `DECISIONS.md` records how the limiter was proved in production.
 
-- [ ] The **upload** path is still unexercised — no `submit:` key has appeared
-      yet. Same code and same store as the login path, which is confirmed
-      working, so this is confirmation rather than doubt. The smoke test is six
-      submissions from one IP; the sixth should return 429 with a `Retry-After`
 - [ ] Threat model: Vercel request logs likely record submitter IPs alongside
       submissions. PDF scrubbing doesn't cover what the platform logs — write
       this down on the privacy page or fix it. **Sharper:** the rate limiter
@@ -266,32 +308,18 @@ It lives in one place, `lib/site-contact.ts`, so the two pages cannot drift.
       rate would quietly degrade delivery of the admin alerts too. Wire Resend's
       bounce/complaint webhooks before that happens
 
-## 🟠 13. No startup validation for environment variables
+## 🟠 14. Sign-in codes — PLANNED, NOT STARTED
 
-No `@t3-oss/env-nextjs`, no zod schema, nothing validates `process.env` at boot.
-A missing or malformed critical var (`ADMIN_PASSWORD`, `UNSUBSCRIBE_SECRET`,
-`CRON_SECRET`, `TURNSTILE_SECRET_KEY`) only surfaces at first use — sometimes
-silently, as §9 flags specifically for Turnstile.
+Nothing below is built. This section used to carry a second, unrelated job —
+one proposed word per account. That is now **§20**, with a different design; the
+reversal is dated in `DECISIONS.md`. What is left here is only sign-in.
 
-- [ ] Validate critical env vars at module load (a small zod schema, or
-      `@t3-oss/env-nextjs`) so the app fails loudly at boot instead of degrading
-      silently at request time
-
-## 🟠 14. Sign-in codes, and one proposed word per account — PLANNED, NOT STARTED
-
-Nothing below is built.
-
-**Sign-in codes.** `/account` sends a magic link only, and the link works *only
-in the browser that requested it* — `DECISIONS.md` records why. Request a link
-on a laptop, open the mail on a phone, and there is no way in and no recovery
-path. A 6-digit code typed back into the original tab closes that. Sign-in and
-account creation are already one action (`shouldCreateUser` defaults to `true`),
-so there is no second flow to build — only copy that says so.
-
-**One proposed word per account.** Words are admin-only today. One *lifetime*
-proposal per account — not one per month — is a self-limiting way to let readers
-feed the prompt queue. Paper submission stays anonymous and account-free; this
-is purely additive.
+`/account` sends a magic link only, and the link works *only in the browser that
+requested it* — `DECISIONS.md` records why. Request a link on a laptop, open the
+mail on a phone, and there is no way in and no recovery path. A 6-digit code
+typed back into the original tab closes that. Sign-in and account creation are
+already one action (`shouldCreateUser` defaults to `true`), so there is no
+second flow to build — only copy that says so.
 
 - [ ] **Answer this before writing any code.** Add `{{ .Token }}` to the Magic
       Link and Confirm signup templates *alongside* `{{ .ConfirmationURL }}`
@@ -320,51 +348,15 @@ is purely additive.
       `autoComplete="one-time-code"`, `maxLength={6}`), a Verify button, and a
       "use a different email" way back. Keep the honeypot and the `?error=link`
       branch. Leave `app/auth/confirm/route.ts` alone unless the fallback lands
-- [ ] `supabase/migrations/0004_word_proposals.sql` — `word_proposals` with
-      `profile_id uuid not null unique references profiles(id) on delete
-      cascade`. The UNIQUE *is* the cap, enforced in the database rather than
-      the route, so a double-submit cannot slip two through. RLS on, zero
-      policies, like `profiles`. **Two consequences, deliberate:** a declined
-      proposal does not return the slot (the admin deletes the row to grant
-      another go), and deleting your account frees it via the cascade — the one
-      bypass. Mirror into `supabase/schema.sql`. **Manual to apply — see §1a**
-- [ ] `lib/word-format.ts` — `normalizeWord` (lowercase + trim, matching
-      `app/api/admin/words/route.ts`) and `isValidWord`. That file is
-      deliberately supabase-free so the client form and the server routes can
-      share one definition
-- [ ] `app/api/account/word/route.ts` — GET the caller's proposal, POST to
-      create. Reject a word already in `words`. Return 409 both from the
-      read-then-write check *and* from the unique-violation the check races
-- [ ] `app/account/AccountDashboard.tsx` — a "Your Word" section, loaded in the
-      existing `Promise.all`. Copy says plainly: one word, once, an editor
-      decides
-- [ ] `app/api/admin/word-proposals/route.ts` plus a fifth admin tab with a
-      pending badge. Accepting only marks it accepted — it does not create the
-      word, because month/year/deadline still have to be chosen in `AddWordForm`
-- [ ] Tests: `auth-verify-code`, `account-word`, `admin-word-proposals`, and
-      `normalizeWord`/`isValidWord` in `tests/lib/words.test.ts`
-- [ ] `README.md` — `word_proposals` in the tables list, and a line that the
-      auth templates must carry **both** `{{ .ConfirmationURL }}` and
-      `{{ .Token }}`
-
-## 🟠 15. Drain the plan sheets
-
-`~/.claude/plans/` holds 8 working sheets, ~73 KB, unversioned and outside the
-repo. They are unreliable as a record by construction: names are auto-generated
-from opening words plus a random pair (`your-current-7-correctly-floofy-clarke.md`),
-so you cannot find one by topic, and they are not in git, not backed up with the
-code, and lost with the machine.
-
-The rule is now: **a plan is scratch.** Anything that must survive is restated
-in `TODO.md` or `DECISIONS.md` before the job closes, then the sheet is deleted.
-This is the §1a failure in miniature — the reasoning grew in one place while the
-record lived in another, and nothing reconciled them.
-
-- [ ] Read the 8 existing sheets for anything not yet promoted, promote it to
-      `TODO.md` or `DECISIONS.md`, then delete them. Do this once; after that
-      the rule keeps the directory empty on its own
+- [ ] Tests: `auth-verify-code`
+- [ ] `README.md` — a line that the auth templates must carry **both**
+      `{{ .ConfirmationURL }}` and `{{ .Token }}`
 
 ## 🟠 17. Nothing tells you the profile id an attachment needs
+
+**Parked 2026-09-03, Seb's call** — this was next and is held. Open, not
+deferred: nothing here was decided against, and the design below stands as
+written.
 
 The Published tab has "Attach to profile", posting to `/api/admin/attach`, which
 requires a raw profile UUID. Nothing in the app will tell you what that UUID is.
@@ -389,14 +381,298 @@ that client's `any` return type costs.
       linking a person to an anonymous paper into an inbox or a screenshot.
       Decide before building either version
 
+## 🟠 20. A word queue accounts can add to — PLANNED, NOT STARTED
+
+Nothing below is built. This replaces the word half of §14, which planned **one
+*lifetime* proposal per account** enforced by a `UNIQUE (profile_id)`. The
+reversal and its reasoning are dated in `DECISIONS.md`.
+
+Words are admin-only today: `app/api/admin/words/route.ts` is the only way one
+is ever created, and there is no queue of any kind — a word is "current" purely
+because its `(month, year)` matches today. Nothing in the schema carries a
+status, a position, or an idea of "next".
+
+**The queue is fair, not first-come-first-served.** Round is a word's position
+among *its own author's waiting words*, oldest first; the queue sorts by round,
+then by age. Everyone's first waiting word is considered before anyone's second.
+
+```
+Ana proposes "tide"  →  her round 1
+Ana proposes "salt"  →  her round 2
+"tide" is used as a word of the month
+Ben proposes "ash"   →  his round 1
+
+Queue: salt (round 1, older), ash (round 1)
+```
+
+The round is **derived at read time — there is no stored ordinal column.**
+Nothing to assign under a race, nothing to renumber when a row leaves, nothing
+that can disagree with the rows.
+
+Four decisions, taken 2026-09-15:
+
+| Question | Decision |
+| --- | --- |
+| Does a word leaving the queue free your front-row place? | **Yes** — round is computed over *waiting* words only |
+| How many waiting words per account? | **3** |
+| What does the admin "accept" do? | **Prefills the existing `AddWordForm`**; creating the word marks the proposal used |
+| What does the proposer see? | **Status only** — waiting / used / declined. No round, no position |
+
+**The table.**
+
+```sql
+create table word_proposals (
+  id uuid primary key default gen_random_uuid(),
+  profile_id uuid not null references profiles(id) on delete cascade,
+  word text not null,
+  status text not null default 'waiting'
+    check (status in ('waiting', 'used', 'declined')),
+  used_word_id uuid references words(id) on delete set null,
+  created_at timestamptz default now(),
+  decided_at timestamptz
+);
+
+create index word_proposals_queue_idx on word_proposals (status, created_at);
+create index word_proposals_profile_idx on word_proposals (profile_id);
+
+-- Two people cannot have the same word waiting at once. Partial, so a declined
+-- word can be proposed again and a used one is governed by words.word's UNIQUE.
+create unique index word_proposals_waiting_word_idx
+  on word_proposals (word) where status = 'waiting';
+
+alter table word_proposals enable row level security;
+-- RLS on, ZERO policies — like profiles.
+```
+
+**The cap is a trigger, not a UNIQUE.** "At most 3 waiting" cannot be written as
+a `UNIQUE`, and a read-then-write count in the route loses to a double-click. A
+`before insert` trigger taking `pg_advisory_xact_lock(hashtext(profile_id))`
+before counting is exact, and raises `word_proposal_cap` as a `check_violation`.
+This check **fails closed** — it *is* the cap, not mitigation sitting behind
+one, which is the distinction `lib/rate-limit.ts:22-35` exists to make.
+
+**Three deliberate consequences.** Deleting your account frees your waiting
+words via the cascade and erases that a used word came from you, while the
+`words` row survives untouched. A declined word can be proposed again, by its
+author or anyone else. `word_proposals` is never joined to `papers`, which stays
+author-free — see the tripwires in `DECISIONS.md`.
+
+- [ ] `supabase/migrations/0004_word_proposals.sql` — the table, the three
+      indexes, the trigger, RLS on with zero policies. Mirror into
+      `supabase/schema.sql`, following the `0003_rate_limits.sql` precedent that
+      tells a from-scratch setup to run the migration rather than copy from
+      there. **Manual to apply — see §1a.** Confirm the trigger exists, not just
+      the table: `select tgname from pg_trigger where tgrelid =
+      'word_proposals'::regclass;`
+- [ ] `lib/word-format.ts` — `normalizeWord` (lowercase + trim, matching what
+      `app/api/admin/words/route.ts` inlines today) and `isValidWord` (2–24
+      characters, `a-z` plus internal `'` or `-`, a letter at each end — which
+      rejects the `__long-form__` sentinel without a special case). That file is
+      deliberately supabase-free so the client form and the server routes share
+      one definition. Then **replace the inline `word.toLowerCase().trim()` in
+      `app/api/admin/words/route.ts`** with it, so there is one definition
+      rather than two that can drift
+- [ ] `lib/word-queue.ts` — `orderWordQueue`, pure, modelled on
+      `lib/admin-queue.ts` so the ordering is testable without a DOM or a
+      database. Tie-break on `id`; `created_at` carries no uniqueness
+- [ ] `app/api/account/words/route.ts` — GET own proposals, POST to add, DELETE
+      to withdraw a waiting one. Shaped like `app/api/account/prefs/route.ts`:
+      `getSessionUser()` → 401, `req.json()` in a try/catch → 400, hand-rolled
+      validation, `ensureProfile` → 500, then scoped by `.eq("profile_id",
+      profile.id)` — never a client-supplied id. Rate-limited
+      `word-proposal:<ip>` at 10/hour, commented as mitigation that **fails
+      open** with the trigger as the real cap. Return 409 from the
+      read-then-write checks *and* from the unique index and trigger those
+      checks race
+- [ ] DELETE is scoped `status = 'waiting'` as well as by profile, so a used or
+      declined row cannot be touched. It exists because a hard cap of 3 with no
+      way to take back a typo leaves a slot dead forever
+- [ ] `app/api/admin/word-queue/route.ts` — GET the ordered waiting list, PATCH
+      to decline (same shape as `app/api/admin/review/route.ts`'s PATCH; sets
+      `decided_at`). Returns **no proposer email and no profile id**: the admin
+      needs the round, not the identity, and nothing else on this site puts a
+      name next to a contribution
+- [ ] `app/api/admin/words/route.ts` — optional `proposalId` on POST; on a
+      successful word insert flip it to `used` with `used_word_id` and
+      `decided_at`. Do it **in this route**, so the word and the proposal cannot
+      end up disagreeing, wrapped in `try/catch` + `console.error` like the
+      existing `notifyNewWord(created)` call so it can never fail word creation
+- [ ] Same route: return **409** on the `words.word` unique violation instead of
+      today's 500 with a raw Postgres message. A queued word can be added by
+      hand in the meantime, and that is a real collision, not a server fault
+- [ ] Admin UI goes **inside the existing Words tab, not a fifth one** — §14
+      specified a fifth tab, and the prefill decision makes that wrong: the
+      queue and the form it fills belong on one screen. New `WordQueuePanel.tsx`
+      above `AddWordForm`; `AdminData.tsx` gains a `"queue"` dataset (type,
+      state, `refresh` branch, `ALL_DATASETS` entry, `useMemo` field *and*
+      dependency) plus `declineQueued` and `useQueued`; `AdminDashboard.tsx`
+      gains one line, `words: queue.length` in `badges`
+- [ ] `app/account/AccountDashboard.tsx` — a "Your Words" section loaded in the
+      existing `Promise.all`. Status only, a withdraw link on waiting rows, and
+      `2 of 3 waiting` — which is what makes a 409 comprehensible. Copy says
+      everyone's first word is considered before anyone's second, and that an
+      editor decides which are used and when
+- [ ] Tests: `tests/lib/word-queue.test.ts` (the worked example above, an empty
+      queue, one account holding all three rounds, a `created_at` tie),
+      `normalizeWord`/`isValidWord` in `tests/lib/words.test.ts`,
+      `tests/api/account-word.test.ts`, `tests/api/admin-word-queue.test.ts` —
+      including that the response carries no email or profile id — and an
+      extension to `tests/api/admin-words.test.ts` for the `proposalId`
+      transition
+- [ ] `README.md` — `word_proposals` in the tables list, and a line that
+      migration `0004` is applied by hand
+- [ ] **The one thing unit tests cannot prove:** two concurrent POSTs for a
+      third word must land exactly one row. That is the advisory lock's whole
+      purpose, and it needs a real database to check
+
+## 🟠 21. Reading Rooms — an asynchronous book club — PLANNED, NOT STARTED
+
+Nothing below is built. "Reading Rooms" is a working name. Scope was decided
+with Seb on 2026-10-22.
+
+A signed-in account opens a **room** around a book or a film and breaks it into
+**sections** — chapters, acts, timestamps, or the whole work at once. People
+write **pages** about a section: considered, typed, anonymous, published as
+*Human On Planet Earth*. Under each page sit **margins**: short replies, one
+level deep, the shape `components/Comments.tsx` already has. Nothing on the site
+touches books or films today, comments only attach to a word (long-form fakes
+one with the `__long-form__` row), and every contribution is a PDF — so pages
+are the first typed text on the site.
+
+Seven decisions, taken 2026-10-22:
+
+| Question | Decision |
+| --- | --- |
+| How is a work broken down? | **Creator's choice** — chapters, acts/parts, timestamps, or whole work. All are ordered rows with free-text labels, so every shape is the same data |
+| Is there a closing section? | **Yes, always** — every room gets a final "The whole work" section, added automatically |
+| How are spoilers handled? | **Manual expand.** Every section starts collapsed; the reader opens the one they want. No reading-position tracking |
+| Can a page point at a passage? | **Yes** — optional `quote` (≤300 chars, to stay inside fair use) and `locator` (≤40, e.g. "p. 112", "1:04:30"), shown as a pull-quote |
+| Is the work looked up anywhere? | **Open Library, fully built in v1**, for books only — it does not catalogue films |
+| Do rooms need approval? | **No — live instantly.** Abuse control is a cap, a rate limit, and an admin Remove |
+| Do pages need approval? | **Yes**, through the admin queue like papers — they carry the most risk. Margins publish instantly, like comments |
+
+**Two things are deferred, not dropped:** a *pace* (each section gets an "opens
+on" date, say a chapter a week, and shows as *upcoming* until then) and a
+*prompt per section* (one word or question from the creator — "Chapter 3 —
+*debt*" — which ties a room back to the monthly word). The schema leaves room
+for both as `opens_at` and `prompt` on `room_sections`; neither is in v1.
+
+**The room cap fails closed; the rate limit fails open.** At most 3 rooms per
+account per 24h, enforced by a `before insert` trigger taking
+`pg_advisory_xact_lock(hashtext(...))` before counting — the same pattern §20
+uses, for the same reason: a read-then-write count in the route loses to a
+double-click. The cap *is* the boundary. The IP `rateLimit` on top is mitigation
+and is commented as such, per `lib/rate-limit.ts`.
+
+**The Open Library lookup is a convenience, so it fails open.** If it times out
+or finds nothing, the form says so and manual entry still works. What *is*
+checked server-side is what gets stored: `ol_work_key` must match
+`^/works/OL\d+W$` and `cover_id` must be an integer, so a client cannot plant an
+arbitrary URL that the room page then renders.
+
+**Migration number clash.** §20 already claims `0004`. Whichever of the two
+ships first takes `0004`; the other takes `0005`. Both are manual to apply until
+§1a lands — which is one more reason §1a goes first.
+
+- [ ] Migration `supabase/migrations/000N_reading_rooms.sql` (see the clash
+      above). Mirror into `supabase/schema.sql` per the `0003_rate_limits.sql`
+      precedent. **Manual to apply — see §1a**; confirm the cap trigger exists,
+      not only the tables, via `pg_trigger`:
+  - `rooms` — id, slug, title, `creator_name` (author of the *work*, not of the
+    room), medium (book / film / series / play / other), year, intro,
+    `ol_work_key`, `cover_id`, `isbn` (all nullable), status (`live` /
+    `removed`), `created_at`. Public read where live
+  - `room_sections` — id, `room_id`, position, label, kind (`part` / `whole`).
+    Public read where the room is live
+  - `room_pages` — id, `section_id`, title, body (plain text, ~10k cap), quote,
+    locator, status (`pending` / `approved` / `rejected`). Public read where
+    approved
+  - `room_margins` — id, `page_id`, `parent_id`, body (2000 cap). Same shape as
+    `comments`
+  - `room_authors`, `room_page_authors`, `room_margin_authors` — RLS on, **zero
+    policies**. Public tables never hold an author; this is the `papers` tripwire
+    in `DECISIONS.md` carried over, not a new rule
+- [ ] `lib/rooms.ts` — pure: slugify, build sections (always appending
+      `whole`), validate labels
+- [ ] `lib/open-library.ts` — `searchWorks`, `parseSearch`, `parseToc`,
+      `coverUrl`, `isWorkKey`
+- [ ] `app/api/rooms/lookup/route.ts` — `GET ?q=`, the only thing that talks to
+      Open Library; the browser never calls it directly. IP rate-limited 30/min
+      (fails open). Queries `search.json` with `limit=8` and a `fields=` list,
+      sends a descriptive `User-Agent` with the site URL as Open Library asks,
+      4s `AbortController` timeout, `next: { revalidate: 86400 }`. Returns
+      `{workKey, title, authors, year, coverId, isbn}`
+- [ ] `app/api/rooms/lookup/toc/route.ts` — `GET ?edition=`, reads
+      `table_of_contents` from `books/{edition}.json`. Best effort: when present
+      it prefills the breakdown as editable chapters; when absent the creator
+      builds it by hand
+- [ ] `app/api/rooms/route.ts` (create, account required),
+      `app/api/rooms/pages/route.ts`, `app/api/rooms/margins/route.ts` — each
+      shaped like `app/api/submit/route.ts`: `rateLimit` + `clientIp`, the
+      `_trap` honeypot, length caps, `getSessionUser` / `ensureProfile`,
+      `notifyAdmin…` for new pages. 409 on the cap trigger's `check_violation`
+- [ ] Pages: `app/rooms/page.tsx` (list), `app/rooms/[slug]/page.tsx` (the work
+      and its sections), `app/rooms/[slug]/[section]/page.tsx` (that section's
+      pages and the write form), `app/rooms/new/` (create form with a section
+      builder and, for books, a search box with cover thumbnails that fills
+      title, creator, year and stores the Open Library ids)
+- [ ] Spoiler folding: on the room page each section is a collapsed `<details>`
+      showing only label and count ("Chapter 4 · 6 pages"). Pages load **lazily
+      on open**, so no page text is in the HTML for anyone to skim. The section
+      deep link counts as an explicit expand. No stored state
+- [ ] Covers from `covers.openlibrary.org/b/id/{cover_id}-M.jpg` — either add
+      the host to `images.remotePatterns` for `next/image`, or a plain `<img
+      loading="lazy">`. The room page credits "Book data from Open Library"
+- [ ] Margins: generalise `components/Comments.tsx` (`buildTree`,
+      `CommentForm`) rather than copying it
+- [ ] Nav: one entry in `components/Nav.tsx`'s `links`
+- [ ] Admin: a "Rooms" tab in `AdminDashboard.tsx` — pending pages (approve /
+      reject) and live rooms (remove), badged on pending pages. Datasets and
+      actions in `AdminData.tsx`, `useMemo` field *and* dependency.
+      `app/api/admin/rooms/route.ts` behind `isAdminRequest`, following §20's
+      recipe
+- [ ] Tests: `tests/lib/rooms.test.ts` (ordering, the `whole` section always
+      last), `tests/lib/open-library.test.ts` (recorded JSON fixtures; `isWorkKey`
+      rejects arbitrary input), `tests/api/rooms*.test.ts` (auth, rate limit,
+      honeypot, caps, and **that no response carries an author**),
+      `tests/api/rooms-lookup.test.ts` (mocked `fetch`: timeout, non-200, empty)
+- [ ] By hand on `npm run dev`: a 3-chapter room is live at once with "The whole
+      work" as a fourth section; a page with a quote is pending, then shows once
+      approved; a margin posts; every section is collapsed on load and no page
+      text is in the source until opened; "Middlemarch" fills cover, fields and
+      (where available) chapters; with openlibrary.org blocked, manual entry
+      still works; a removed room 404s; a 4th room inside 24h is refused
+- [ ] **The one thing unit tests cannot prove:** concurrent creates at the cap
+      must land exactly one row — the advisory lock, against a real database
+- [ ] On ship: `CHANGELOG.md`, `data/whats-new.ts`, `README.md` tables list
+
+## 🟠 22. Next.js 16.2.2 has a critical advisory
+
+Found 2026-10-26 by `npm audit`: 16 findings, 1 critical. **Only one affects
+the live site.** `next` 16.2.2 has a denial-of-service bug in Server
+Components, which this site uses. The fix is `next@16.4.3`, a minor bump
+within 16.x. It also clears the `postcss` and `sharp` findings, which come in
+through Next.
+
+The other 13 are development and build tooling: vitest, vite, babel, js-yaml,
+brace-expansion and others. None of them runs when a visitor loads a page.
+Plain `npm audit fix` covers all of them, with no major version jumps.
+
+Do this as a change of its own, not folded into another one. `proxy.ts` and
+`instrumentation.ts` both rely on Next conventions, and a minor bump can move
+those.
+
+- [ ] Bump `next` and `eslint-config-next` together to `16.4.3`. They are
+      pinned exactly, not with `^`, so this is a deliberate edit
+- [ ] `npm audit fix` for the tooling; never `--force`
+- [ ] Re-check: `npm run build`, test, lint, and the boot check started both
+      ways (a var missing → 500 with the problem listed; all vars present →
+      200), the way `DECISIONS.md` records it was proved for §13
+- [ ] `npm audit` afterwards. Record what is left and why, rather than
+      leaving it as a bare number
+
 ## Housekeeping
 
-- [ ] No pre-commit hooks exist (`.husky/` absent, no `prepare` script). Add
-      husky + lint-staged to run lint/typecheck before commit — this is the same
-      class of failure (`package.json`/`package-lock.json` drift) that already
-      broke `npm ci` once. Deferred by choice on 2026-08-29, but the blocker is
-      gone: lint is at zero, so a hook that runs it would pass today rather than
-      failing on first use
 - [ ] `paper_authors.public_visible` is dormant — the public author page was
       removed before release and the column was kept "in case sharing returns".
       Give it a decision date or drop it; a column nothing reads is a question

@@ -54,6 +54,99 @@ in a working file, so they survive a machine.
 
 Newest first. A choice that will be questioned again, written down once.
 
+### 2026-10-26 — a new running order, and §13 and the hook un-parked
+
+On 2026-09-03 Seb parked §17, §13 and the pre-commit hook. The order then
+was: those three parked; §14's experiment and §4a's browser test waiting on a
+person; §1a before §20; §9 waiting on its Cloudflare setup.
+
+**Replaced** by an order that follows dependencies, now in `TODO.md`'s header.
+Seb un-parked §13 and the hook. §17 stays parked. The reasoning for the new
+order:
+
+- **The cheap guards come first.** The hook protects lint at zero. §13 makes
+  §9's "an absent secret must reject" true at startup instead of being one
+  more thing to retrofit later.
+- **§1a still comes before every migration.** §21 now adds a second one.
+- **§14 and §9 come before the features.** §20 and §21 are account-only, and
+  §21 adds public write routes.
+
+**§13 found more than it was scoped for.** It was written as "a missing var
+surfaces late". Writing the check showed that three security checks didn't
+just surface late, they *opened*:
+
+- With `ADMIN_PASSWORD` unset, admin sessions were signed with the literal key
+  `"unset"`, so anyone reading the source could mint one.
+- With `CRON_SECRET` unset, the cron route accepted `Bearer undefined`.
+- With `UNSUBSCRIBE_SECRET` unset, unsubscribe links were signed with
+  `"unset"` too.
+
+Production had all three set, as the 2026-08-19 probe showed and a re-probe
+of the cron route on 2026-10-26 confirmed. So nothing was exposed. All three
+now fail closed where they are used, as well as at startup.
+
+**The startup check is proved, not assumed.** A production build started with
+a var missing refused to boot. Every request returned 500, and the log listed
+each missing var. Started with every var present, it served 200. Next.js
+rethrows from `register()` and caches the failure for the instance, which is
+why every request fails rather than only the first.
+
+**What the check showed that nobody knew:** `.env.local` has no
+`UNSUBSCRIBE_SECRET` and no `CRON_SECRET`. Local `npm run dev` therefore stops
+at boot until both are added. That is the check doing its job. No Claude
+session will edit that file.
+
+### 2026-09-15 — the word queue is fair by round, and three waiting, not one for life
+
+`TODO.md` §14 planned **one *lifetime* proposal per account**, and said so in the
+strongest terms: `word_proposals.profile_id uuid not null unique`, with the note
+that "the UNIQUE *is* the cap, enforced in the database rather than the route, so
+a double-submit cannot slip two through". It also recorded two deliberate
+consequences — that a declined proposal did not return the slot, and that
+deleting your account freed it via the cascade.
+
+**Reversed.** An account may hold **three waiting words**, and the queue is
+ordered fairly rather than first-come-first-served. The original claim is left
+standing above so it is not proposed again as a simplification. The word half of
+§14 became §20; §14 keeps its number and is now sign-in codes only.
+
+**Round is computed over waiting rows only, and that is a real trade.** A word's
+round is its position among its own author's *waiting* words, oldest first; the
+queue sorts by round, then by age. Because the round is derived rather than
+stored, a repeat proposer's next word is promoted back to round 1 the moment one
+of theirs leaves — so a second word can beat a newcomer's first. The cap of three
+is what bounds this: an account can hold at most one round-1 word at a time.
+
+The alternative was a **stored lifetime ordinal** — your Nth word ever is always
+round N, whatever happened to the earlier ones. Set aside as harsher than
+intended: it charges a round to a word an editor turned down, so being declined
+would cost you your place next time. What the chosen design gives up in exchange
+is written above rather than discovered later.
+
+Deriving the round also removes a class of problem outright: there is no ordinal
+to assign under a race, none to renumber when a row leaves, and none that can
+disagree with the rows it describes.
+
+**The cap is a trigger with an advisory lock, not a UNIQUE.** "At most three
+waiting" is not expressible as a `UNIQUE`, and a read-then-write count in the
+route loses to a double-click — which is exactly the failure §14's UNIQUE was
+chosen to prevent, so dropping the UNIQUE without replacing it would have been a
+regression. A `before insert` trigger takes
+`pg_advisory_xact_lock(hashtext(profile_id))` before counting, which serialises
+inserts for that one profile and makes the cap exact.
+
+That check **fails closed**, and the distinction is the point: it *is* the cap,
+not abuse mitigation sitting behind a real check, so a database failure must
+refuse the fourth word rather than allow it. Contrast the per-IP limiter on the
+same route, which may fail open — `lib/rate-limit.ts` carries the rule.
+
+**The admin queue shows no proposer identity.** It returns the word, its round
+and its age — no email, no profile id. The admin needs to know the round, not
+who wrote it, and nothing else on this site puts a name next to a contribution;
+`papers` is deliberately author-free for the same reason.
+
+Nothing here is built. §20 carries the work.
+
 ### 2026-09-03 — replies are one level deep, and the server is what enforces it
 
 `comments.parent_comment_id` references `comments(id)`, so the database allows
@@ -96,6 +189,27 @@ Until it lands, the limiter is mitigation and is commented as such.
 ## Retracted and corrected
 
 Newest first. Each keeps the original claim, not just the fix.
+
+### 2026-10-26 — the plan sheets §15 meant to drain were mostly gone already
+
+`TODO.md` §15 said `~/.claude/plans/` held **8 sheets**, ~73 KB, waiting to be
+read for anything unpromoted. When the drain ran on 2026-10-26 there were three.
+One was this project's, and two belonged to an unrelated project:
+`~/.claude/plans/` is shared by every project on the machine, not just this one.
+One of those two disappeared during the drain itself, between listing the
+directory and reading it.
+
+- **Reading Rooms (2026-10-22): promoted** to `TODO.md` §21 in full, then
+  deleted.
+- **The two sheets from the other project:** left alone. They are not this
+  repository's to delete.
+- **The original eight: not verified.** None of them was still present, so
+  nobody can now say whether each was promoted before it went. If a decision
+  from before 2026-10-22 seems to be missing from these records, this is the
+  likely reason. It is a gap, not proof that anything was lost.
+
+The rule stands, and this is the argument for it: a scratch sheet can vanish
+without anyone deciding to delete it. Promote first.
 
 ### 2026-08-30 — the former host's name, kept then removed
 
@@ -229,6 +343,26 @@ stop that recurring.
 
 The method matters as much as the result — it is the part that gets reused.
 
+### 2026-10-26 — the upload and contact limiters are working live
+
+Six empty POSTs each to `/api/contact` and `/api/submit` on
+`humansonplanetearth.com`, from one IP. Both routes returned **400 five times,
+then 429**, with `Retry-After: 3598`, and each 429 carried that route's own
+message. This is the smoke test `TODO.md` §3 owed for uploads, plus the "sixth
+contact message in an hour" check owed since 2026-09-03.
+
+**Why empty bodies prove it.** Both routes call `rateLimit` before they read the
+body, so an invalid request still counts toward the limit. The probe exercised
+the real limiter path while creating no papers, no messages and no emails.
+
+**Why this is stronger than an absent 429.** The limiter fails open, so a test
+that never sees a 429 cannot tell "limiting" apart from "store unreachable".
+Seeing a real 429 rules out the second.
+
+**Not covered:** long-form upload (`submit-long-form:`, 3 an hour) and
+comments (10 an hour). Both use the same code and the same store, so this is a
+gap in what was checked, not a reason to doubt them.
+
 ### 2026-08-19 — the orphaned-PDF sweep found nothing, and that is the finding
 
 36 stored PDFs against 39 paths referenced by rows. The gap of 3 is exactly the
@@ -252,8 +386,8 @@ different client than the app uses.
 Separately confirmed live for the admin-login path — an `admin-login:<ip>` row
 with a running counter appeared in `rate_limits` after a post-deploy sign-in, so
 the shared store, the `x-forwarded-for` IP derivation and the atomic upsert are
-all working. The **upload** path is still unexercised; `TODO.md` §3 carries the
-smoke test.
+all working. The **upload** path was unexercised until 2026-10-26; see that
+entry above.
 
 ### 2026-08-19 — secrets proved by probe, not by dashboard
 
