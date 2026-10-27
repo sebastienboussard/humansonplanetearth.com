@@ -107,6 +107,12 @@ Manual setup:
 1. Create the tables. See "Migrations and deploys" above.
 2. Supabase dashboard → Authentication: enable email (magic link) sign-in and
    add `https://<site>/auth/confirm` to the redirect URLs; set the Site URL.
+   Both the **Magic Link** and **Confirm signup** templates must carry
+   **both** `{{ .ConfirmationURL }}` (the link) and `{{ .Token }}` (the code).
+   Never swap the link for `{{ .TokenHash }}`: that broke every sign-in once.
+   The link only works in the browser that asked for it, while the code
+   works on any device. **Email OTP Length must be 8**, matching
+   `OTP_LENGTH` in `lib/sign-in-code.ts`.
 3. Resend: verify the sending domain (DNS records) for `NOTIFY_FROM_EMAIL`.
 4. Vercel: set the env vars above. `vercel.json` schedules
    `/api/cron/deadline-reminders` daily at 09:00 UTC (sends at exactly 7 and

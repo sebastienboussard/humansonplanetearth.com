@@ -54,6 +54,43 @@ in a working file, so they survive a machine.
 
 Newest first. A choice that will be questioned again, written down once.
 
+### 2026-10-26 — the emailed code signs in across devices, despite PKCE
+
+§14 was gated on one question: does `{{ .Token }}` from an email requested the
+way the app requests it (PKCE, because `@supabase/ssr` forces it) sign anyone
+in? The fear came from `token_hash`, which GoTrue refuses for PKCE-issued
+emails (see "Retracted and corrected" below).
+
+**Yes, and from anywhere.** The experiment:
+
+- `{{ .Token }}` was added to both templates, under the link, which stays.
+- A sign-in email was requested with a PKCE client exactly as `/account`
+  requests one. The script confirmed it stored a code verifier, so the request
+  really was PKCE.
+- `verifyOtp({ email, token, type: "email" })` was called from a *fresh*
+  client that held no verifier. That is the cross-device case, the stricter
+  of the two tests.
+- A session came back for the right user.
+
+PKCE binds the *link* to the requesting browser. It does not bind the
+*code*.
+
+**What it settles:**
+
+- The request side doesn't change.
+- The server-side implicit-flow fallback that §14 carried is dropped. It
+  would have meant moving the request server-side and adding a client
+  component to read tokens from the URL fragment.
+- The code fixes the cross-device dead end outright. The original plan
+  expected it to work only in the tab that asked for it.
+
+**Found on the way:** this project's codes are **8 digits**. §14 had assumed
+6 everywhere, which would have rejected every real code.
+
+This is the third time the PKCE hard-coding has shaped a design, after the
+`token_hash` retraction and the template rule in `README.md`. This entry
+exists so the answer isn't rediscovered a fourth time.
+
 ### 2026-10-26 — migrations run before the deploy, not alongside it
 
 §1a had to choose how migrations reach production. Seb's call, from three

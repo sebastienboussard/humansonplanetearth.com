@@ -1,9 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { WHATS_NEW, CHANGELOG_URL, REPO_URL } from "@/data/whats-new";
+import { WHATS_NEW, CHANGELOG_URL, MAX_WHATS_NEW, REPO_URL } from "@/data/whats-new";
 
 describe("WHATS_NEW entries", () => {
   it("has at least one entry", () => {
     expect(WHATS_NEW.length).toBeGreaterThan(0);
+  });
+
+  it("has at most five entries, so the banner stays short", () => {
+    // Adding one means dropping the oldest. It stays in CHANGELOG.md.
+    expect(MAX_WHATS_NEW).toBe(5);
+    expect(WHATS_NEW.length).toBeLessThanOrEqual(MAX_WHATS_NEW);
   });
 
   it("every entry has a non-empty title and blurb", () => {

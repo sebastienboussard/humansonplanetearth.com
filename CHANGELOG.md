@@ -18,7 +18,30 @@ All notable changes to this project are documented here.
   - an admin page with no cookie, or a forged one, still redirects to the
     login, and the admin API still returns 401.
 
+### Added
+- **Sign in with a code, on any device.** Sign-in emails now carry an 8-digit
+  code under the link, and `/account`'s "check your inbox" screen has a box
+  for it. The link only works in the browser that asked for it, because
+  `@supabase/ssr` forces PKCE. Requesting on a laptop and opening the mail on
+  a phone used to be a dead end with no way back. The code works anywhere:
+  proved 2026-10-26 from a client that had never requested it, and recorded in
+  `DECISIONS.md`. `POST /api/auth/verify-code` verifies through the
+  cookie-backed server client, so the session lands in the same cookies the
+  link would set. It is rate-limited per IP (fails open), refuses anything
+  that isn't exactly 8 digits before Supabase sees it, and gives one message
+  for wrong, expired and used codes. `lib/sign-in-code.ts` holds the length
+  for the form and the route both, and a test pins it to the dashboard's
+  setting.
+- **Sign-in emails go through Resend.** They had come from Supabase's built-in
+  mailer, which allows a few emails an hour for the whole site and is not
+  meant for production. Past that, nobody could sign in. Set in the Supabase
+  dashboard, not in code (`TODO.md` §23).
+
 ### Fixed
+- **The hourly email cap no longer says "wait a minute".** Supabase has two
+  different refusals on sign-in emails, a short per-address cooldown and a
+  project-wide hourly cap. The form gave the cooldown's message for both, so
+  people retried into a wall. It now names the one that happened.
 - **The account page restores the notifications panel without an extra
   render.** It used to read the saved open/closed state in an effect of its
   own, which the stricter React lint rule in `eslint-config-next` 16.4

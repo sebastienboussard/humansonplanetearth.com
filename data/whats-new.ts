@@ -7,12 +7,19 @@
 // the banner for anyone curious enough to want it.
 //
 // Rule of thumb: if a reader would not notice it while using the site, it does
-// not go here. Newest first, edited by hand per release. The planned /changes
-// page (TODO §10) is expected to consume this same array.
+// not go here. Newest first, edited by hand per release.
+//
+// At most MAX_WHATS_NEW entries, Seb's call 2026-10-26, so the banner stays
+// short and only carries what is actually new. Adding an entry means dropping
+// the oldest, and a test enforces it. Dropped entries are not lost: each one
+// is in CHANGELOG.md. That also means the planned /changes page (TODO §10)
+// can't use this array for the full history.
 
 /** The public repository. The site's code is open — say so where readers look. */
 export const REPO_URL = "https://github.com/sebastienboussard/humansonplanetearth.com";
 export const CHANGELOG_URL = `${REPO_URL}/blob/main/CHANGELOG.md`;
+
+export const MAX_WHATS_NEW = 5;
 
 export type WhatsNewEntry = {
   date: string; // ISO "YYYY-MM-DD"
@@ -22,6 +29,13 @@ export type WhatsNewEntry = {
 };
 
 export const WHATS_NEW: WhatsNewEntry[] = [
+  {
+    date: "2026-10-26",
+    title: "Sign in with a code, on any device",
+    blurb:
+      "The sign-in email now has a code as well as a link. Asked for it on your laptop but opened the email on your phone? Type the code into the page you started on and you're in.",
+    href: "/account",
+  },
   {
     date: "2026-09-03",
     title: "A new word now points at the month before",
@@ -48,24 +62,5 @@ export const WHATS_NEW: WhatsNewEntry[] = [
     blurb:
       "Create an account and choose what you want to hear about: a new word announced, a deadline coming up, comments on your papers, replies to your comments. An account only requires your email.  Papers stay anonymous credited only to Human On Planet Earth. This is to encourage discussions and responses. If you do not want an account there is no change. You can still submit without an account.",
     href: "/account",
-  },
-  {
-    date: "2026-08-19",
-    title: "Find papers by hashtag",
-    blurb:
-      "Papers carry quiet hashtags. On word pages and in the long-form index, you can now filter by them.",
-  },
-  {
-    date: "2026-08-19",
-    title: "Clearer upload limits",
-    blurb:
-      "If your PDF is too large, the submit page now tells you straight away — how big it is, what the limit is, and what to do — instead of quietly clearing your file. Both word papers and long-form papers cap at 4.5 MB.",
-    href: "/submit",
-  },
-  {
-    date: "2026-07-01",
-    title: "Newest papers first",
-    blurb:
-      "Word pages now open with the most recent paper. A small toggle lets you read oldest-first instead.",
   },
 ];

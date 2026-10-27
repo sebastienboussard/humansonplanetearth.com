@@ -245,34 +245,45 @@ Rejection already deletes the stored PDF. Two sweep scripts exist, and
       grace window. Only worth wiring once there is enough submission volume for
       the queue to grow — today the whole bucket is 36 files
 
-## 🟠 9. Cloudflare Turnstile
+## 🟡 9. Cloudflare Turnstile — built, waiting on the keys
 
-**External setup required first:**
-1. [dash.cloudflare.com](https://dash.cloudflare.com) → Turnstile → Add widget
-2. "Managed" mode, hostname `humansonplanetearth.com`
-3. Copy the **Site Key** and **Secret Key**
-4. Add to `.env.local`:
-   ```
-   NEXT_PUBLIC_TURNSTILE_SITE_KEY=your_site_key
-   TURNSTILE_SECRET_KEY=your_secret_key
-   ```
-5. Same two vars in Vercel → Project settings → Environment variables
-6. `npm install @marsidev/react-turnstile`
+**Built 2026-10-26 on the local branch `turnstile`, never pushed, and it
+must not reach `main` before the keys exist.** It fails closed by design, and `lib/env.ts` now requires both keys at
+boot. A deploy without them in Vercel would return 500 on every page, loudly.
+The order is: keys in Vercel, then push.
 
-**Code changes (after env vars are set):**
-- [ ] `app/submit/SubmitForm.tsx` — add `<Turnstile>` widget, gate submit on token
-- [ ] `app/api/submit/route.ts` — verify `cf-token` against siteverify
-- [ ] `app/long-form/submit/LongFormSubmitForm.tsx` + its route — the original
-      plan covered only the word endpoint and left long-form unprotected
-- [ ] **`/contact` and `/comments` are in scope too.** Both were unthrottled
-      until 2026-09-03 and both send email; they now carry per-IP limits that
-      fail open, which makes Turnstile the real boundary on exactly those two
-      routes. The contact form is where traffic actually arrives
-- [ ] Fail **closed**, not open. "Verify only when `TURNSTILE_SECRET_KEY` is
-      present" means a typo'd env var silently disables verification. In
-      production an absent secret should reject. Contrast §3's limiter, which
-      may fail open because it sits behind a real check — this *is* the check
-- [ ] Pass `remoteip` to siteverify
+What exists:
+
+- `lib/turnstile.ts`, the server check. It fails closed on every path: no
+  secret, no or malformed token, Cloudflare unreachable or slow (5 s), or a
+  "no".
+- `components/TurnstileWidget.tsx`, written by hand rather than adding
+  `@marsidev/react-turnstile`. The API used is only render, reset and remove.
+- The check is wired into all four public write routes: word submit,
+  long-form submit, contact and comments. It runs after the honeypot and
+  before anything expensive, such as reading the PDF. `remoteip` is passed.
+- Each form disables its button until it holds a token and resets the widget
+  after every send, since tokens are single-use.
+- Tests cover the check against a fake Cloudflare and a refusal in every
+  route.
+- Proved against **Cloudflare's real siteverify** with its published test
+  keys: the always-pass secret let a request through, the always-fail secret
+  got 403 `invalid-input-response`, and a missing token got 403.
+
+**The accepted cost:** if Cloudflare's verify endpoint is down, nobody can
+submit, comment or send a message until it is back. That is what "fails
+closed" means here, and it is the point. The limiters in front of the check
+fail open, so this check is the boundary on these routes.
+
+- [ ] **Seb:** Cloudflare → Turnstile → Add widget. Name
+      `humansonplanetearth`, hostnames `humansonplanetearth.com` and
+      `localhost`, mode **Managed**
+- [ ] **Seb:** add `NEXT_PUBLIC_TURNSTILE_SITE_KEY` and
+      `TURNSTILE_SECRET_KEY` to Vercel for **Production and Preview**, and to
+      `.env.local`. Then tell Claude, which merges `turnstile` into `main`;
+      then push
+- [ ] After the deploy: send one real contact message and one real comment
+      through the live widget, and check both arrive
 
 ## 🟡 10. "What's Changed" — banner shipped, page still open
 
@@ -288,6 +299,9 @@ would not notice it while using the site, it does not go in the banner.
 - [ ] `app/changes/page.tsx` — a full page, linked from `components/Nav.tsx`.
       The banner only shows the most recent handful; there is still nowhere to
       read the whole reader-facing history
+- [ ] **Since 2026-10-26 `data/whats-new.ts` holds at most five entries**
+      (Seb's call; a test enforces it), so it can no longer be the full
+      history this page shows. The page needs its own source
 - [ ] Decide the source for that page: keep hand-editing `data/whats-new.ts`, or
       move entries into a `changes` table so non-code updates (a new word of the
       month, newly published papers) can appear without a deploy. The hardcoded
@@ -316,49 +330,43 @@ It lives in one place, `lib/site-contact.ts`, so the two pages cannot drift.
       rate would quietly degrade delivery of the admin alerts too. Wire Resend's
       bounce/complaint webhooks before that happens
 
-## 🟠 14. Sign-in codes — PLANNED, NOT STARTED
+## 🟡 14. Sign-in codes — built, waiting on a browser test
 
-Nothing below is built. This section used to carry a second, unrelated job —
-one proposed word per account. That is now **§20**, with a different design; the
-reversal is dated in `DECISIONS.md`. What is left here is only sign-in.
+The design question is answered; nothing is built yet. This section used to
+carry a second, unrelated job, one proposed word per account. That is now
+**§20**, with a different design, and the reversal is dated in `DECISIONS.md`.
+What is left here is only sign-in.
 
-`/account` sends a magic link only, and the link works *only in the browser that
-requested it* — `DECISIONS.md` records why. Request a link on a laptop, open the
-mail on a phone, and there is no way in and no recovery path. A 6-digit code
-typed back into the original tab closes that. Sign-in and account creation are
-already one action (`shouldCreateUser` defaults to `true`), so there is no
-second flow to build — only copy that says so.
+`/account` sends a magic link only, and the link works *only in the browser
+that requested it*; `DECISIONS.md` records why. Request a link on a laptop,
+open the mail on a phone, and there is no way in and no recovery path.
 
-- [ ] **Answer this before writing any code.** Add `{{ .Token }}` to the Magic
-      Link and Confirm signup templates *alongside* `{{ .ConfirmationURL }}`
-      (both may coexist; the link must stay — replacing it with
-      `{{ .TokenHash }}` broke sign-in entirely once already). Then call
-      `verifyOtp({ email, token, type: "email" })` and see whether a session
-      comes back. If it does, the code and PKCE coexist and the request side
-      needs no change at all. If it does not, GoTrue is refusing the plain token
-      for a PKCE-issued OTP the same way it refuses `token_hash`, and the
-      fallback is to move the OTP *request* server-side to a client built with
-      `createClient` + `auth: { flowType: "implicit" }` (plain `supabase-js`
-      does not force PKCE). That fallback returns tokens in the URL *fragment*,
-      which a route handler cannot read, so `/auth/confirm` would also need a
-      small client component letting `detectSessionInUrl` consume the hash — but
-      it would make links work cross-device, closing that limitation outright.
-      **Record the answer in `DECISIONS.md` either way.** This is the second
-      time the PKCE hard-coding has shaped a design; it should not be
-      rediscovered a third
-- [ ] `app/api/auth/verify-code/route.ts` — POST `{ email, token }`, token
-      matching `/^\d{6}$/`, rate-limited `verify-code:<ip>` at 10 per 15 min
-      like `app/api/admin/login/route.ts`. Note in a comment that Supabase's own
-      attempt cap is the real boundary against a 6-digit brute force, since
-      `rateLimit` fails open
-- [ ] `app/account/AccountLogin.tsx` — the `status === "sent"` panel is
-      currently a dead end. Give it a code input (`inputMode="numeric"`,
-      `autoComplete="one-time-code"`, `maxLength={6}`), a Verify button, and a
-      "use a different email" way back. Keep the honeypot and the `?error=link`
-      branch. Leave `app/auth/confirm/route.ts` alone unless the fallback lands
-- [ ] Tests: `auth-verify-code`
-- [ ] `README.md` — a line that the auth templates must carry **both**
-      `{{ .ConfirmationURL }}` and `{{ .Token }}`
+**Answered 2026-10-26: the emailed code works cross-device.** A code from a
+PKCE-requested email signed in from a client that never requested it.
+`DECISIONS.md` has the experiment. So the request side doesn't change, no
+server-side fallback is needed, and the code also closes the cross-device gap.
+That makes it a bigger fix than the original plan, which only expected the
+code to work in the requesting tab. Sign-in and account creation are already
+one action (`shouldCreateUser` defaults to `true`), so there is no second flow
+to build, only copy that says so.
+
+**Codes are 8 digits in this project, not 6** (Authentication → Email OTP
+length). The plan said 6 throughout, and would have rejected every real code.
+
+**Already live:** both email templates (Magic Link and Confirm signup) carry
+`{{ .Token }}` under `{{ .ConfirmationURL }}`, as a plain "Or enter this code
+on the sign-in page" line. Until this section ships, that line promises
+something `/account` can't do yet. Ship soon, or take the line out.
+
+**Built 2026-10-26, not committed:** the route, the form, the shared
+`lib/sign-in-code.ts`, tests and the README note. The one thing left is a real
+round trip in a browser. The first attempt was blocked by §23's email cap
+before any email went out.
+
+- [ ] **Browser test:** request on `/account`, type the 8-digit code without
+      clicking the link, and land on the dashboard. Try a wrong code once
+- [ ] Reword the template line in the same voice as the rest of the email,
+      once the code works on `/account`
 
 ## 🟠 17. Nothing tells you the profile id an attachment needs
 
@@ -653,6 +661,32 @@ workflow applies both (§1a).
 - [ ] **The one thing unit tests cannot prove:** concurrent creates at the cap
       must land exactly one row — the advisory lock, against a real database
 - [ ] On ship: `CHANGELOG.md`, `data/whats-new.ts`, `README.md` tables list
+
+## 🟠 23. Sign-in emails hit a site-wide hourly cap
+
+Found 2026-10-26 while testing §14. After a handful of test emails, Supabase
+refused to send any more with `over_email_send_rate_limit`. That cap is
+**project-wide**: while it holds, no visitor anywhere can get a sign-in email,
+so nobody can sign in or create an account. Before §14 the form told them
+"wait a minute", which was wrong. It now says the true thing, but saying it
+doesn't fix it.
+
+How tight the cap is depends on who sends auth email. Supabase's built-in
+mailer allows only a few an hour, can't be raised, and Supabase says not to use
+it in production. With custom SMTP the limit is a number under Authentication
+→ Rate Limits.
+
+**Answered 2026-10-26: it's the built-in mailer.** Sign-in emails come from
+`noreply@mail.app.supabase.io`, so the cap is Supabase's fixed few an hour,
+for the whole site, and it can't be raised without custom SMTP.
+
+- [ ] Authentication → Emails → SMTP Settings, sending
+      through Resend, which the site already uses for notifications. Use the
+      verified domain and Resend's SMTP host, port and API key. Then raise
+      the emails-per-hour limit to something a busy evening can't reach
+- [ ] Either way, record the setting and the reason in `DECISIONS.md`. It is
+      dashboard state, which no file in the repo shows. §20 and §21 both bring
+      people to their accounts, so this has to land before either ships
 
 ## Housekeeping
 
