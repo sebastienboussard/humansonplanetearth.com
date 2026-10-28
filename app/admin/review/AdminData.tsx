@@ -47,6 +47,7 @@ export type AdminRoomRequest = AdminRoom & {
   creator_name: string | null;
   year: number | null;
   intro: string | null;
+  links: { url: string }[] | null;
   room_sections: { label: string; position: number }[] | null;
 };
 

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { describeWork, getRoom, pageCounts } from "@/lib/room-data";
+import { linkLabel } from "@/lib/rooms";
 import RoomSections from "../RoomSections";
 
 export const revalidate = 60;
@@ -25,6 +26,30 @@ export default async function RoomPage({ params }: { params: Promise<{ slug: str
       <p className="text-sm mb-6" style={{ ...sans, color: "var(--muted)" }}>{describeWork(room)}</p>
       {room.intro && (
         <p className="leading-relaxed mb-10" style={{ color: "var(--ink)", whiteSpace: "pre-wrap" }}>{room.intro}</p>
+      )}
+      {/* Added by whoever opened the room; only http(s), checked in the route
+          and the database (migration 0008). nofollow ugc: they're not ours. */}
+      {room.links && room.links.length > 0 && (
+        <div className="mb-10">
+          <p className="text-xs uppercase tracking-widest mb-2" style={{ ...sans, color: "var(--muted)" }}>
+            Where to find it
+          </p>
+          <ul className="flex flex-wrap gap-x-5 gap-y-1 text-sm" style={sans}>
+            {room.links.map((link) => (
+              <li key={link.url}>
+                <a
+                  href={link.url}
+                  target="_blank"
+                  rel="nofollow ugc noopener noreferrer"
+                  className="underline underline-offset-4"
+                  style={{ color: "var(--terracotta)" }}
+                >
+                  {linkLabel(link.url)} ↗
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
 
       <p className="text-xs mb-4" style={{ ...sans, color: "var(--muted)" }}>

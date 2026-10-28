@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getCurrentWord, getMonthName, formatDeadline, getDaysRemaining } from "@/lib/words";
 import { supabase } from "@/lib/supabase";
 import WhatsNewBanner from "@/components/WhatsNewBanner";
+import { describeWork, listRooms } from "@/lib/room-data";
 
 export const revalidate = 60;
 
@@ -21,7 +22,7 @@ export default async function HomePage() {
 
   // RLS only exposes approved papers to the anon client; the status filter
   // keeps the intent explicit anyway.
-  const [wordPaperRes, longFormRes] = await Promise.all([
+  const [wordPaperRes, longFormRes, rooms] = await Promise.all([
     current
       ? supabase
           .from("papers")
@@ -41,6 +42,8 @@ export default async function HomePage() {
       .order("submitted_at", { ascending: false })
       .limit(1)
       .maybeSingle(),
+    // listRooms() returns [] on any error, so the section never fails the page.
+    listRooms(3),
   ]);
 
   // Don't fail the page over the teaser lines — log and render without them
@@ -145,6 +148,51 @@ export default async function HomePage() {
         >
           Learn more →
         </Link>
+      </section>
+
+      <hr style={{ borderColor: "var(--border)" }} className="mb-16" />
+
+      {/* Reading Rooms teaser (TODO §21) */}
+      <section className="text-center mb-20">
+        <h2 className="text-2xl font-normal mb-4" style={{ color: "var(--forest)" }}>
+          Reading Rooms
+        </h2>
+        <p
+          className="text-base leading-relaxed mb-6 max-w-xl mx-auto"
+          style={{ color: "var(--ink)" }}
+        >
+          Read a book or watch a film with everyone else, at your own pace. Each room is broken into
+          parts that stay closed until you open them, so nothing ahead of you is spoiled.
+        </p>
+        {rooms.length > 0 && (
+          <ul className="mb-6 space-y-2 max-w-md mx-auto">
+            {rooms.map((room) => (
+              <li key={room.id}>
+                <Link
+                  href={`/rooms/${room.slug}`}
+                  className="block px-5 py-3 rounded-sm transition-opacity hover:opacity-80"
+                  style={{ backgroundColor: "var(--card)", border: "1px solid var(--border)" }}
+                >
+                  <span className="block" style={{ color: "var(--forest)" }}>{room.title}</span>
+                  <span
+                    className="block text-xs mt-0.5"
+                    style={{ fontFamily: "system-ui, sans-serif", color: "var(--muted)" }}
+                  >
+                    {describeWork(room)}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+        <div className="flex justify-center gap-6 text-sm" style={{ fontFamily: "system-ui, sans-serif" }}>
+          <Link href="/rooms" className="underline underline-offset-4" style={{ color: "var(--terracotta)" }}>
+            Browse rooms →
+          </Link>
+          <Link href="/rooms/new" className="underline underline-offset-4" style={{ color: "var(--terracotta)" }}>
+            {rooms.length > 0 ? "Open a room →" : "Open the first room →"}
+          </Link>
+        </div>
       </section>
 
       <hr style={{ borderColor: "var(--border)" }} className="mb-16" />

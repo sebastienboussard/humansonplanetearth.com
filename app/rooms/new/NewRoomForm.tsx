@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { LIMITS, MEDIUMS, WHOLE_WORK_LABEL, buildSections, sectionsProblem } from "@/lib/rooms";
+import { LIMITS, MEDIUMS, WHOLE_WORK_LABEL, buildSections, parseLinks, sectionsProblem } from "@/lib/rooms";
 
 // The room's breakdown is typed one part per line. Any shape is the same data,
 // whether chapters, acts or timestamps, and "The whole work" is always added
@@ -33,12 +33,15 @@ export default function NewRoomForm({ mode = "open" }: { mode?: "open" | "reques
   const [year, setYear] = useState("");
   const [intro, setIntro] = useState("");
   const [lines, setLines] = useState("");
+  const [linkLines, setLinkLines] = useState("");
   const [chapterCount, setChapterCount] = useState("");
   const [honeypot, setHoneypot] = useState("");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
 
   const sections = buildSections(lines.split("\n"));
+  const parsedLinks = parseLinks(linkLines);
+  const linkProblem = "error" in parsedLinks ? parsedLinks.error : null;
   const problem = sectionsProblem(sections);
 
   function fillChapters() {
@@ -48,7 +51,7 @@ export default function NewRoomForm({ mode = "open" }: { mode?: "open" | "reques
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (honeypot || !title.trim() || problem || sending) return;
+    if (honeypot || !title.trim() || problem || linkProblem || sending) return;
     setSending(true);
     setError("");
     try {
@@ -62,6 +65,7 @@ export default function NewRoomForm({ mode = "open" }: { mode?: "open" | "reques
           year: year.trim() || null,
           intro,
           sections: lines.split("\n"),
+          links: linkLines.split("\n"),
           ...(requesting ? { reply_email: replyEmail } : {}),
           _trap: honeypot,
         }),
@@ -139,6 +143,14 @@ export default function NewRoomForm({ mode = "open" }: { mode?: "open" | "reques
         </p>
       </div>
 
+      <div>
+        <label htmlFor="room-links" className={label} style={{ ...sans, color: "var(--muted)" }}>
+          Where to find it (optional): links to read, borrow, buy or watch it, one per line, up to {LIMITS.links}.
+        </label>
+        <textarea id="room-links" value={linkLines} onChange={(e) => setLinkLines(e.target.value)} rows={3} placeholder={"https://www.gutenberg.org/ebooks/145\nhttps://openlibrary.org/works/OL1097698W"} className="w-full px-4 py-3 rounded-sm text-sm" style={field} />
+        {linkProblem && <p className="text-xs mt-1" style={{ ...sans, color: "var(--terracotta)" }}>{linkProblem}</p>}
+      </div>
+
       {requesting && (
         <div>
           <label htmlFor="room-reply-email" className={label} style={{ ...sans, color: "var(--muted)" }}>
@@ -157,7 +169,7 @@ export default function NewRoomForm({ mode = "open" }: { mode?: "open" | "reques
 
       <button
         type="submit"
-        disabled={!title.trim() || !!problem || sending}
+        disabled={!title.trim() || !!problem || !!linkProblem || sending}
         className="w-full py-3 text-sm text-white transition-opacity hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
         style={{ ...sans, backgroundColor: "var(--terracotta)", letterSpacing: "0.05em" }}
       >

@@ -18,6 +18,8 @@ export const LIMITS = {
   quote: 300,
   locator: 40,
   margin: 2000,
+  links: 5,
+  linkUrl: 500,
 } as const;
 
 /** The label of the closing section every room gets. */
@@ -91,6 +93,47 @@ export function isMedium(value: unknown): value is Medium {
   return typeof value === "string" && (MEDIUMS as readonly string[]).includes(value);
 }
 
+export type RoomLink = { url: string };
+
+/**
+ * "Where to find it" links (migration 0008), one per line or as an array.
+ * Blanks are dropped and repeats collapsed. Only http(s) URLs, so nothing like
+ * javascript: can reach the room page; the database checks the same. A bare
+ * "openlibrary.org/..." gets https:// in front, since that is what people paste.
+ */
+export function parseLinks(input: unknown): { links: RoomLink[] } | { error: string } {
+  const lines = (Array.isArray(input) ? input : typeof input === "string" ? input.split("\n") : [])
+    .map((l) => (typeof l === "string" ? l.trim() : ""))
+    .filter((l) => l.length > 0);
+  const links: RoomLink[] = [];
+  for (const line of lines) {
+    const candidate = /^[a-z][a-z0-9+.-]*:/i.test(line) ? line : `https://${line}`;
+    let url: URL;
+    try {
+      url = new URL(candidate);
+    } catch {
+      return { error: `"${line.slice(0, 60)}" doesn't look like a web address.` };
+    }
+    if ((url.protocol !== "https:" && url.protocol !== "http:") || !url.hostname.includes(".")) {
+      return { error: `"${line.slice(0, 60)}" doesn't look like a web address.` };
+    }
+    const href = url.toString();
+    if (href.length > LIMITS.linkUrl) return { error: `A link is at most ${LIMITS.linkUrl} characters.` };
+    if (!links.some((l) => l.url === href)) links.push({ url: href });
+  }
+  if (links.length > LIMITS.links) return { error: `A room can list at most ${LIMITS.links} links.` };
+  return { links };
+}
+
+/** What a link shows as: its site, without "www.". */
+export function linkLabel(url: string): string {
+  try {
+    return new URL(url).hostname.replace(/^www\./, "");
+  } catch {
+    return url;
+  }
+}
+
 export type RoomInput = {
   title: string;
   creator: string | null;
@@ -98,6 +141,7 @@ export type RoomInput = {
   year: number | null;
   intro: string | null;
   sections: SectionInput[];
+  links: RoomLink[];
 };
 
 /**
@@ -124,5 +168,7 @@ export function parseRoom(payload: Record<string, unknown>): { room: RoomInput }
   const sections = buildSections(payload.sections);
   const problem = sectionsProblem(sections);
   if (problem) return { error: problem };
-  return { room: { title, creator, medium: payload.medium, year, intro, sections } };
+  const links = parseLinks(payload.links);
+  if ("error" in links) return links;
+  return { room: { title, creator, medium: payload.medium, year, intro, sections, links: links.links } };
 }

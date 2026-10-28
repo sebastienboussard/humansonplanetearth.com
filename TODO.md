@@ -536,7 +536,9 @@ and still goes live at once. A request is a hidden room (`status =
 'requested'`) that goes live only when the admin opens it, so the 22 Oct "no
 approval" row above still holds for accounts. Migration `0006_room_requests.sql`,
 proved in PGlite the same day. Also 2026-10-27: a page's title is optional
-(migration 0007).
+(migration 0007); rooms get "Where to find it" links, up to five, added by
+whoever opens or asks for the room (migration 0008, proved in PGlite); and
+the home page gets a Reading Rooms section with the three newest rooms.
 
 **21a, built 2026-10-26 on the local branch `rooms`. Live 2026-10-27,**
 pushed with room requests as `ae2e6f1`; that deploy applied 0005 and 0006.
@@ -582,6 +584,10 @@ Its build:
   - check every section is closed on load, with no page text in view-source
   - remove the room and check it 404s
   - try a 4th room within 24h and check it is refused
+  - add links when opening a room, and check they show under "Where to
+    find it" and open in a new tab; check a request's links show in full in
+    admin
+  - check the home page lists the three newest rooms
   - signed out, ask for a room with an email; check it is hidden at its
     address, shows under "Rooms asked for" in admin, and that opening it
     makes it live and sends one email. Ask for another and decline it
@@ -602,6 +608,11 @@ scope and is unchanged:
       table of contents, chapters are prefilled. Manual entry still works
       when the lookup fails
 - [ ] The room page credits "Book data from Open Library"
+- [ ] **An automatic Open Library link under "Where to find it"** (Seb,
+      2026-10-27), built from `ol_work_key` at display time rather than
+      stored in `rooms.links`, so it can't go stale or count against the
+      five. Shown first. Open Library's page offers borrowing or reading free
+      where the edition allows it
 
 ## 🟠 23. Sign-in emails hit a site-wide hourly cap
 

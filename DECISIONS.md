@@ -54,6 +54,34 @@ in a working file, so they survive a machine.
 
 Newest first. A choice that will be questioned again, written down once.
 
+### 2026-10-27 — Reading Rooms: "Where to find it" links
+
+**Seb asked for both:** links the room's opener adds, and an automatic Open
+Library link for books. The first is built. The second needs `ol_work_key`,
+which only the §21b lookup fills, so it is specified in §21b. It will be
+derived when the page renders, not stored, so it can't go stale and doesn't
+use up one of the five.
+
+**A JSON column on `rooms`, not a `room_links` table.** Links are a short
+list read only with the room, never queried on their own. A column keeps
+them inside the one all-or-nothing call that writes the room. A separate
+insert after the call could leave a room without its links.
+
+**Checked twice, because they are rendered as `href`s.** `parseLinks()`
+accepts only `http(s)` with a dotted host, and adds `https://` to a bare
+address, since that is what people paste. The database repeats the floor
+with `room_links_valid()`: an array of at most five `{url}` objects, each
+`^https?://` with no whitespace and at most 500 characters. Rooms opened from
+an account go live with no review, so this is the only thing between a
+pasted `javascript:` and a reader's click.
+
+**Both functions changed signature without a window of breakage.** The old
+signatures are dropped and recreated with `p_links jsonb default '[]'`.
+Between the migration and the deploy, the old code still calls them with
+named arguments and no `p_links`, which the default satisfies. PGlite proved
+that call, that no overload is left behind, and that the revokes cover the
+new signatures (`42501` for `anon` and `authenticated`).
+
 ### 2026-10-27 — Reading Rooms: a page's title is optional
 
 **Seb's call.** The writing is what matters. A required title is one more

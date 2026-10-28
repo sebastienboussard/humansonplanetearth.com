@@ -5,6 +5,8 @@ import {
   cleanText,
   cleanYear,
   isMedium,
+  linkLabel,
+  parseLinks,
   parseRoom,
   sectionsProblem,
   slugWithSuffix,
@@ -121,8 +123,13 @@ describe("parseRoom", () => {
           { label: "One", kind: "part" },
           { label: WHOLE_WORK_LABEL, kind: "whole" },
         ],
+        links: [],
       },
     });
+  });
+
+  it("refuses a room with a bad link", () => {
+    expect(parseRoom({ ...base, links: ["javascript:alert(1)"] })).toEqual({ error: expect.stringMatching(/web address/) });
   });
 
   it.each([
@@ -133,5 +140,41 @@ describe("parseRoom", () => {
   ])("explains what is wrong", (input, message) => {
     const result = parseRoom(input);
     expect("error" in result && result.error).toMatch(message);
+  });
+});
+
+describe("parseLinks", () => {
+  it("takes lines, drops blanks and repeats, and adds https:// to a bare address", () => {
+    expect(parseLinks("https://www.gutenberg.org/ebooks/145\n\n  openlibrary.org/works/OL1W \nhttps://www.gutenberg.org/ebooks/145")).toEqual({
+      links: [{ url: "https://www.gutenberg.org/ebooks/145" }, { url: "https://openlibrary.org/works/OL1W" }],
+    });
+  });
+
+  it("is empty for nothing", () => {
+    expect(parseLinks(undefined)).toEqual({ links: [] });
+    expect(parseLinks(["", "  "])).toEqual({ links: [] });
+  });
+
+  it.each([
+    ["javascript:", "javascript:alert(1)"],
+    ["data:", "data:text/html,<script>alert(1)</script>"],
+    ["ftp:", "ftp://example.com/file"],
+    ["no dot in the host", "localhost/thing"],
+    ["not a URL", "a book shop near me"],
+  ])("refuses %s", (_label, line) => {
+    expect(parseLinks([line])).toEqual({ error: expect.stringMatching(/web address/) });
+  });
+
+  it("refuses a sixth link and an overlong one", () => {
+    const six = Array.from({ length: 6 }, (_, i) => `https://example.com/${i}`);
+    expect(parseLinks(six)).toEqual({ error: expect.stringMatching(/at most 5/) });
+    expect(parseLinks([`https://example.com/${"x".repeat(500)}`])).toEqual({ error: expect.stringMatching(/500/) });
+  });
+});
+
+describe("linkLabel", () => {
+  it("shows the site without www.", () => {
+    expect(linkLabel("https://www.gutenberg.org/ebooks/145")).toBe("gutenberg.org");
+    expect(linkLabel("https://openlibrary.org/works/OL1W")).toBe("openlibrary.org");
   });
 });

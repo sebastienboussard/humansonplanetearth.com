@@ -35,10 +35,18 @@ export default function RoomsPanel() {
                   {request.intro && (
                     <p className="text-sm leading-relaxed mb-2" style={{ color: "var(--ink)", whiteSpace: "pre-wrap" }}>{request.intro}</p>
                   )}
-                  <p className="text-xs mb-4" style={{ ...sans, color: "var(--muted)" }}>
+                  <p className="text-xs mb-2" style={{ ...sans, color: "var(--muted)" }}>
                     {parts.map((p) => p.label).join(" · ")}
                   </p>
-                  <div className="flex gap-4 text-sm" style={sans}>
+                  {/* Shown in full, not as a site name, so the admin sees exactly where each one goes. */}
+                  {request.links && request.links.length > 0 && (
+                    <ul className="text-xs mb-2 space-y-0.5" style={{ ...sans, color: "var(--ink)", wordBreak: "break-all" }}>
+                      {request.links.map((link) => (
+                        <li key={link.url}>{link.url}</li>
+                      ))}
+                    </ul>
+                  )}
+                  <div className="flex gap-4 text-sm mt-4" style={sans}>
                     <button onClick={() => void decideRoomRequest(request.id, "open")} style={{ color: "var(--forest)" }} className="underline">
                       Open it
                     </button>

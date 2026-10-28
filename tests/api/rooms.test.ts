@@ -64,6 +64,7 @@ describe("POST /api/rooms", () => {
     ["a year that isn't one", { ...room, year: "soon" }],
     ["a 121-character section", { ...room, sections: ["x".repeat(121)] }],
     ["an overlong introduction", { ...room, intro: "x".repeat(2001) }],
+    ["a data: link", { ...room, links: ["data:text/html,hi"] }],
   ])("refuses %s before calling the database", async (_label, body) => {
     profileHolder.current = profile;
     holder.current = createMockSupabase({ rpcs: { rate_limit_hit: allow } });
@@ -80,7 +81,9 @@ describe("POST /api/rooms", () => {
     profileHolder.current = profile;
     holder.current = createMockSupabase({ rpcs: { rate_limit_hit: allow, create_room: { data: "room-1" } } });
 
-    const res = await createRoom(jsonRequest(BASE, { ...room, creator: " George Eliot ", year: "1871" }));
+    const res = await createRoom(
+      jsonRequest(BASE, { ...room, creator: " George Eliot ", year: "1871", links: ["gutenberg.org/ebooks/145", ""] })
+    );
     expect(res.status).toBe(201);
     const body = await res.json();
     expect(body).toEqual({ slug: "middlemarch" });
@@ -94,6 +97,7 @@ describe("POST /api/rooms", () => {
       p_creator_name: "George Eliot",
       p_medium: "book",
       p_year: 1871,
+      p_links: [{ url: "https://gutenberg.org/ebooks/145" }],
       p_sections: [
         { label: "Book One", kind: "part" },
         { label: "Book Two", kind: "part" },

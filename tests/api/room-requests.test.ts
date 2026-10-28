@@ -51,6 +51,7 @@ describe("POST /api/rooms/requests", () => {
       ],
     });
     expect(call.args).not.toHaveProperty("p_profile_id");
+    expect(call.args).toMatchObject({ p_links: [] });
     expect(holder.current.rpcCalls.map((c) => c.fn)).not.toContain("create_room");
     expect(notifyAdminRoomRequest).toHaveBeenCalledWith({ title: "Middlemarch" });
   });
@@ -73,6 +74,7 @@ describe("POST /api/rooms/requests", () => {
     ["no title", { ...room, title: " " }],
     ["an unknown medium", { ...room, medium: "podcast" }],
     ["a malformed email", { ...room, reply_email: "not-an-email" }],
+    ["a javascript: link", { ...room, links: ["javascript:alert(1)"] }],
   ])("refuses %s before calling the database", async (_label, body) => {
     holder.current = createMockSupabase({ rpcs: { rate_limit_hit: allow } });
     expect((await POST(jsonRequest(URL, body))).status).toBe(400);

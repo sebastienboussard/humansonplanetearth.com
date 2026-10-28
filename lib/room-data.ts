@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase";
+import type { RoomLink } from "@/lib/rooms";
 
 // Public reads for the Reading Room pages (TODO §21). Every query goes through
 // the public client, so RLS in migration 0005 decides what is visible: live
@@ -13,6 +14,7 @@ export type RoomRow = {
   medium: string;
   year: number | null;
   intro: string | null;
+  links: RoomLink[] | null;
   created_at: string;
 };
 
@@ -27,14 +29,15 @@ export type RoomPageRow = {
   submitted_at: string;
 };
 
-const ROOM_FIELDS = "id, slug, title, creator_name, medium, year, intro, created_at";
+const ROOM_FIELDS = "id, slug, title, creator_name, medium, year, intro, links, created_at";
 
-export async function listRooms(): Promise<RoomRow[]> {
+/** Newest first. The home page asks for a few; the rooms page for all. */
+export async function listRooms(limit = 200): Promise<RoomRow[]> {
   const { data } = await supabase
     .from("rooms")
     .select(ROOM_FIELDS)
     .order("created_at", { ascending: false })
-    .limit(200);
+    .limit(limit);
   return (data ?? []) as RoomRow[];
 }
 

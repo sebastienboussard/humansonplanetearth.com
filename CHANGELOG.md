@@ -47,6 +47,19 @@ All notable changes to this project are documented here.
   characters; an empty one is stored as none. Migration
   `0007_room_page_title_optional.sql`, proved in PGlite: reruns cleanly,
   leaves existing pages untouched, and still refuses a blank title or body.
+- **"Where to find it" links on a Reading Room.** Whoever opens or asks for
+  a room can add up to five links to where the work can be read, borrowed,
+  bought or watched. They show under the introduction as the site's name,
+  open in a new tab, and are marked `nofollow ugc`. The admin sees a
+  request's links in full before opening it. Only `http(s)` addresses are
+  accepted, checked in the route and again by the database, so nothing like
+  `javascript:` can be planted. Migration `0008_room_links.sql` adds the
+  column and a `p_links` argument to `create_room()` and `request_room()`,
+  with a default so the old code keeps working until the deploy lands.
+  Proved in PGlite.
+- **Reading Rooms on the home page.** A section between "What is this?" and
+  Long-Form describes the rooms, lists the three newest, and links to
+  browse them or open one.
 - **Propose a word for a future month.** Signed-in accounts can suggest
   words, with up to three waiting at a time, and withdraw a waiting one. The
   queue is fair rather than first-come-first-served: each word's round is its

@@ -56,6 +56,7 @@ export async function POST(req: NextRequest) {
       p_year: room.year,
       p_intro: room.intro,
       p_sections: room.sections,
+      p_links: room.links,
       p_reply_email: email,
     });
     if (!error) {
