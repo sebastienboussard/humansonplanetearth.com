@@ -68,9 +68,11 @@ All notable changes to this project are documented here.
   caches for a day, and sends a User-Agent naming the site. Migration
   `0009_room_open_library.sql` lets the two room functions save the work and
   cover. Proved in PGlite.
-- **Reading Rooms on the home page.** A section between "What is this?" and
-  Long-Form describes the rooms, lists the three newest, and links to
-  browse them or open one.
+- **Reading Rooms on the home page.** A section under the word of the month
+  describes the rooms, lists the three newest, and links to browse them or
+  open one.
+- **"What is this?" moved to the bottom of the home page,** after Long-Form,
+  so the word, Reading Rooms and Long-Form come first.
 - **Propose a word for a future month.** Signed-in accounts can suggest
   words, with up to three waiting at a time, and withdraw a waiting one. The
   queue is fair rather than first-come-first-served: each word's round is its

@@ -128,30 +128,6 @@ export default async function HomePage() {
 
       <hr style={{ borderColor: "var(--border)" }} className="mb-16" />
 
-      {/* About blurb */}
-      <section className="max-w-2xl mx-auto text-center mb-20">
-        <h2 className="text-2xl font-normal mb-6" style={{ color: "var(--forest)" }}>
-          What is this?
-        </h2>
-        <p className="text-base leading-relaxed mb-4" style={{ color: "var(--ink)" }}>
-          Each month, a word is chosen. Anyone can respond in up to one page — written, drawn,
-          or anything else that fits. Save it as a PDF and submit it here.
-        </p>
-        <p className="text-base leading-relaxed mb-6" style={{ color: "var(--ink)" }}>
-          All papers are published anonymously, credited only as{" "}
-          <em>Human On Planet Earth</em>.
-        </p>
-        <Link
-          href="/about"
-          className="text-sm underline underline-offset-4"
-          style={{ color: "var(--terracotta)", fontFamily: "system-ui, sans-serif" }}
-        >
-          Learn more →
-        </Link>
-      </section>
-
-      <hr style={{ borderColor: "var(--border)" }} className="mb-16" />
-
       {/* Reading Rooms teaser (TODO §21) */}
       <section className="text-center mb-20">
         <h2 className="text-2xl font-normal mb-4" style={{ color: "var(--forest)" }}>
@@ -198,7 +174,7 @@ export default async function HomePage() {
       <hr style={{ borderColor: "var(--border)" }} className="mb-16" />
 
       {/* Long-form teaser */}
-      <section className="text-center">
+      <section className="text-center mb-20">
         <h2 className="text-2xl font-normal mb-4" style={{ color: "var(--forest)" }}>
           Long-Form
         </h2>
@@ -230,6 +206,30 @@ export default async function HomePage() {
           style={{ color: "var(--terracotta)", fontFamily: "system-ui, sans-serif" }}
         >
           Browse long-form papers →
+        </Link>
+      </section>
+
+      <hr style={{ borderColor: "var(--border)" }} className="mb-16" />
+
+      {/* About blurb */}
+      <section className="max-w-2xl mx-auto text-center">
+        <h2 className="text-2xl font-normal mb-6" style={{ color: "var(--forest)" }}>
+          What is this?
+        </h2>
+        <p className="text-base leading-relaxed mb-4" style={{ color: "var(--ink)" }}>
+          Each month, a word is chosen. Anyone can respond in up to one page — written, drawn,
+          or anything else that fits. Save it as a PDF and submit it here.
+        </p>
+        <p className="text-base leading-relaxed mb-6" style={{ color: "var(--ink)" }}>
+          All papers are published anonymously, credited only as{" "}
+          <em>Human On Planet Earth</em>.
+        </p>
+        <Link
+          href="/about"
+          className="text-sm underline underline-offset-4"
+          style={{ color: "var(--terracotta)", fontFamily: "system-ui, sans-serif" }}
+        >
+          Learn more →
         </Link>
       </section>
 
