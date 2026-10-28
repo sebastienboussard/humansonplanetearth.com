@@ -474,7 +474,7 @@ author-free — see the tripwires in `DECISIONS.md`.
       third word must land exactly one row. PGlite has a single connection.
       This needs two real sessions against the real database
 
-## 🟡 21. Reading Rooms — 21a built on a branch, 21b open
+## 🟡 21. Reading Rooms — 21a live, 21b open
 
 Nothing below is built. "Reading Rooms" is a working name. Scope was decided
 with Seb on 2026-10-22.
@@ -537,8 +537,9 @@ and still goes live at once. A request is a hidden room (`status =
 approval" row above still holds for accounts. Migration `0006_room_requests.sql`,
 proved in PGlite the same day.
 
-**21a, built 2026-10-26 on the local branch `rooms`, from `main`, not yet
-pushed:**
+**21a, built 2026-10-26 on the local branch `rooms`. Live 2026-10-27,**
+pushed with room requests as `ae2e6f1`; that deploy applied 0005 and 0006.
+Its build:
 
 - **Migration 0005.** One `create_room()` function does the cap, the room,
   its sections and the private author row, all or nothing, and it is revoked
@@ -572,8 +573,6 @@ pushed:**
   shows the sign-in prompt on `/rooms/new`, and returns 404 for an unknown
   room. A signed-out create gets 401.
 
-- [ ] **Ship it:** merge `rooms` into `main`, and push. One deploy applies
-      0005 and 0006
 - [ ] **Live walk-through** after that deploy:
   - open a room with 3 parts and check "The whole work" is the 4th section
   - write a page with a quote and check it is pending; approve it in admin
