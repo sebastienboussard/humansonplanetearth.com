@@ -90,3 +90,39 @@ export function cleanYear(value: unknown): number | null {
 export function isMedium(value: unknown): value is Medium {
   return typeof value === "string" && (MEDIUMS as readonly string[]).includes(value);
 }
+
+export type RoomInput = {
+  title: string;
+  creator: string | null;
+  medium: Medium;
+  year: number | null;
+  intro: string | null;
+  sections: SectionInput[];
+};
+
+/**
+ * A room as the create form sends it, checked. Shared by opening a room and
+ * requesting one, so the two can't drift apart. The error is a message a
+ * person can act on.
+ */
+export function parseRoom(payload: Record<string, unknown>): { room: RoomInput } | { error: string } {
+  const title = cleanText(payload.title);
+  const creator = cleanText(payload.creator);
+  const intro = cleanText(payload.intro);
+  if (!title) return { error: "Give the work a title." };
+  if (title.length > LIMITS.title || (creator?.length ?? 0) > LIMITS.creator) {
+    return { error: "The title or creator is too long." };
+  }
+  if ((intro?.length ?? 0) > LIMITS.intro) {
+    return { error: `The introduction is at most ${LIMITS.intro} characters.` };
+  }
+  if (!isMedium(payload.medium)) return { error: "Choose what kind of work this is." };
+  const year = cleanYear(payload.year);
+  if (payload.year !== undefined && payload.year !== null && payload.year !== "" && year === null) {
+    return { error: "The year should be a whole number." };
+  }
+  const sections = buildSections(payload.sections);
+  const problem = sectionsProblem(sections);
+  if (problem) return { error: problem };
+  return { room: { title, creator, medium: payload.medium, year, intro, sections } };
+}

@@ -112,6 +112,18 @@ export function adminNewRoomPageEmail(page: { room: string; section: string }): 
   };
 }
 
+// A visitor without an account asking for a Reading Room (TODO §21). Carries
+// the work's title only, never the requester's email.
+export function adminRoomRequestEmail(request: { title: string }): EmailContent {
+  return {
+    subject: `Reading Room requested: ${request.title}`,
+    text: [
+      `Someone without an account has asked for a Reading Room on "${request.title}". It is hidden until you open it.`,
+      adminFooter("rooms"),
+    ].join("\n"),
+  };
+}
+
 export function adminNewMessageEmail(message: {
   body: string;
   replyEmail: string | null;
@@ -143,6 +155,36 @@ export function commentReplyEmail(
       "",
       `Read and reply: ${pageUrl}`,
       footer(profileId, "comment_replies"),
+    ].join("\n"),
+  };
+}
+
+// ---- Room requests ----
+// The one reply to a visitor who asked for a Reading Room and left an email
+// (TODO §21). They have no account and no profile, so there is no footer()
+// and nothing to unsubscribe from: this is the only email they will get, and
+// the address is deleted once it is sent.
+
+export function roomRequestOpenedEmail(room: { title: string; slug: string }): EmailContent {
+  return {
+    subject: `Your Reading Room is open: ${room.title}`,
+    text: [
+      `The Reading Room you asked for, "${room.title}", is now open:`,
+      `${siteUrl()}/rooms/${room.slug}`,
+      "",
+      "Anyone can write in it. This is the only email you will get about it.",
+    ].join("\n"),
+  };
+}
+
+export function roomRequestDeclinedEmail(room: { title: string }): EmailContent {
+  return {
+    subject: `Your Reading Room request: ${room.title}`,
+    text: [
+      `Thank you for asking for a Reading Room on "${room.title}". It won't be opened this time.`,
+      "",
+      `You can always open a room yourself with an account: ${siteUrl()}/rooms/new`,
+      "This is the only email you will get about it.",
     ].join("\n"),
   };
 }

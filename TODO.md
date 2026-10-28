@@ -24,7 +24,7 @@ sit are correct — those sections are done, and live in `CHANGELOG.md` and
 
 New work gets the next free number before `## Housekeeping`.
 
-Last swept 2026-08-30: the lint work committed and pushed (`8dd7024`), the 12
+Last swept 2026-10-27 (§21: room requests). Before that, 2026-08-30: the lint work committed and pushed (`8dd7024`), the 12
 remote branches deleted, and this file split — 812 lines down to open work only,
 with the reasoning moved to `DECISIONS.md` rather than deleted.
 
@@ -530,6 +530,13 @@ workflow applies it (§1a).
   designed: anyone can post and they show at once. The honeypot and the
   per-IP limit are the only filters, so spam is cleared after the fact.
 
+**One decision from 2026-10-27** (`DECISIONS.md` has it): **without an
+account, a visitor can ask for a room.** Opening one still needs an account
+and still goes live at once. A request is a hidden room (`status =
+'requested'`) that goes live only when the admin opens it, so the 22 Oct "no
+approval" row above still holds for accounts. Migration `0006_room_requests.sql`,
+proved in PGlite the same day.
+
 **21a, built 2026-10-26 on the local branch `rooms`, from `main`, not yet
 pushed:**
 
@@ -566,7 +573,7 @@ pushed:**
   room. A signed-out create gets 401.
 
 - [ ] **Ship it:** merge `rooms` into `main`, and push. One deploy applies
-      0005
+      0005 and 0006
 - [ ] **Live walk-through** after that deploy:
   - open a room with 3 parts and check "The whole work" is the 4th section
   - write a page with a quote and check it is pending; approve it in admin
@@ -575,6 +582,9 @@ pushed:**
   - check every section is closed on load, with no page text in view-source
   - remove the room and check it 404s
   - try a 4th room within 24h and check it is refused
+  - signed out, ask for a room with an email; check it is hidden at its
+    address, shows under "Rooms asked for" in admin, and that opening it
+    makes it live and sends one email. Ask for another and decline it
 - [ ] **Two real sessions** creating a 4th room at once must land exactly
       one. The advisory lock is for this, and PGlite has one connection
 

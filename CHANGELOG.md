@@ -34,6 +34,14 @@ All notable changes to this project are documented here.
   pages and removing rooms. Migration `0005_reading_rooms.sql` was proved in
   real Postgres, including as the public role. The Open Library lookup
   follows separately (`TODO.md` §21b).
+- **Ask for a Reading Room without an account.** Signed out, `/rooms/new`
+  still offers sign-in, and now also takes the same form as a request. The
+  room is kept hidden until the admin opens or declines it under "Rooms
+  asked for" in the Reading Rooms tab. The requester can leave an email to
+  hear back; it is kept privately, used for one reply, and then deleted. At
+  most 30 requests can wait at once, a cap inside `request_room()` that
+  fails closed, with a per-IP limit of three an hour on top that fails open.
+  Migration `0006_room_requests.sql`.
 - **Propose a word for a future month.** Signed-in accounts can suggest
   words, with up to three waiting at a time, and withdraw a waiting one. The
   queue is fair rather than first-come-first-served: each word's round is its

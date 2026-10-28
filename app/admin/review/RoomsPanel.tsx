@@ -3,18 +3,62 @@
 import Link from "next/link";
 import { useAdminData } from "./AdminData";
 
-// Reading Rooms moderation (TODO §21). Pages wait here until approved; rooms
-// go live at once and can be taken down here. Nothing shows who wrote what,
-// because the API doesn't send it.
+// Reading Rooms moderation (TODO §21). Pages wait here until approved. Rooms
+// opened from an account go live at once; rooms asked for without one wait
+// here until opened (migration 0006). Any live room can be taken down here.
+// Nothing shows who wrote or asked for what, because the API doesn't send it.
 
 const sans = { fontFamily: "system-ui, sans-serif" } as const;
 const card = { backgroundColor: "var(--card)", border: "1px solid var(--border)" } as const;
 
 export default function RoomsPanel() {
-  const { roomPages, liveRooms, loading, decideRoomPage, removeRoom } = useAdminData();
+  const { roomPages, roomRequests, liveRooms, loading, decideRoomPage, removeRoom, decideRoomRequest } = useAdminData();
 
   return (
     <div className="space-y-12">
+      <section>
+        <h2 className="text-lg font-normal mb-4" style={{ color: "var(--forest)" }}>Rooms asked for</h2>
+        {loading.rooms ? (
+          <p className="text-sm italic" style={{ ...sans, color: "var(--muted)" }}>Loading…</p>
+        ) : roomRequests.length === 0 ? (
+          <p className="text-sm" style={{ ...sans, color: "var(--muted)" }}>Nothing waiting.</p>
+        ) : (
+          <ul className="space-y-4">
+            {roomRequests.map((request) => {
+              const parts = [...(request.room_sections ?? [])].sort((a, b) => a.position - b.position);
+              return (
+                <li key={request.id} className="p-5 rounded-sm" style={card}>
+                  <p className="text-base" style={{ color: "var(--forest)" }}>{request.title}</p>
+                  <p className="text-xs mb-2" style={{ ...sans, color: "var(--muted)" }}>
+                    {[request.medium, request.creator_name, request.year].filter((v) => v !== null && v !== "").join(" · ")}
+                  </p>
+                  {request.intro && (
+                    <p className="text-sm leading-relaxed mb-2" style={{ color: "var(--ink)", whiteSpace: "pre-wrap" }}>{request.intro}</p>
+                  )}
+                  <p className="text-xs mb-4" style={{ ...sans, color: "var(--muted)" }}>
+                    {parts.map((p) => p.label).join(" · ")}
+                  </p>
+                  <div className="flex gap-4 text-sm" style={sans}>
+                    <button onClick={() => void decideRoomRequest(request.id, "open")} style={{ color: "var(--forest)" }} className="underline">
+                      Open it
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (confirm(`Decline "${request.title}"? It won't be opened.`)) void decideRoomRequest(request.id, "decline");
+                      }}
+                      style={{ color: "var(--terracotta)" }}
+                      className="underline"
+                    >
+                      Decline
+                    </button>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </section>
+
       <section>
         <h2 className="text-lg font-normal mb-4" style={{ color: "var(--forest)" }}>Pages waiting for review</h2>
         {loading.rooms ? (

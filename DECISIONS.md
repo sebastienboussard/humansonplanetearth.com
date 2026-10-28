@@ -54,6 +54,53 @@ in a working file, so they survive a machine.
 
 Newest first. A choice that will be questioned again, written down once.
 
+### 2026-10-27 — Reading Rooms: without an account, ask the admin
+
+**Opening a room still needs an account. Without one, a visitor can ask for
+it. Seb's call.** Until now a signed-out visitor at `/rooms/new` got only a
+sign-in link. Now they can fill in the same form, and it goes to the admin
+instead of going live. Rooms opened from an account still go live at once, so
+the 22 Oct "no approval for rooms" holds for accounts. Approval is the price
+of skipping the account.
+
+**A request is a room row, not a separate table.** It has status
+`'requested'`, and every public policy in 0005 reads `status = 'live'`. So
+the room, its sections and its address are invisible before anyone decides,
+and the pages route already refuses to write into it. Opening the request
+flips one column. A separate table would have needed a copy step that could
+fail halfway. The slug is reserved when the request is made, so opening it
+later can't collide. Declined rooms are kept, like removed ones.
+
+**The cap is on the queue, not the person.** There is no account to count, so
+`request_room()` refuses a 31st waiting request, under an advisory lock, and
+fails closed. A flood stops at a queue the admin can still read. The per-IP
+limit (3 an hour) sits on top and fails open, as everywhere else. Seb
+confirmed 30 once the trade-off was explained: during a flood, real
+requests are turned away until the queue is cleared.
+
+**The reply email is optional, private and short-lived.** It goes in
+`room_request_contacts`, RLS on and zero policies like the `*_authors`
+tables. It is never sent to the browser, even to the admin. It is used for
+one email when the request is decided, and then deleted whether or not that
+email was sent. That reply has no unsubscribe footer: there is no profile to
+sign one against, and it is the only email the person will get.
+
+**Proved in PGlite, as 0005 was.** 0005 ran, then 0006 ran three times
+cleanly. Supabase's public roles and default grants were set up first.
+Checked:
+
+- `rooms_status_check` is replaced, not doubled, and still refuses an
+  unknown status
+- a request writes the room, its sections, and the contact row only when an
+  email is given, with no author row
+- the 31st waiting request is refused with `room_request_cap` / `23514` and
+  leaves nothing behind; opening one frees a place
+- a taken slug fails with `rooms_slug_key`, which the route retries
+- `create_room()` still opens rooms live
+- as `anon`: only live rooms are visible, a requested room's sections and
+  every reply email are invisible, a request can't be flipped to live, and
+  calling `request_room` returns `42501`, as it does for `authenticated`
+
 ### 2026-10-26 — Reading Rooms: anyone writes, and room creation is one function
 
 **Pages and margins need no account. Seb's call.** The 22 Oct scope said rooms

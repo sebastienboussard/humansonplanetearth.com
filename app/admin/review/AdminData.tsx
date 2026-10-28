@@ -41,6 +41,15 @@ export type AdminRoomPage = {
 
 export type AdminRoom = { id: string; slug: string; title: string; medium: string; created_at: string };
 
+// A room asked for by a visitor without an account (migration 0006). Hidden
+// until opened. The requester's email never reaches the browser.
+export type AdminRoomRequest = AdminRoom & {
+  creator_name: string | null;
+  year: number | null;
+  intro: string | null;
+  room_sections: { label: string; position: number }[] | null;
+};
+
 export type NewWordInput = {
   word: string;
   month: string;
@@ -58,6 +67,7 @@ type AdminDataValue = {
   /** Waiting proposals in fair order, with rounds and no proposer identity. */
   queue: QueuedWord[];
   roomPages: AdminRoomPage[];
+  roomRequests: AdminRoomRequest[];
   liveRooms: AdminRoom[];
   unread: number;
   loading: Record<Dataset, boolean>;
@@ -74,6 +84,7 @@ type AdminDataValue = {
   declineQueued: (id: string) => Promise<void>;
   decideRoomPage: (id: string, status: "approved" | "rejected") => Promise<void>;
   removeRoom: (id: string) => Promise<void>;
+  decideRoomRequest: (id: string, decision: "open" | "decline") => Promise<void>;
 };
 
 const AdminDataContext = createContext<AdminDataValue | null>(null);
@@ -123,8 +134,12 @@ export function AdminDataProvider({ children }: { children: React.ReactNode }) {
   });
   const [words, setWords] = useState<AdminWord[]>([]);
   const [queue, setQueue] = useState<QueuedWord[]>([]);
-  // Pending pages and live rooms arrive together from one route.
-  const [rooms, setRooms] = useState<{ pages: AdminRoomPage[]; live: AdminRoom[] }>({ pages: [], live: [] });
+  // Pending pages, room requests and live rooms arrive together from one route.
+  const [rooms, setRooms] = useState<{ pages: AdminRoomPage[]; requests: AdminRoomRequest[]; live: AdminRoom[] }>({
+    pages: [],
+    requests: [],
+    live: [],
+  });
   const [loading, setLoading] = useState<Record<Dataset, boolean>>({
     messages: true,
     pending: true,
@@ -150,10 +165,12 @@ export function AdminDataProvider({ children }: { children: React.ReactNode }) {
         );
         setPapers((prev) => ({ ...prev, published: sortPublished(data.papers ?? []) }));
       } else if (key === "rooms") {
-        const data = await getJson<{ pendingPages?: AdminRoomPage[]; liveRooms?: AdminRoom[] }>(
-          "/api/admin/rooms"
-        );
-        setRooms({ pages: data.pendingPages ?? [], live: data.liveRooms ?? [] });
+        const data = await getJson<{
+          pendingPages?: AdminRoomPage[];
+          roomRequests?: AdminRoomRequest[];
+          liveRooms?: AdminRoom[];
+        }>("/api/admin/rooms");
+        setRooms({ pages: data.pendingPages ?? [], requests: data.roomRequests ?? [], live: data.liveRooms ?? [] });
       } else if (key === "queue") {
         const data = await getJson<{ queue?: QueuedWord[] }>("/api/admin/word-queue");
         setQueue(data.queue ?? []);
@@ -257,6 +274,19 @@ export function AdminDataProvider({ children }: { children: React.ReactNode }) {
     setRooms((prev) => ({ ...prev, live: prev.live.filter((r) => r.id !== id) }));
   }, []);
 
+  const decideRoomRequest = useCallback(async (id: string, decision: "open" | "decline") => {
+    const failure = await send("/api/admin/rooms", "PATCH", { roomId: id, decision });
+    if (failure) {
+      setError(failure);
+      return;
+    }
+    setRooms((prev) => {
+      const request = prev.requests.find((r) => r.id === id);
+      const opened = decision === "open" && request ? [{ ...request, created_at: new Date().toISOString() }] : [];
+      return { ...prev, requests: prev.requests.filter((r) => r.id !== id), live: [...opened, ...prev.live] };
+    });
+  }, []);
+
   const declineQueued = useCallback(async (id: string) => {
     const failure = await send("/api/admin/word-queue", "PATCH", { id, status: "declined" });
     if (failure) {
@@ -274,6 +304,7 @@ export function AdminDataProvider({ children }: { children: React.ReactNode }) {
       words,
       queue,
       roomPages: rooms.pages,
+      roomRequests: rooms.requests,
       liveRooms: rooms.live,
       unread: unreadCount(messages),
       loading,
@@ -289,6 +320,7 @@ export function AdminDataProvider({ children }: { children: React.ReactNode }) {
       declineQueued,
       decideRoomPage,
       removeRoom,
+      decideRoomRequest,
     }),
     [
       messages,
@@ -308,6 +340,7 @@ export function AdminDataProvider({ children }: { children: React.ReactNode }) {
       declineQueued,
       decideRoomPage,
       removeRoom,
+      decideRoomRequest,
     ]
   );
 

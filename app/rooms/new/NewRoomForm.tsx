@@ -1,12 +1,16 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { LIMITS, MEDIUMS, WHOLE_WORK_LABEL, buildSections, sectionsProblem } from "@/lib/rooms";
 
 // The room's breakdown is typed one part per line. Any shape is the same data,
 // whether chapters, acts or timestamps, and "The whole work" is always added
 // at the end (lib/rooms.ts buildSections).
+//
+// With an account the form opens the room. Without one it sends the same room
+// as a request, which waits for the admin (app/api/rooms/requests).
 
 const sans = { fontFamily: "system-ui, sans-serif" } as const;
 const field = {
@@ -18,8 +22,11 @@ const field = {
 } as const;
 const label = "block text-xs mb-1";
 
-export default function NewRoomForm() {
+export default function NewRoomForm({ mode = "open" }: { mode?: "open" | "request" }) {
   const router = useRouter();
+  const requesting = mode === "request";
+  const [replyEmail, setReplyEmail] = useState("");
+  const [requested, setRequested] = useState(false);
   const [title, setTitle] = useState("");
   const [creator, setCreator] = useState("");
   const [medium, setMedium] = useState<(typeof MEDIUMS)[number]>("book");
@@ -45,7 +52,7 @@ export default function NewRoomForm() {
     setSending(true);
     setError("");
     try {
-      const res = await fetch("/api/rooms", {
+      const res = await fetch(requesting ? "/api/rooms/requests" : "/api/rooms", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
@@ -55,19 +62,34 @@ export default function NewRoomForm() {
           year: year.trim() || null,
           intro,
           sections: lines.split("\n"),
+          ...(requesting ? { reply_email: replyEmail } : {}),
           _trap: honeypot,
         }),
       });
       const data = await res.json().catch(() => ({}));
+      if (res.ok && requesting) {
+        setRequested(true);
+        return;
+      }
       if (res.ok && data.slug) {
         router.push(`/rooms/${data.slug}`);
         return;
       }
-      setError(data.error ?? "Could not open the room. Please try again.");
+      setError(data.error ?? (requesting ? "Could not send your request. Please try again." : "Could not open the room. Please try again."));
     } catch {
       setError("Network error. Please try again.");
     }
     setSending(false);
+  }
+
+  if (requested) {
+    return (
+      <p className="text-sm" style={{ ...sans, color: "var(--ink)" }}>
+        Thank you. Your request has gone to the admin, and the room will appear on the{" "}
+        <Link href="/rooms" className="underline underline-offset-4" style={{ color: "var(--terracotta)" }}>Reading Rooms</Link>{" "}
+        page if it is opened.{replyEmail.trim() ? " You'll get one email either way." : ""}
+      </p>
+    );
   }
 
   return (
@@ -117,6 +139,15 @@ export default function NewRoomForm() {
         </p>
       </div>
 
+      {requesting && (
+        <div>
+          <label htmlFor="room-reply-email" className={label} style={{ ...sans, color: "var(--muted)" }}>
+            Your email, to hear whether it opens (optional). Used once, then deleted.
+          </label>
+          <input id="room-reply-email" type="email" value={replyEmail} onChange={(e) => setReplyEmail(e.target.value)} maxLength={320} className="w-full px-4 py-3 rounded-sm text-sm" style={field} />
+        </div>
+      )}
+
       {/* Honeypot — hidden from real users */}
       <div style={{ display: "none" }} aria-hidden="true">
         <input type="text" tabIndex={-1} autoComplete="off" value={honeypot} onChange={(e) => setHoneypot(e.target.value)} />
@@ -130,7 +161,7 @@ export default function NewRoomForm() {
         className="w-full py-3 text-sm text-white transition-opacity hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
         style={{ ...sans, backgroundColor: "var(--terracotta)", letterSpacing: "0.05em" }}
       >
-        {sending ? "Opening…" : "Open the Room"}
+        {requesting ? (sending ? "Sending…" : "Ask for this Room") : sending ? "Opening…" : "Open the Room"}
       </button>
     </form>
   );

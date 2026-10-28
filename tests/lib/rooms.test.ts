@@ -5,6 +5,7 @@ import {
   cleanText,
   cleanYear,
   isMedium,
+  parseRoom,
   sectionsProblem,
   slugWithSuffix,
   slugify,
@@ -102,5 +103,35 @@ describe("cleanText / cleanYear / isMedium", () => {
   it("knows the five mediums", () => {
     expect(isMedium("film")).toBe(true);
     expect(isMedium("podcast")).toBe(false);
+  });
+});
+
+describe("parseRoom", () => {
+  const base = { title: " Middlemarch ", medium: "book", sections: ["One"] };
+
+  it("cleans a good room", () => {
+    expect(parseRoom({ ...base, creator: "", year: "1871" })).toEqual({
+      room: {
+        title: "Middlemarch",
+        creator: null,
+        medium: "book",
+        year: 1871,
+        intro: null,
+        sections: [
+          { label: "One", kind: "part" },
+          { label: WHOLE_WORK_LABEL, kind: "whole" },
+        ],
+      },
+    });
+  });
+
+  it.each([
+    [{ ...base, title: "" }, /title/],
+    [{ ...base, medium: "podcast" }, /kind of work/],
+    [{ ...base, year: "soon" }, /whole number/],
+    [{ ...base, intro: "x".repeat(2001) }, /introduction/],
+  ])("explains what is wrong", (input, message) => {
+    const result = parseRoom(input);
+    expect("error" in result && result.error).toMatch(message);
   });
 });

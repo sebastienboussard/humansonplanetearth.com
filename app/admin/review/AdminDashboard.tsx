@@ -50,7 +50,7 @@ function Badge({ count }: { count: number }) {
 }
 
 function Tabs() {
-  const { pending, unread, error, dismissError, queue, roomPages } = useAdminData();
+  const { pending, unread, error, dismissError, queue, roomPages, roomRequests } = useAdminData();
   const active = useSyncExternalStore(subscribeToHash, tabFromHash, () => "messages");
 
   function select(tab: TabId) {
@@ -64,7 +64,7 @@ function Tabs() {
     messages: unread,
     pending: pending.length,
     words: queue.length,
-    rooms: roomPages.length,
+    rooms: roomPages.length + roomRequests.length,
   };
 
   return (
