@@ -474,7 +474,7 @@ author-free — see the tripwires in `DECISIONS.md`.
       third word must land exactly one row. PGlite has a single connection.
       This needs two real sessions against the real database
 
-## 🟡 21. Reading Rooms — 21a live, 21b built on a branch
+## 🟡 21. Reading Rooms — live, waiting on the walk-throughs
 
 Nothing below is built. "Reading Rooms" is a working name. Scope was decided
 with Seb on 2026-10-22.
@@ -594,8 +594,8 @@ Its build:
 - [ ] **Two real sessions** creating a 4th room at once must land exactly
       one. The advisory lock is for this, and PGlite has one connection
 
-**21b, the Open Library lookup, built 2026-10-28 on the local branch
-`open-library`, from `main`, not yet pushed.** Migration `0009_room_open_library.sql`
+**21b, the Open Library lookup, built 2026-10-28. Live the same day** as
+`47fd6ee`, with 0007, 0008 and 0009 applied by the pipeline. Migration `0009_room_open_library.sql`
 lets `create_room()` and `request_room()` save `ol_work_key` and `cover_id`.
 The columns were in 0005, but nothing could write them, so 21b needed a
 migration after all. Proved in PGlite.
