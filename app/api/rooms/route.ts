@@ -54,6 +54,8 @@ export async function POST(req: NextRequest) {
       p_intro: room.intro,
       p_sections: room.sections,
       p_links: room.links,
+      p_ol_work_key: room.olWorkKey,
+      p_cover_id: room.coverId,
     });
     if (!error) return NextResponse.json({ slug }, { status: 201 });
 

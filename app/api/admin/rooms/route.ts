@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
       .order("submitted_at", { ascending: true }),
     admin
       .from("rooms")
-      .select("id, slug, title, creator_name, medium, year, intro, links, created_at, room_sections(label, position)")
+      .select("id, slug, title, creator_name, medium, year, intro, links, ol_work_key, created_at, room_sections(label, position)")
       .eq("status", "requested")
       .order("created_at", { ascending: true }),
     admin

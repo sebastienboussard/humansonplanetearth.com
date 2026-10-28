@@ -474,7 +474,7 @@ author-free — see the tripwires in `DECISIONS.md`.
       third word must land exactly one row. PGlite has a single connection.
       This needs two real sessions against the real database
 
-## 🟡 21. Reading Rooms — 21a live, 21b open
+## 🟡 21. Reading Rooms — 21a live, 21b built on a branch
 
 Nothing below is built. "Reading Rooms" is a working name. Scope was decided
 with Seb on 2026-10-22.
@@ -594,25 +594,32 @@ Its build:
 - [ ] **Two real sessions** creating a 4th room at once must land exactly
       one. The advisory lock is for this, and PGlite has one connection
 
-**21b, the Open Library lookup, not started.** It is designed in the 22 Oct
-scope and is unchanged:
+**21b, the Open Library lookup, built 2026-10-28 on the local branch
+`open-library`, from `main`, not yet pushed.** Migration `0009_room_open_library.sql`
+lets `create_room()` and `request_room()` save `ol_work_key` and `cover_id`.
+The columns were in 0005, but nothing could write them, so 21b needed a
+migration after all. Proved in PGlite.
 
-- [ ] `lib/open-library.ts`: `searchWorks`, `parseSearch`, `parseToc`,
-      `coverUrl`, `isWorkKey`, with recorded-fixture tests
-- [ ] `app/api/rooms/lookup/route.ts` and `.../lookup/toc/route.ts`:
-      30/min, fails open, 4 s timeout, a day's cache, a descriptive
-      User-Agent. The migration already validates `ol_work_key`, `cover_id`
-      and `isbn`
-- [ ] The create form gets a search box for books with cover thumbnails as a
-      plain `<img loading="lazy">`, not `next/image`. When the edition has a
-      table of contents, chapters are prefilled. Manual entry still works
+- [x] `lib/open-library.ts`: `searchWorks`, `parseSearch`, `coverUrl`,
+      `workUrl`, `isWorkKey`, `isCoverId`, tested against responses recorded
+      from openlibrary.org (`tests/fixtures/open-library/`)
+- [x] `app/api/rooms/lookup/route.ts`: 30 a minute per IP, fails open, 4 s
+      timeout, a day's cache, a descriptive User-Agent
+- [x] The create form gets a book search, shown only when "book" is chosen,
+      with cover thumbnails as a plain `<img loading="lazy">`. Picking one
+      fills title, author and year, all still editable. Manual entry works
       when the lookup fails
-- [ ] The room page credits "Book data from Open Library"
-- [ ] **An automatic Open Library link under "Where to find it"** (Seb,
-      2026-10-27), built from `ol_work_key` at display time rather than
-      stored in `rooms.links`, so it can't go stale or count against the
-      five. Shown first. Open Library's page offers borrowing or reading free
-      where the edition allows it
+- [x] The room page shows the cover, and credits "Book data from Open Library"
+- [x] The automatic Open Library link, first under "Where to find it",
+      built from `ol_work_key` at display time
+
+Chapters from the table of contents were dropped by Seb on 2026-10-28;
+`DECISIONS.md` has why.
+
+- [ ] **Live walk-through** after the deploy: search for a book, pick it,
+      open the room, and check the cover, the Open Library link first under
+      "Where to find it", and the credit. Search for nonsense and check the
+      "Nothing found" note. Switch to "film" and check the search goes away
 
 ## 🟠 23. Sign-in emails hit a site-wide hourly cap
 

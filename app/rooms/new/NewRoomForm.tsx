@@ -4,6 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { LIMITS, MEDIUMS, WHOLE_WORK_LABEL, buildSections, parseLinks, sectionsProblem } from "@/lib/rooms";
+import type { OpenLibraryWork } from "@/lib/open-library";
+import BookLookup from "./BookLookup";
 
 // The room's breakdown is typed one part per line. Any shape is the same data,
 // whether chapters, acts or timestamps, and "The whole work" is always added
@@ -34,6 +36,8 @@ export default function NewRoomForm({ mode = "open" }: { mode?: "open" | "reques
   const [intro, setIntro] = useState("");
   const [lines, setLines] = useState("");
   const [linkLines, setLinkLines] = useState("");
+  // The Open Library work picked in BookLookup, if any (§21b). Books only.
+  const [picked, setPicked] = useState<OpenLibraryWork | null>(null);
   const [chapterCount, setChapterCount] = useState("");
   const [honeypot, setHoneypot] = useState("");
   const [sending, setSending] = useState(false);
@@ -43,6 +47,13 @@ export default function NewRoomForm({ mode = "open" }: { mode?: "open" | "reques
   const parsedLinks = parseLinks(linkLines);
   const linkProblem = "error" in parsedLinks ? parsedLinks.error : null;
   const problem = sectionsProblem(sections);
+
+  function pick(work: OpenLibraryWork) {
+    setPicked(work);
+    setTitle(work.title);
+    setCreator(work.author ?? "");
+    setYear(work.year !== null ? String(work.year) : "");
+  }
 
   function fillChapters() {
     const n = Math.min(LIMITS.sections, Math.max(0, Math.floor(Number(chapterCount))));
@@ -66,6 +77,7 @@ export default function NewRoomForm({ mode = "open" }: { mode?: "open" | "reques
           intro,
           sections: lines.split("\n"),
           links: linkLines.split("\n"),
+          ...(picked && medium === "book" ? { ol_work_key: picked.key, cover_id: picked.coverId } : {}),
           ...(requesting ? { reply_email: replyEmail } : {}),
           _trap: honeypot,
         }),
@@ -99,6 +111,29 @@ export default function NewRoomForm({ mode = "open" }: { mode?: "open" | "reques
   return (
     <form onSubmit={submit} className="space-y-6">
       <div>
+        <span className={label} style={{ ...sans, color: "var(--muted)" }}>It&apos;s a…</span>
+        <div className="flex flex-wrap gap-4 text-sm" style={sans}>
+          {MEDIUMS.map((m) => (
+            <label key={m} className="flex items-center gap-1.5" style={{ color: "var(--ink)" }}>
+              <input type="radio" name="medium" value={m} checked={medium === m} onChange={() => setMedium(m)} />
+              {m}
+            </label>
+          ))}
+        </div>
+      </div>
+      {medium === "book" &&
+        (picked ? (
+          <p className="text-xs" style={{ ...sans, color: "var(--muted)" }}>
+            Found on Open Library: the room will show its cover and link to it. Edit anything below that isn&apos;t
+            quite right.{" "}
+            <button type="button" onClick={() => setPicked(null)} className="underline" style={{ color: "var(--terracotta)" }}>
+              Unlink
+            </button>
+          </p>
+        ) : (
+          <BookLookup onPick={pick} />
+        ))}
+      <div>
         <label htmlFor="room-title" className={label} style={{ ...sans, color: "var(--muted)" }}>Title of the work</label>
         <input id="room-title" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={LIMITS.title} className="w-full px-4 py-3 rounded-sm text-sm" style={field} />
       </div>
@@ -110,17 +145,6 @@ export default function NewRoomForm({ mode = "open" }: { mode?: "open" | "reques
         <div>
           <label htmlFor="room-year" className={label} style={{ ...sans, color: "var(--muted)" }}>Year</label>
           <input id="room-year" value={year} onChange={(e) => setYear(e.target.value)} inputMode="numeric" maxLength={5} className="w-full px-4 py-3 rounded-sm text-sm" style={field} />
-        </div>
-      </div>
-      <div>
-        <span className={label} style={{ ...sans, color: "var(--muted)" }}>It&apos;s a…</span>
-        <div className="flex flex-wrap gap-4 text-sm" style={sans}>
-          {MEDIUMS.map((m) => (
-            <label key={m} className="flex items-center gap-1.5" style={{ color: "var(--ink)" }}>
-              <input type="radio" name="medium" value={m} checked={medium === m} onChange={() => setMedium(m)} />
-              {m}
-            </label>
-          ))}
         </div>
       </div>
       <div>

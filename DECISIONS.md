@@ -54,6 +54,48 @@ in a working file, so they survive a machine.
 
 Newest first. A choice that will be questioned again, written down once.
 
+### 2026-10-28 — Open Library: what it gives, and what it doesn't
+
+**Tables of contents are too rare to build on.** The 22 Oct design had the
+lookup prefill chapters from an edition's table of contents. Before building
+it, `works/<key>/editions.json` was surveyed:
+
+| Work | Editions | With a table of contents (first 100) |
+| --- | --- | --- |
+| Frankenstein | 2,187 | 0 |
+| Pride and Prejudice | 4,042 | 0 |
+| The Great Gatsby | 1,181 | 0 |
+| Middlemarch | 50 checked | 0 |
+| The Lord of the Rings | 253 | 8 |
+
+Even the Tolkien hits are mostly three lines ("pt. 1. The fellowship of the
+ring"). The one full one mixes in a list of illustrations and a foreword
+among nested books and chapters. **Seb dropped it on 2026-10-28.** The
+alternative, offering a usable contents list as an editable suggestion when
+one turns up, would rarely appear, and would cost another route and more
+requests to Open Library. The "chapters 1 to N" filler already covers most
+books.
+
+**What it does give is good enough to fill in, not to trust.** Search
+returns the work key, title, authors, first year and cover reliably. But
+Middlemarch's first year comes back as 1800, so every field it fills stays
+editable. `parseSearch()` skips anything malformed, and the database checks
+the key and cover again.
+
+**21b needed a migration after all.** It was said on 2026-10-27 that it
+wouldn't. The columns were there from 0005, but `create_room()` and
+`request_room()` took no arguments for them. 0009 adds two, defaulting to
+null, in the same way 0008 added `p_links`.
+
+**The lookup needs no account.** Asking for a room doesn't, so neither does
+the search that helps fill the form in.
+
+**Proved in PGlite.** 0009 reruns cleanly, and leaves one 11-argument
+version of each function. Calls in the 0008 style still work. The key and
+cover are saved by both functions. A bad key or a cover of 0 is refused,
+with nothing left behind. `anon` and `authenticated` get `42501` on the new
+signatures.
+
 ### 2026-10-27 — Reading Rooms: "Where to find it" links
 
 **Seb asked for both:** links the room's opener adds, and an automatic Open

@@ -51,9 +51,18 @@ describe("POST /api/rooms/requests", () => {
       ],
     });
     expect(call.args).not.toHaveProperty("p_profile_id");
-    expect(call.args).toMatchObject({ p_links: [] });
+    expect(call.args).toMatchObject({ p_links: [], p_ol_work_key: null, p_cover_id: null });
     expect(holder.current.rpcCalls.map((c) => c.fn)).not.toContain("create_room");
     expect(notifyAdminRoomRequest).toHaveBeenCalledWith({ title: "Middlemarch" });
+  });
+
+  it("passes an Open Library work through for a book", async () => {
+    holder.current = createMockSupabase({ rpcs: { rate_limit_hit: allow, request_room: { data: "room-1" } } });
+    await POST(jsonRequest(URL, { ...room, ol_work_key: "/works/OL20867W", cover_id: 252882 }));
+    expect(holder.current.rpcCalls.find((c) => c.fn === "request_room")!.args).toMatchObject({
+      p_ol_work_key: "/works/OL20867W",
+      p_cover_id: 252882,
+    });
   });
 
   it("sends a null email when none is given", async () => {

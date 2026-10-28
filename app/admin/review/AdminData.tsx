@@ -48,6 +48,7 @@ export type AdminRoomRequest = AdminRoom & {
   year: number | null;
   intro: string | null;
   links: { url: string }[] | null;
+  ol_work_key: string | null;
   room_sections: { label: string; position: number }[] | null;
 };
 

@@ -1,5 +1,6 @@
 import { supabase } from "@/lib/supabase";
-import type { RoomLink } from "@/lib/rooms";
+import { linkLabel, type RoomLink } from "@/lib/rooms";
+import { workUrl } from "@/lib/open-library";
 
 // Public reads for the Reading Room pages (TODO §21). Every query goes through
 // the public client, so RLS in migration 0005 decides what is visible: live
@@ -15,6 +16,8 @@ export type RoomRow = {
   year: number | null;
   intro: string | null;
   links: RoomLink[] | null;
+  ol_work_key: string | null;
+  cover_id: number | null;
   created_at: string;
 };
 
@@ -29,7 +32,7 @@ export type RoomPageRow = {
   submitted_at: string;
 };
 
-const ROOM_FIELDS = "id, slug, title, creator_name, medium, year, intro, links, created_at";
+const ROOM_FIELDS = "id, slug, title, creator_name, medium, year, intro, links, ol_work_key, cover_id, created_at";
 
 /** Newest first. The home page asks for a few; the rooms page for all. */
 export async function listRooms(limit = 200): Promise<RoomRow[]> {
@@ -80,6 +83,19 @@ export async function sectionPages(sectionId: string): Promise<RoomPageRow[]> {
 /** The work, the way it is introduced: "George Eliot · book · 1871". */
 export function describeWork(room: Pick<RoomRow, "creator_name" | "medium" | "year">): string {
   return [room.creator_name, room.medium, room.year].filter((x) => x !== null && x !== "").join(" · ");
+}
+
+/**
+ * "Where to find it": the Open Library work first, when the room has one
+ * (§21b), built here rather than stored so it can't go stale or use up one of
+ * the five. Then the opener's own links, minus any that repeat it.
+ */
+export function whereToFind(room: Pick<RoomRow, "links" | "ol_work_key">): { url: string; label: string }[] {
+  const auto = room.ol_work_key ? [{ url: workUrl(room.ol_work_key), label: "Open Library" }] : [];
+  const own = (room.links ?? [])
+    .filter((l) => !auto.some((a) => a.url === l.url))
+    .map((l) => ({ url: l.url, label: linkLabel(l.url) }));
+  return [...auto, ...own];
 }
 
 /** Sections are addressed by their place, counting from 1: /rooms/middlemarch/2. */

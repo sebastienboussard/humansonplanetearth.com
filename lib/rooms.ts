@@ -1,3 +1,5 @@
+import { isCoverId, isWorkKey } from "@/lib/open-library";
+
 // Reading Rooms (TODO §21): the rules every room, section, page and margin
 // follows. Pure and Supabase-free, so the create form, the routes and the
 // tests all use one definition. Each limit here is also a CHECK in
@@ -142,6 +144,9 @@ export type RoomInput = {
   intro: string | null;
   sections: SectionInput[];
   links: RoomLink[];
+  /** From the Open Library lookup (§21b); books only, otherwise null. */
+  olWorkKey: string | null;
+  coverId: number | null;
 };
 
 /**
@@ -170,5 +175,13 @@ export function parseRoom(payload: Record<string, unknown>): { room: RoomInput }
   if (problem) return { error: problem };
   const links = parseLinks(payload.links);
   if ("error" in links) return links;
-  return { room: { title, creator, medium: payload.medium, year, intro, sections, links: links.links } };
+  // Only a book can be an Open Library work. Anything that isn't exactly the
+  // shape the database accepts is dropped, not refused: the lookup is a
+  // convenience, and a room without it is still a good room.
+  const isBook = payload.medium === "book";
+  const olWorkKey = isBook && isWorkKey(payload.ol_work_key) ? payload.ol_work_key : null;
+  const coverId = olWorkKey && isCoverId(payload.cover_id) ? payload.cover_id : null;
+  return {
+    room: { title, creator, medium: payload.medium, year, intro, sections, links: links.links, olWorkKey, coverId },
+  };
 }

@@ -57,6 +57,17 @@ All notable changes to this project are documented here.
   column and a `p_links` argument to `create_room()` and `request_room()`,
   with a default so the old code keeps working until the deploy lands.
   Proved in PGlite.
+- **Find the book on Open Library when opening a Reading Room.** With
+  "book" chosen, the form offers a search. Picking a result fills in the
+  title, author and year, all still editable, since Open Library's data is
+  often close rather than right (it has Middlemarch as 1800). The room then
+  shows the book's cover, lists Open Library first under "Where to find it",
+  and credits "Book data from Open Library". The lookup fails open: if Open
+  Library is slow or down, the form says so and takes the details by hand.
+  It is limited to 30 searches a minute per IP, times out after 4 seconds,
+  caches for a day, and sends a User-Agent naming the site. Migration
+  `0009_room_open_library.sql` lets the two room functions save the work and
+  cover. Proved in PGlite.
 - **Reading Rooms on the home page.** A section between "What is this?" and
   Long-Form describes the rooms, lists the three newest, and links to
   browse them or open one.

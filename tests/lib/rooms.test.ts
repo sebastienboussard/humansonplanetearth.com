@@ -124,7 +124,28 @@ describe("parseRoom", () => {
           { label: WHOLE_WORK_LABEL, kind: "whole" },
         ],
         links: [],
+        olWorkKey: null,
+        coverId: null,
       },
+    });
+  });
+
+  it("keeps an Open Library work for a book", () => {
+    const result = parseRoom({ ...base, ol_work_key: "/works/OL20867W", cover_id: 252882 });
+    expect(result).toMatchObject({ room: { olWorkKey: "/works/OL20867W", coverId: 252882 } });
+  });
+
+  it.each([
+    ["a film", { ...base, medium: "film", ol_work_key: "/works/OL20867W", cover_id: 252882 }],
+    ["a key that isn't a work", { ...base, ol_work_key: "https://evil.example/", cover_id: 252882 }],
+    ["a cover without a work", { ...base, cover_id: 252882 }],
+  ])("drops the Open Library fields for %s, without refusing the room", (_label, input) => {
+    expect(parseRoom(input)).toMatchObject({ room: { olWorkKey: null, coverId: null } });
+  });
+
+  it("drops a cover id that isn't a positive integer", () => {
+    expect(parseRoom({ ...base, ol_work_key: "/works/OL1W", cover_id: "7" })).toMatchObject({
+      room: { olWorkKey: "/works/OL1W", coverId: null },
     });
   });
 

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useAdminData } from "./AdminData";
+import { workUrl } from "@/lib/open-library";
 
 // Reading Rooms moderation (TODO §21). Pages wait here until approved. Rooms
 // opened from an account go live at once; rooms asked for without one wait
@@ -39,6 +40,13 @@ export default function RoomsPanel() {
                     {parts.map((p) => p.label).join(" · ")}
                   </p>
                   {/* Shown in full, not as a site name, so the admin sees exactly where each one goes. */}
+                  {request.ol_work_key && (
+                    <p className="text-xs mb-2" style={sans}>
+                      <a href={workUrl(request.ol_work_key)} target="_blank" rel="noopener noreferrer" className="underline" style={{ color: "var(--forest)" }}>
+                        On Open Library ↗
+                      </a>
+                    </p>
+                  )}
                   {request.links && request.links.length > 0 && (
                     <ul className="text-xs mb-2 space-y-0.5" style={{ ...sans, color: "var(--ink)", wordBreak: "break-all" }}>
                       {request.links.map((link) => (

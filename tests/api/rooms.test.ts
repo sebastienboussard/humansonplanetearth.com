@@ -98,6 +98,8 @@ describe("POST /api/rooms", () => {
       p_medium: "book",
       p_year: 1871,
       p_links: [{ url: "https://gutenberg.org/ebooks/145" }],
+      p_ol_work_key: null,
+      p_cover_id: null,
       p_sections: [
         { label: "Book One", kind: "part" },
         { label: "Book Two", kind: "part" },
