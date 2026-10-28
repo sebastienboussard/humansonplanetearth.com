@@ -19,9 +19,11 @@ export default function RoomPageCard({ page }: { page: RoomPageRow }) {
           )}
         </blockquote>
       )}
-      <h3 className="text-lg font-normal mb-2" style={{ color: "var(--forest)" }}>
-        {page.title}
-      </h3>
+      {page.title && (
+        <h3 className="text-lg font-normal mb-2" style={{ color: "var(--forest)" }}>
+          {page.title}
+        </h3>
+      )}
       <p className="leading-relaxed" style={{ color: "var(--ink)", whiteSpace: "pre-wrap" }}>
         {page.body}
       </p>

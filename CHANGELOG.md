@@ -42,6 +42,11 @@ All notable changes to this project are documented here.
   most 30 requests can wait at once, a cap inside `request_room()` that
   fails closed, with a per-IP limit of three an hour on top that fails open.
   Migration `0006_room_requests.sql`.
+- **A page in a Reading Room no longer needs a title.** The writing is still
+  required. A title, when given, is still real text of at most 200
+  characters; an empty one is stored as none. Migration
+  `0007_room_page_title_optional.sql`, proved in PGlite: reruns cleanly,
+  leaves existing pages untouched, and still refuses a blank title or body.
 - **Propose a word for a future month.** Signed-in accounts can suggest
   words, with up to three waiting at a time, and withdraw a waiting one. The
   queue is fair rather than first-come-first-served: each word's round is its

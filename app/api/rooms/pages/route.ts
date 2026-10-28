@@ -55,10 +55,11 @@ export async function POST(req: NextRequest) {
   const body = cleanText(payload.body);
   const quote = cleanText(payload.quote);
   const locator = cleanText(payload.locator);
-  if (!sectionId || !title || !body) {
-    return NextResponse.json({ error: "A page needs a title and some writing." }, { status: 400 });
+  // The title is optional (migration 0007); the writing isn't.
+  if (!sectionId || !body) {
+    return NextResponse.json({ error: "A page needs some writing." }, { status: 400 });
   }
-  if (title.length > LIMITS.pageTitle) {
+  if ((title?.length ?? 0) > LIMITS.pageTitle) {
     return NextResponse.json({ error: `The title is at most ${LIMITS.pageTitle} characters.` }, { status: 400 });
   }
   if (body.length > LIMITS.pageBody) {

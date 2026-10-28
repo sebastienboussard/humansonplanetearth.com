@@ -31,7 +31,7 @@ export type Dataset = "messages" | "pending" | "published" | "words" | "queue" |
 // Reading Rooms (TODO §21). Pages carry their room and section, never an author.
 export type AdminRoomPage = {
   id: string;
-  title: string;
+  title: string | null;
   body: string;
   quote: string | null;
   locator: string | null;

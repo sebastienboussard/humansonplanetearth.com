@@ -20,7 +20,7 @@ export type SectionRow = { id: string; position: number; label: string; kind: "p
 
 export type RoomPageRow = {
   id: string;
-  title: string;
+  title: string | null;
   body: string;
   quote: string | null;
   locator: string | null;

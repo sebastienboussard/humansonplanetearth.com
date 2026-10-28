@@ -26,7 +26,7 @@ export default function PageForm({ sectionId, sectionLabel }: { sectionId: strin
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (honeypot || !title.trim() || !body.trim()) return;
+    if (honeypot || !body.trim()) return;
     setStatus("sending");
     setError("");
     try {
@@ -66,7 +66,7 @@ export default function PageForm({ sectionId, sectionLabel }: { sectionId: strin
         No account needed. Pages are read before they appear, and are always published as Human On Planet Earth.
       </p>
 
-      <input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={LIMITS.pageTitle} placeholder="A title" aria-label="Title" className="w-full px-4 py-3 rounded-sm text-sm" style={field} />
+      <input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={LIMITS.pageTitle} placeholder="A title (optional)" aria-label="Title (optional)" className="w-full px-4 py-3 rounded-sm text-sm" style={field} />
       <textarea value={body} onChange={(e) => setBody(e.target.value)} maxLength={LIMITS.pageBody} rows={10} placeholder="Your page" aria-label="Your page" className="w-full px-4 py-3 rounded-sm text-sm" style={field} />
       <p className="text-xs -mt-2 text-right" style={{ ...sans, color: "var(--muted)" }}>{body.length} / {LIMITS.pageBody}</p>
 
@@ -87,7 +87,7 @@ export default function PageForm({ sectionId, sectionLabel }: { sectionId: strin
 
       <button
         type="submit"
-        disabled={!title.trim() || !body.trim() || status === "sending"}
+        disabled={!body.trim() || status === "sending"}
         className="w-full py-3 text-sm text-white transition-opacity hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
         style={{ ...sans, backgroundColor: "var(--terracotta)", letterSpacing: "0.05em" }}
       >

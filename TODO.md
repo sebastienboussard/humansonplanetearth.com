@@ -535,7 +535,8 @@ account, a visitor can ask for a room.** Opening one still needs an account
 and still goes live at once. A request is a hidden room (`status =
 'requested'`) that goes live only when the admin opens it, so the 22 Oct "no
 approval" row above still holds for accounts. Migration `0006_room_requests.sql`,
-proved in PGlite the same day.
+proved in PGlite the same day. Also 2026-10-27: a page's title is optional
+(migration 0007).
 
 **21a, built 2026-10-26 on the local branch `rooms`. Live 2026-10-27,**
 pushed with room requests as `ae2e6f1`; that deploy applied 0005 and 0006.

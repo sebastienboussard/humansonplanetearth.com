@@ -1,8 +1,8 @@
 // Reading Rooms (TODO §21): the rules every room, section, page and margin
 // follows. Pure and Supabase-free, so the create form, the routes and the
 // tests all use one definition. Each limit here is also a CHECK in
-// supabase/migrations/0005_reading_rooms.sql, which is the floor if a route
-// ever forgets.
+// supabase/migrations/0005_reading_rooms.sql (a page's title since 0007),
+// which is the floor if a route ever forgets.
 
 export const MEDIUMS = ["book", "film", "series", "play", "other"] as const;
 export type Medium = (typeof MEDIUMS)[number];

@@ -30,10 +30,10 @@ export type WhatsNewEntry = {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
-    date: "2026-10-26",
+    date: "2026-10-27",
     title: "Reading Rooms",
     blurb:
-      "Read a book or watch a film with everyone else, at your own pace. Each room is broken into parts that stay closed until you open them, so nothing ahead of you is spoiled. Write a page about the part you're on, or a few words in the margin.",
+      "Read a book or watch a film with everyone else, at your own pace. Each room is broken into parts that stay closed until you open them, so nothing ahead of you is spoiled. Write a page about the part you're on, or a few words in the margin. No account? You can still ask for a room to be opened.",
     href: "/rooms",
   },
   {

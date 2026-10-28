@@ -176,6 +176,21 @@ describe("POST /api/rooms/pages", () => {
     expect(notifyAdminNewRoomPage).toHaveBeenCalledWith({ room: "Middlemarch", section: "Book One" });
   });
 
+  it.each([
+    ["missing", undefined],
+    ["blank", "   "],
+  ])("accepts a page whose title is %s, storing it as null", async (_label, title) => {
+    holder.current = createMockSupabase({
+      rpcs: { rate_limit_hit: allow },
+      tables: { room_sections: liveSection, room_pages: { data: { id: "p9" } } },
+    });
+    const res = await postPage(jsonRequest(`${BASE}/pages`, { ...page, title }));
+    expect(res.status).toBe(201);
+    expect(holder.current.query("room_pages")!.insert).toHaveBeenCalledWith(
+      expect.objectContaining({ title: null, body: "Lydgate's debts…" })
+    );
+  });
+
   it("keeps a private author link when the writer is signed in", async () => {
     profileHolder.current = profile;
     holder.current = createMockSupabase({
@@ -189,8 +204,8 @@ describe("POST /api/rooms/pages", () => {
   });
 
   it.each([
-    ["no title", { ...page, title: "" }],
     ["no body", { ...page, body: "   " }],
+    ["a 201-character title", { ...page, title: "x".repeat(201) }],
     ["a 301-character quote", { ...page, quote: "x".repeat(301) }],
     ["a 41-character locator", { ...page, locator: "x".repeat(41) }],
     ["a 10,001-character body", { ...page, body: "x".repeat(10001) }],

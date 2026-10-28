@@ -77,7 +77,7 @@ export default function RoomsPanel() {
                     &ldquo;{page.quote}&rdquo;{page.locator ? ` (${page.locator})` : ""}
                   </blockquote>
                 )}
-                <p className="text-base mb-1" style={{ color: "var(--forest)" }}>{page.title}</p>
+                {page.title && <p className="text-base mb-1" style={{ color: "var(--forest)" }}>{page.title}</p>}
                 <p className="text-sm leading-relaxed mb-4" style={{ color: "var(--ink)", whiteSpace: "pre-wrap" }}>{page.body}</p>
                 <div className="flex gap-4 text-sm" style={sans}>
                   <button onClick={() => void decideRoomPage(page.id, "approved")} style={{ color: "var(--forest)" }} className="underline">
@@ -85,7 +85,7 @@ export default function RoomsPanel() {
                   </button>
                   <button
                     onClick={() => {
-                      if (confirm(`Reject "${page.title}"? It won't be published.`)) void decideRoomPage(page.id, "rejected");
+                      if (confirm(`Reject ${page.title ? `"${page.title}"` : "this page"}? It won't be published.`)) void decideRoomPage(page.id, "rejected");
                     }}
                     style={{ color: "var(--terracotta)" }}
                     className="underline"

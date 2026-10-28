@@ -54,6 +54,15 @@ in a working file, so they survive a machine.
 
 Newest first. A choice that will be questioned again, written down once.
 
+### 2026-10-27 — Reading Rooms: a page's title is optional
+
+**Seb's call.** The writing is what matters. A required title is one more
+thing to think of before a page can be sent. The database keeps the floor:
+a title is either absent (null) or real text of 1–200 characters, never
+blank. So "no title" has one representation, and the page card simply leaves
+the heading out. Migration 0007 replaces the 0005 check rather than editing
+0005, which has already run in production.
+
 ### 2026-10-27 — Reading Rooms: without an account, ask the admin
 
 **Opening a room still needs an account. Without one, a visitor can ask for
