@@ -5,6 +5,7 @@ import {
   paperCommentEmail,
   commentReplyEmail,
   adminNewPaperEmail,
+  adminPaperEditEmail,
   adminNewMessageEmail,
 } from "@/lib/email-templates";
 import { unsubscribeUrl } from "@/lib/unsubscribe";
@@ -77,6 +78,18 @@ describe("admin alert templates", () => {
     const { text } = adminNewPaperEmail({ type: "word", word: "regret", title: null });
     expect(text).not.toContain("tags");
     expect(text).not.toContain(".pdf");
+  });
+
+  it("change-request alert names the paper, links the pending tab, and carries no path (TODO §24)", () => {
+    const word = adminPaperEditEmail({ type: "word", word: "regret", title: null });
+    expect(word.subject).toBe("Change requested: regret");
+    expect(word.text).toContain(`${SITE}/admin/review#pending`);
+    expect(word.text).not.toContain(".pdf");
+    expect(word.text.toLowerCase()).not.toContain("unsubscribe");
+
+    const longForm = adminPaperEditEmail({ type: "long-form", word: null, title: "On Grief" });
+    expect(longForm.subject).toBe("Change requested: On Grief");
+    expect(longForm.text).toContain('long-form paper "On Grief"');
   });
 
   it("message alert carries the body, reply address and messages deep link", () => {

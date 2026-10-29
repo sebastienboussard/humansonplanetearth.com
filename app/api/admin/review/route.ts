@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabase";
 import { isAdminRequest as isAuthed } from "@/lib/admin-auth";
 import { removeStoredPdf } from "@/lib/storage-cleanup";
+import { declinePendingEdits, pendingEditPaths } from "@/lib/paper-edits";
 
 // GET — list papers by status (pending by default, or ?status=approved)
 export async function GET(req: NextRequest) {
@@ -59,12 +60,17 @@ export async function DELETE(req: NextRequest) {
 
   if (!paper) return NextResponse.json({ error: "Paper not found." }, { status: 404 });
 
+  // Read before the delete: the cascade drops an open change request (TODO
+  // §24), and with it the only record of where its replacement file is.
+  const replacements = await pendingEditPaths(id);
+
   // Row first, then the file. A stray orphaned PDF is a smaller problem than a
   // live row pointing at storage that no longer exists.
   const { error } = await admin.from("papers").delete().eq("id", id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   await removeStoredPdf(paper.pdf_url);
+  for (const path of replacements) await removeStoredPdf(path);
 
   return NextResponse.json({ ok: true });
 }
@@ -95,6 +101,9 @@ export async function PATCH(req: NextRequest) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   if (pdfUrl) await removeStoredPdf(pdfUrl);
+  // A rejected paper can never take a change (TODO §24), so an open request
+  // on it closes too.
+  if (status === "rejected") await declinePendingEdits(id);
 
   return NextResponse.json({ ok: true });
 }

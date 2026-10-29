@@ -1,12 +1,13 @@
 // Email alerts to the site's own inbox when there is admin work to do:
-// a paper waiting for review, or a contact message. Fire-and-forget by
-// design — an alert failure must never fail the visitor's request, so both
-// functions swallow everything and resolve void.
+// a paper waiting for review, a change request on one, or a contact message.
+// Fire-and-forget by design — an alert failure must never fail the visitor's
+// request, so both functions swallow everything and resolve void.
 
 import { sendEmail } from "@/lib/email";
 import {
   adminNewMessageEmail,
   adminNewPaperEmail,
+  adminPaperEditEmail,
   adminNewRoomPageEmail,
   adminRoomRequestEmail,
 } from "@/lib/email-templates";
@@ -28,6 +29,20 @@ export async function notifyAdminNewPaper(paper: {
     await sendEmail({ to, ...adminNewPaperEmail(paper) });
   } catch (err) {
     console.error("Admin paper alert error:", err);
+  }
+}
+
+export async function notifyAdminPaperEdit(paper: {
+  type: "word" | "long-form";
+  word: string | null;
+  title: string | null;
+}): Promise<void> {
+  const to = adminAddress();
+  if (!to) return;
+  try {
+    await sendEmail({ to, ...adminPaperEditEmail(paper) });
+  } catch (err) {
+    console.error("Admin paper edit alert error:", err);
   }
 }
 

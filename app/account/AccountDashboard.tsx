@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { createBrowserSupabase } from "@/lib/supabase-browser";
 import YourWords from "./YourWords";
+import PaperChangeRequest, { changeStatusText, type PaperChange } from "./PaperChangeRequest";
 
 type Prefs = {
   new_word: boolean;
@@ -23,6 +24,7 @@ type PaperEntry = {
     status: string;
     submitted_at: string;
   } | null;
+  change: PaperChange;
 };
 
 const PREF_LABELS: { key: keyof Prefs; label: string; detail: string }[] = [
@@ -96,6 +98,17 @@ export default function AccountDashboard() {
     }
     load();
   }, []);
+
+  // Shown as waiting straight away; the next load reads it back from the server.
+  function markChangeSent(paperId: string) {
+    setPapers((prev) =>
+      prev.map((p) =>
+        p.paper_id === paperId
+          ? { ...p, change: { status: "pending", at: new Date().toISOString() } }
+          : p
+      )
+    );
+  }
 
   async function togglePref(key: keyof Prefs) {
     if (!prefs) return;
@@ -260,6 +273,20 @@ export default function AccountDashboard() {
                     ? new Date(entry.papers.submitted_at).toLocaleDateString()
                     : ""}
                 </p>
+                {changeStatusText(entry.change) && (
+                  <p className="text-xs mt-0.5" style={sansMuted}>
+                    {changeStatusText(entry.change)}
+                  </p>
+                )}
+                {/* A rejected paper's file is gone, and one request at a time. */}
+                {entry.papers &&
+                  entry.papers.status !== "rejected" &&
+                  entry.change?.status !== "pending" && (
+                    <PaperChangeRequest
+                      paperId={entry.paper_id}
+                      onSent={() => markChangeSent(entry.paper_id)}
+                    />
+                  )}
               </div>
             ))}
           </div>

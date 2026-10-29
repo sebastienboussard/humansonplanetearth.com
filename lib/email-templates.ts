@@ -99,6 +99,25 @@ export function adminNewPaperEmail(paper: {
   };
 }
 
+// An author asking for their paper's PDF to be replaced (TODO §24). Same
+// carrying rule as a new paper: type and word/title only.
+export function adminPaperEditEmail(paper: {
+  type: "word" | "long-form";
+  word: string | null;
+  title: string | null;
+}): EmailContent {
+  const name = paper.type === "long-form" ? paper.title ?? "Untitled" : paper.word ?? "unknown word";
+  return {
+    subject: `Change requested: ${name}`,
+    text: [
+      `The author of the ${
+        paper.type === "long-form" ? `long-form paper "${name}"` : `paper for "${name}"`
+      } has sent a replacement PDF. It is waiting for you under Pending papers.`,
+      adminFooter("pending"),
+    ].join("\n"),
+  };
+}
+
 // A page written in a Reading Room (TODO §21), waiting for review. Carries the
 // room and section names only, never the page text or anything about who wrote
 // it.

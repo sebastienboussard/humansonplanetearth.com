@@ -16,7 +16,8 @@ Status markers: `🟠` open · `🟡` partial · `⏸` deferred.
 **Section numbers never change.** Comments in shipped code, tests and
 scripts cite them — `app/api/contact/route.ts` and `tests/api/contact.test.ts`
 (§1a), both cleanup scripts (§7, §2), `data/whats-new.ts` (§10),
-`CHANGELOG.md` (§4), and the §14, §20 and §21 code added 2026-10-26.
+`CHANGELOG.md` (§4), the §14, §20 and §21 code added 2026-10-26, and the §24
+code added 2026-10-28.
 `lib/rate-limit.ts` cited §9 until §9 was ruled out on 2026-10-26. Renumbering breaks all of them
 silently; nothing would fail a build. The gaps where §1, §5, §8 and §12 used to
 sit are correct — those sections are done, and live in `CHANGELOG.md` and
@@ -24,7 +25,7 @@ sit are correct — those sections are done, and live in `CHANGELOG.md` and
 
 New work gets the next free number before `## Housekeeping`.
 
-Last swept 2026-10-27 (§21: room requests). Before that, 2026-08-30: the lint work committed and pushed (`8dd7024`), the 12
+Last swept 2026-10-28 (§24: change requests on papers). Before that, 2026-10-27 (§21: room requests). Before that, 2026-08-30: the lint work committed and pushed (`8dd7024`), the 12
 remote branches deleted, and this file split — 812 lines down to open work only,
 with the reasoning moved to `DECISIONS.md` rather than deleted.
 
@@ -82,6 +83,10 @@ size:
 8. **Waiting on something outside the code:** §2 (a decision), §4a (a person
    at the hardened Firefox profile), §7's automation (submission volume), and
    §3's edge KV move (traffic).
+
+Added 2026-10-28: §24, change requests on papers, decided with Seb the same
+day and built in the same pass. It takes migration `0010` and waits only on a
+push and a walk-through.
 
 One verification is still owed from production: that comment threads follow
 the paper when paging fast. It needs a person at a browser. The contact 429 was
@@ -646,6 +651,32 @@ for the whole site, and it can't be raised without custom SMTP.
 - [ ] Either way, record the setting and the reason in `DECISIONS.md`. It is
       dashboard state, which no file in the repo shows. §20 and §21 both bring
       people to their accounts, so this has to land before either ships
+
+## 🟡 24. Change requests on papers — built, waiting on the live check
+
+Seb's call, 2026-10-28: an author can ask to replace a paper's PDF, and Seb
+applies it. Only papers attached to an account qualify, because
+`paper_authors` is the only proof of who wrote one. A paper sent without an
+account has no way in, for now; the contact form stays the fallback, and
+whatever is asked there can't be verified. Only the PDF changes — title and
+tags are out of scope until asked for.
+
+Built: `POST /api/account/papers/edit`, the "Request a change" form in Your
+Papers, `app/api/admin/edits`, and the Change requests list in the Pending
+papers tab. Migration `0010_paper_edit_requests.sql`. Shipped detail in
+`CHANGELOG.md`.
+
+- [ ] Push, and confirm the pipeline applied 0010 (`migration list`)
+- [ ] Live walk-through: sign in, request a change on an attached paper, see
+      the admin alert and the request under Pending papers, Apply it, and check
+      the public paper shows the new PDF and the old file is gone from the
+      bucket. Repeat with Decline: the paper unchanged, the replacement gone,
+      and "Change not applied" on the account page
+- [ ] Run `scripts/cleanup-orphaned-pdfs.mjs` dry, after 0010 is live, with a
+      request pending, and check its file is not listed. Before 0010 the
+      script stops with "Could not list change requests" — by design
+- [ ] Later, if wanted: tell the author by email when their change is applied
+      or declined. Today the account page is the only place it shows
 
 ## Housekeeping
 

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
-import { PDFDocument, PDFName, PDFRef } from "pdf-lib";
+import { PDFDocument } from "pdf-lib";
 import { getAdminClient } from "@/lib/supabase";
 import { clientIp, rateLimit, tooManyRequests } from "@/lib/rate-limit";
 import { WORD_MAX_SIZE, formatBytes, oversizeMessage } from "@/lib/upload-limits";
@@ -8,6 +8,7 @@ import { parseTags } from "@/lib/tags";
 import { getSessionUser, ensureProfile } from "@/lib/profile";
 import { notifyAdminNewPaper } from "@/lib/admin-alerts";
 import { discardOrphanedUpload } from "@/lib/storage-cleanup";
+import { stripPdfMetadata } from "@/lib/pdf-sanitize";
 
 // 4.5 MB, the same allowance long-form gets. It is also the ceiling: Vercel
 // refuses a serverless request body above roughly 4.5 MB before this handler
@@ -82,23 +83,7 @@ export async function POST(req: NextRequest) {
     // Never fall back to uploading the original un-stripped bytes.
     let cleanBuffer: Buffer;
     try {
-      pdfDoc.setTitle("");
-      pdfDoc.setAuthor("");
-      pdfDoc.setSubject("");
-      pdfDoc.setKeywords([]);
-      pdfDoc.setProducer("");
-      pdfDoc.setCreator("");
-      pdfDoc.setCreationDate(new Date(0));
-      pdfDoc.setModificationDate(new Date(0));
-
-      // Remove the XMP metadata stream — delete the object itself, not just the
-      // catalog reference (pdf-lib doesn't garbage-collect orphaned objects).
-      const metaRef = pdfDoc.catalog.get(PDFName.of("Metadata"));
-      pdfDoc.catalog.delete(PDFName.of("Metadata"));
-      if (metaRef instanceof PDFRef) pdfDoc.context.delete(metaRef);
-
-      const cleanBytes = await pdfDoc.save({ updateFieldAppearances: false });
-      cleanBuffer = Buffer.from(cleanBytes);
+      cleanBuffer = await stripPdfMetadata(pdfDoc);
     } catch (err) {
       console.error("PDF sanitization failed:", err);
       return NextResponse.json(

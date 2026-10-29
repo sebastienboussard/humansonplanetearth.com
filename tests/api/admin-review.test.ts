@@ -161,6 +161,53 @@ describe("PATCH /api/admin/review", () => {
   });
 });
 
+describe("PATCH /api/admin/review — open change requests (TODO §24)", () => {
+  it("closes an open change request when its paper is rejected, and removes the replacement", async () => {
+    holder.current = createMockSupabase({
+      tables: {
+        papers: [{ data: { pdf_url: "word-1/abc.pdf" } }, { data: null }],
+        paper_edit_requests: [{ data: [{ pdf_path: "word-1/new.pdf" }] }, { data: null }],
+      },
+    });
+
+    const res = await PATCH(
+      jsonRequest(URL, { id: "p1", status: "rejected" }, { method: "PATCH", cookies: adminCookies() })
+    );
+
+    expect(res.status).toBe(200);
+    const close = holder.current.query("paper_edit_requests", 1)!;
+    expect(close.update).toHaveBeenCalledWith(expect.objectContaining({ status: "declined" }));
+    expect(close.eq).toHaveBeenCalledWith("status", "pending");
+    expect(holder.current.bucket("papers")!.remove).toHaveBeenCalledWith(["word-1/new.pdf"]);
+  });
+
+  it("keeps the replacement file if closing the request fails", async () => {
+    holder.current = createMockSupabase({
+      tables: {
+        papers: [{ data: { pdf_url: "word-1/abc.pdf" } }, { data: null }],
+        paper_edit_requests: [{ data: [{ pdf_path: "word-1/new.pdf" }] }, { error: { message: "boom" } }],
+      },
+    });
+
+    const res = await PATCH(
+      jsonRequest(URL, { id: "p1", status: "rejected" }, { method: "PATCH", cookies: adminCookies() })
+    );
+
+    expect(res.status).toBe(200);
+    expect(holder.current.bucket("papers")!.remove).not.toHaveBeenCalledWith(["word-1/new.pdf"]);
+  });
+
+  it("leaves change requests alone when approving", async () => {
+    holder.current = createMockSupabase({ tables: { papers: { data: null } } });
+
+    await PATCH(
+      jsonRequest(URL, { id: "p1", status: "approved" }, { method: "PATCH", cookies: adminCookies() })
+    );
+
+    expect(holder.current.query("paper_edit_requests")).toBeUndefined();
+  });
+});
+
 describe("DELETE /api/admin/review", () => {
   it("rejects unauthenticated requests", async () => {
     holder.current = createMockSupabase();
@@ -198,5 +245,23 @@ describe("DELETE /api/admin/review", () => {
     const deleteQuery = holder.current.query("papers", 1)!;
     expect(deleteQuery.delete).toHaveBeenCalled();
     expect(deleteQuery.eq).toHaveBeenCalledWith("id", "p1");
+  });
+
+  it("also removes the replacement file of an open change request (TODO §24)", async () => {
+    holder.current = createMockSupabase({
+      tables: {
+        papers: [{ data: { id: "p1", pdf_url: "w1/123.pdf" } }, { data: null }],
+        paper_edit_requests: { data: [{ pdf_path: "w1/456.pdf" }] },
+      },
+    });
+
+    const res = await DELETE(
+      jsonRequest(URL, { id: "p1" }, { method: "DELETE", cookies: adminCookies() })
+    );
+
+    expect(res.status).toBe(200);
+    const remove = holder.current.bucket("papers")!.remove;
+    expect(remove).toHaveBeenCalledWith(["w1/123.pdf"]);
+    expect(remove).toHaveBeenCalledWith(["w1/456.pdf"]);
   });
 });

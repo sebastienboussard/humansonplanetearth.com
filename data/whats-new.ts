@@ -30,6 +30,13 @@ export type WhatsNewEntry = {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    date: "2026-10-28",
+    title: "Change a paper you sent",
+    blurb:
+      "Spotted something after sending? If the paper is attached to your account, you can send a new PDF from your account page. It's checked like any submission, and the paper stays as it is until then.",
+    href: "/account",
+  },
+  {
     date: "2026-10-27",
     title: "Reading Rooms",
     blurb:
@@ -56,11 +63,5 @@ export const WHATS_NEW: WhatsNewEntry[] = [
     blurb:
       "In the first days of a month there is nothing published yet. The page no longer stops at \u201cbe the first\u201d \u2014 it links you to what people made for last month's word.",
     href: "/words",
-  },
-  {
-    date: "2026-09-03",
-    title: "Comments follow the paper you are looking at",
-    blurb:
-      "Paging quickly through papers could leave the previous paper's discussion on screen. Each paper now keeps its own thread, however fast you move.",
   },
 ];

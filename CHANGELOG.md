@@ -19,6 +19,22 @@ All notable changes to this project are documented here.
     login, and the admin API still returns 401.
 
 ### Added
+- **Ask for a change to a paper you sent** (`TODO.md` §24). Each paper under
+  Your Papers on `/account` now has "Request a change": the author sends a
+  replacement PDF, with an optional note, and the admin applies or declines
+  it from a "Change requests" list at the top of the Pending papers tab. Only
+  papers attached to an account qualify — that link is the only proof of who
+  wrote a paper — and only the PDF can change for now. The replacement gets
+  the same checks as a new submission: size, one page for word papers, and
+  metadata stripping, which now lives in one place (`lib/pdf-sanitize.ts`)
+  instead of being copied in both submit routes. The paper keeps its current
+  file until the change is applied, and the old file is removed when it is.
+  Rejecting or deleting a paper closes its open request and removes the
+  replacement. The orphan sweep (`scripts/cleanup-orphaned-pdfs.mjs`) counts
+  files claimed by pending requests, so it doesn't delete them. Migration
+  `0010_paper_edit_requests.sql` adds the private request table (no author
+  column), allows one open request per paper, and adds `apply_paper_edit()`,
+  which repoints the paper and closes the request in one transaction.
 - **Reading Rooms.** Anyone signed in can open a room for a book or a film and
   break it into parts, such as chapters, acts or timestamps. Every room ends
   with "The whole work". Anyone can write a **page** about a part, typed and

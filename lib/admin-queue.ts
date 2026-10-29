@@ -25,6 +25,17 @@ export type AdminMessage = {
   created_at: string;
 };
 
+// A change request on a paper (TODO §24): the author's replacement PDF beside
+// the one it would replace. No author on it, by design.
+export type AdminPaperEdit = {
+  id: string;
+  note: string | null;
+  created_at: string;
+  paper: Pick<AdminPaper, "id" | "type" | "title" | "words"> & { status: string };
+  current_url: string;
+  replacement_url: string;
+};
+
 // What a paper is called in a list: long-form papers go by their title, word
 // papers by their word.
 export function paperLabel(paper: Pick<AdminPaper, "type" | "title" | "words">): string {

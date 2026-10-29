@@ -15,6 +15,7 @@ import {
   unreadCount,
   type AdminMessage,
   type AdminPaper,
+  type AdminPaperEdit,
 } from "@/lib/admin-queue";
 import type { QueuedWord } from "@/lib/word-queue";
 
@@ -26,7 +27,7 @@ export type AdminWord = {
   deadline: string;
 };
 
-export type Dataset = "messages" | "pending" | "published" | "words" | "queue" | "rooms";
+export type Dataset = "messages" | "pending" | "edits" | "published" | "words" | "queue" | "rooms";
 
 // Reading Rooms (TODO §21). Pages carry their room and section, never an author.
 export type AdminRoomPage = {
@@ -64,6 +65,8 @@ export type NewWordInput = {
 type AdminDataValue = {
   messages: AdminMessage[];
   pending: AdminPaper[];
+  /** Open change requests on papers (TODO §24), oldest first. */
+  edits: AdminPaperEdit[];
   published: AdminPaper[];
   words: AdminWord[];
   /** Waiting proposals in fair order, with rounds and no proposer identity. */
@@ -87,6 +90,7 @@ type AdminDataValue = {
   decideRoomPage: (id: string, status: "approved" | "rejected") => Promise<void>;
   removeRoom: (id: string) => Promise<void>;
   decideRoomRequest: (id: string, decision: "open" | "decline") => Promise<void>;
+  decideEdit: (id: string, decision: "apply" | "decline") => Promise<void>;
 };
 
 const AdminDataContext = createContext<AdminDataValue | null>(null);
@@ -122,7 +126,7 @@ async function send(url: string, method: string, body: unknown): Promise<string 
   }
 }
 
-const ALL_DATASETS: Dataset[] = ["messages", "pending", "published", "words", "queue", "rooms"];
+const ALL_DATASETS: Dataset[] = ["messages", "pending", "edits", "published", "words", "queue", "rooms"];
 
 export function AdminDataProvider({ children }: { children: React.ReactNode }) {
   const [messages, setMessages] = useState<AdminMessage[]>([]);
@@ -134,6 +138,7 @@ export function AdminDataProvider({ children }: { children: React.ReactNode }) {
     pending: [],
     published: [],
   });
+  const [edits, setEdits] = useState<AdminPaperEdit[]>([]);
   const [words, setWords] = useState<AdminWord[]>([]);
   const [queue, setQueue] = useState<QueuedWord[]>([]);
   // Pending pages, room requests and live rooms arrive together from one route.
@@ -145,6 +150,7 @@ export function AdminDataProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState<Record<Dataset, boolean>>({
     messages: true,
     pending: true,
+    edits: true,
     published: true,
     words: true,
     queue: true,
@@ -161,6 +167,9 @@ export function AdminDataProvider({ children }: { children: React.ReactNode }) {
       } else if (key === "pending") {
         const data = await getJson<{ papers?: AdminPaper[] }>("/api/admin/review");
         setPapers((prev) => ({ ...prev, pending: data.papers ?? [] }));
+      } else if (key === "edits") {
+        const data = await getJson<{ edits?: AdminPaperEdit[] }>("/api/admin/edits");
+        setEdits(data.edits ?? []);
       } else if (key === "published") {
         const data = await getJson<{ papers?: AdminPaper[] }>(
           "/api/admin/review?status=approved"
@@ -289,6 +298,28 @@ export function AdminDataProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
+  const decideEdit = useCallback(
+    async (id: string, decision: "apply" | "decline") => {
+      const failure = await send("/api/admin/edits", "PATCH", { id, decision });
+      // Gone from the list either way: on success it is decided, and on
+      // failure it was most likely decided elsewhere — the refresh below
+      // brings back anything that is still open.
+      setEdits((prev) => prev.filter((e) => e.id !== id));
+      if (failure) {
+        setError(failure);
+        void refresh("edits");
+        return;
+      }
+      // An applied change moves the paper to a new file, so both paper lists
+      // need their links again.
+      if (decision === "apply") {
+        void refresh("pending");
+        void refresh("published");
+      }
+    },
+    [refresh]
+  );
+
   const declineQueued = useCallback(async (id: string) => {
     const failure = await send("/api/admin/word-queue", "PATCH", { id, status: "declined" });
     if (failure) {
@@ -302,6 +333,7 @@ export function AdminDataProvider({ children }: { children: React.ReactNode }) {
     () => ({
       messages,
       pending: papers.pending,
+      edits,
       published: papers.published,
       words,
       queue,
@@ -323,10 +355,12 @@ export function AdminDataProvider({ children }: { children: React.ReactNode }) {
       decideRoomPage,
       removeRoom,
       decideRoomRequest,
+      decideEdit,
     }),
     [
       messages,
       papers,
+      edits,
       words,
       queue,
       rooms,
@@ -343,6 +377,7 @@ export function AdminDataProvider({ children }: { children: React.ReactNode }) {
       decideRoomPage,
       removeRoom,
       decideRoomRequest,
+      decideEdit,
     ]
   );
 

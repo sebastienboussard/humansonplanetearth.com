@@ -1,5 +1,6 @@
 /**
- * Sweep storage objects that no `papers` row references (TODO §7).
+ * Sweep storage objects that no `papers` row or pending change request
+ * references (TODO §7, §24).
  *
  * The mirror image of cleanup-rejected-pdfs.mjs: that script walks database
  * rows and asks storage about each one, so a file with no row is invisible to
@@ -44,21 +45,34 @@ const admin = createClient(url, key);
  * Every path any row claims, whatever its status. A rejected row keeps its
  * pdf_url after the file is deleted — harmless here, since a path that is in
  * the set simply never becomes a candidate.
+ *
+ * A change request's replacement PDF (TODO §24) is claimed by no paper until
+ * it is applied, so pending requests count too. Only pending ones: an applied
+ * request's file is the paper's own pdf_url by then, and a declined one's file
+ * was meant to go. A failed read exits rather than guessing — not knowing
+ * what is claimed must never turn into deleting it.
  */
-async function referencedPaths() {
+async function claimedBy(table, column, label, filter) {
   const paths = new Set();
   for (let from = 0; ; from += PAGE) {
-    const { data, error } = await admin
-      .from("papers")
-      .select("pdf_url")
-      .range(from, from + PAGE - 1);
+    let query = admin.from(table).select(column);
+    if (filter) query = filter(query);
+    const { data, error } = await query.range(from, from + PAGE - 1);
     if (error) {
-      console.error("Could not list papers:", error.message);
+      console.error(`Could not list ${label}:`, error.message);
       process.exit(1);
     }
-    for (const row of data ?? []) if (row.pdf_url) paths.add(row.pdf_url);
+    for (const row of data ?? []) if (row[column]) paths.add(row[column]);
     if ((data ?? []).length < PAGE) return paths;
   }
+}
+
+async function referencedPaths() {
+  const papers = await claimedBy("papers", "pdf_url", "papers");
+  const changes = await claimedBy("paper_edit_requests", "pdf_path", "change requests", (q) =>
+    q.eq("status", "pending")
+  );
+  return new Set([...papers, ...changes]);
 }
 
 /** One page-through of a single storage prefix. */
@@ -107,7 +121,7 @@ const unreferenced = files.filter((f) => !referenced.has(f.path));
 const orphans = unreferenced.filter((f) => new Date(f.createdAt).getTime() < cutoff);
 const tooYoung = unreferenced.length - orphans.length;
 
-console.log(`${files.length} stored file(s), ${referenced.size} referenced by a paper row.`);
+console.log(`${files.length} stored file(s), ${referenced.size} referenced by a paper or a pending change.`);
 
 if (tooYoung > 0) {
   console.log(`${tooYoung} unreferenced file(s) newer than ${GRACE_DAYS} days — leaving alone.`);

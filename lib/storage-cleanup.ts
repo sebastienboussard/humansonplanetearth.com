@@ -4,8 +4,8 @@
  * Two callers with opposite hazards:
  *   - the review route, where the row has already changed and the file should
  *     follow (`removeStoredPdf`)
- *   - the submit routes, where the file landed but the row may not have
- *     (`discardOrphanedUpload`)
+ *   - the submit routes and the change-request route (TODO §24), where the file
+ *     landed but the row may not have (`discardOrphanedUpload`)
  */
 import { getAdminClient } from "@/lib/supabase";
 
@@ -35,14 +35,20 @@ export async function removeStoredPdf(path: string) {
  * path. Anything else — a row found, or a lookup that itself failed — leaves
  * the file for `scripts/cleanup-orphaned-pdfs.mjs` to sweep later.
  *
+ * `claimedBy` names the row that should have claimed the file: a paper by
+ * default, or a change request, whose replacement PDF no paper points at yet.
+ *
  * Never throws: cleanup must not change what the caller returns.
  */
-export async function discardOrphanedUpload(path: string) {
+export async function discardOrphanedUpload(
+  path: string,
+  claimedBy: { table: string; column: string } = { table: "papers", column: "pdf_url" }
+) {
   try {
     const { data, error } = await getAdminClient()
-      .from("papers")
+      .from(claimedBy.table)
       .select("id")
-      .eq("pdf_url", path)
+      .eq(claimedBy.column, path)
       .limit(1);
 
     if (error) {

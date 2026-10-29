@@ -4,6 +4,7 @@ import { useSyncExternalStore } from "react";
 import { AdminDataProvider, useAdminData } from "./AdminData";
 import MessagesInbox from "./MessagesInbox";
 import ReviewQueue from "./ReviewQueue";
+import ChangeRequests from "./ChangeRequests";
 import PublishedPapers from "./PublishedPapers";
 import WordsPanel from "./WordsPanel";
 import RoomsPanel from "./RoomsPanel";
@@ -50,7 +51,7 @@ function Badge({ count }: { count: number }) {
 }
 
 function Tabs() {
-  const { pending, unread, error, dismissError, queue, roomPages, roomRequests } = useAdminData();
+  const { pending, edits, unread, error, dismissError, queue, roomPages, roomRequests } = useAdminData();
   const active = useSyncExternalStore(subscribeToHash, tabFromHash, () => "messages");
 
   function select(tab: TabId) {
@@ -62,7 +63,7 @@ function Tabs() {
 
   const badges: Partial<Record<TabId, number>> = {
     messages: unread,
-    pending: pending.length,
+    pending: pending.length + edits.length,
     words: queue.length,
     rooms: roomPages.length + roomRequests.length,
   };
@@ -120,6 +121,7 @@ function Tabs() {
         <MessagesInbox />
       </div>
       <div id="panel-pending" role="tabpanel" hidden={active !== "pending"}>
+        <ChangeRequests />
         <ReviewQueue />
       </div>
       <div id="panel-published" role="tabpanel" hidden={active !== "published"}>
