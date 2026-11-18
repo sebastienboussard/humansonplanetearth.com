@@ -133,6 +133,28 @@ All notable changes to this project are documented here.
   deletion keep their full page load on purpose, since that is what clears
   the session from memory, and say why in a comment.
 
+### Changed
+- **Pages in a Reading Room can be told apart and moved between** (`TODO.md`
+  §21). Once a part had a few pages, they ran together: every page is signed
+  the same, titles are optional, and each one trailed its margins in boxes
+  that looked more like pages than the pages did. Now:
+  - the room page is a table of contents, one row per part with its page
+    count, linking to that part. The parts no longer open in place, so a
+    part is read in one place only, and the room page still carries no page
+    text;
+  - a part with two or more pages opens with a numbered list of them, each
+    line its title, else where its quote is from, else how it starts
+    (`pageHandle` in `lib/room-data.ts`), with its date and margin count;
+  - each page is its own card, "Page 3 of 7" with its date, ending in links
+    to the list and the next page (`#page-3`);
+  - margins fold behind their count and load only when opened, drawn as
+    notes on a rule rather than as cards. A part with 20 pages used to make
+    20 margin requests on load; it now makes none (`marginCounts`);
+  - after sending a page: "Write another", and a link back to the room.
+
+  `GET /api/rooms/pages` is gone, along with its tests: the room page's
+  accordion was its only caller.
+
 ## 2026-10-26
 
 Released to production through the new deploy workflow, run

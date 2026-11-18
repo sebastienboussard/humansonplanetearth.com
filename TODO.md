@@ -25,7 +25,7 @@ sit are correct — those sections are done, and live in `CHANGELOG.md` and
 
 New work gets the next free number before `## Housekeeping`.
 
-Last swept 2026-10-28 (§24: change requests on papers). Before that, 2026-10-27 (§21: room requests). Before that, 2026-08-30: the lint work committed and pushed (`8dd7024`), the 12
+Last swept 2026-11-17 (§21: pages in a room numbered and listed, margins folded). Before that, 2026-10-28 (§24: change requests on papers). Before that, 2026-10-27 (§21: room requests). Before that, 2026-08-30: the lint work committed and pushed (`8dd7024`), the 12
 remote branches deleted, and this file split — 812 lines down to open work only,
 with the reasoning moved to `DECISIONS.md` rather than deleted.
 
@@ -586,7 +586,8 @@ Its build:
   - write a page with a quote and check it is pending; approve it in admin
     and check it shows
   - add a margin and a reply
-  - check every section is closed on load, with no page text in view-source
+  - check the room page lists the parts with no page text in view-source,
+    and that a part with several pages opens with a numbered list of them
   - remove the room and check it 404s
   - try a 4th room within 24h and check it is refused
   - add links when opening a room, and check they show under "Where to
@@ -596,6 +597,11 @@ Its build:
   - signed out, ask for a room with an email; check it is hidden at its
     address, shows under "Rooms asked for" in admin, and that opening it
     makes it live and sends one email. Ask for another and decline it
+2026-11-17: Seb found pages hard to tell apart and move between once a part
+had a few. The room page is now a table of contents, not inline accordions,
+and each part opens with a numbered list of its pages, with margins folded
+behind a count. `CHANGELOG.md` has the details.
+
 - [ ] **Two real sessions** creating a 4th room at once must land exactly
       one. The advisory lock is for this, and PGlite has one connection
 

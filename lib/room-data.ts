@@ -70,6 +70,40 @@ export async function pageCounts(sectionIds: string[]): Promise<Record<string, n
   return counts;
 }
 
+/** Margin counts per page: ids only, so margins load only when opened. */
+export async function marginCounts(pageIds: string[]): Promise<Record<string, number>> {
+  if (pageIds.length === 0) return {};
+  const { data } = await supabase.from("room_margins").select("page_id").in("page_id", pageIds);
+  const counts: Record<string, number> = {};
+  for (const row of (data ?? []) as { page_id: string }[]) {
+    counts[row.page_id] = (counts[row.page_id] ?? 0) + 1;
+  }
+  return counts;
+}
+
+/**
+ * A line that tells one page from another in a section's list, since every
+ * page is signed the same and the title is optional: the title, else where
+ * its quote is from and how it starts, else how the page starts.
+ */
+export function pageHandle(page: Pick<RoomPageRow, "title" | "body" | "quote" | "locator">): string {
+  if (page.title?.trim()) return page.title.trim();
+  if (page.quote?.trim()) {
+    const quote = `“${clip(page.quote, 50)}”`;
+    return page.locator?.trim() ? `${page.locator.trim()} — ${quote}` : quote;
+  }
+  return clip(page.body, 70);
+}
+
+/** Whitespace collapsed, cut on a word near `max`, with an ellipsis if cut. */
+function clip(text: string, max: number): string {
+  const flat = text.replace(/\s+/g, " ").trim();
+  if (flat.length <= max) return flat;
+  const cut = flat.slice(0, max);
+  const space = cut.lastIndexOf(" ");
+  return `${(space > max / 2 ? cut.slice(0, space) : cut).replace(/[\s.,;:!?—–-]+$/, "")}…`;
+}
+
 export async function sectionPages(sectionId: string): Promise<RoomPageRow[]> {
   const { data } = await supabase
     .from("room_pages")

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { LIMITS } from "@/lib/rooms";
 
 // Write a page about one section (TODO §21). No account needed, Seb's call.
@@ -15,7 +16,17 @@ const field = {
   outline: "none",
 } as const;
 
-export default function PageForm({ sectionId, sectionLabel }: { sectionId: string; sectionLabel: string }) {
+export default function PageForm({
+  sectionId,
+  sectionLabel,
+  roomHref,
+  roomTitle,
+}: {
+  sectionId: string;
+  sectionLabel: string;
+  roomHref: string;
+  roomTitle: string;
+}) {
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [quote, setQuote] = useState("");
@@ -23,6 +34,14 @@ export default function PageForm({ sectionId, sectionLabel }: { sectionId: strin
   const [honeypot, setHoneypot] = useState("");
   const [status, setStatus] = useState<"idle" | "sending" | "sent">("idle");
   const [error, setError] = useState("");
+
+  function writeAnother() {
+    setTitle("");
+    setBody("");
+    setQuote("");
+    setLocator("");
+    setStatus("idle");
+  }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -54,6 +73,14 @@ export default function PageForm({ sectionId, sectionLabel }: { sectionId: strin
         <p className="text-lg mb-1" style={{ color: "var(--forest)" }}>Thank you.</p>
         <p className="text-sm italic" style={{ color: "var(--muted)" }}>
           Your page will appear here once it has been read, as Human On Planet Earth.
+        </p>
+        <p className="flex flex-wrap justify-center gap-x-5 gap-y-1 mt-5 text-sm" style={sans}>
+          <button type="button" onClick={writeAnother} className="underline underline-offset-4" style={{ color: "var(--terracotta)" }}>
+            Write another
+          </button>
+          <Link href={roomHref} className="underline underline-offset-4" style={{ color: "var(--muted)" }}>
+            ← {roomTitle}
+          </Link>
         </p>
       </div>
     );

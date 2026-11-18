@@ -14,7 +14,7 @@ vi.mock("@/lib/profile", async () =>
 vi.mock("@/lib/admin-alerts", () => ({ notifyAdminNewRoomPage: vi.fn(async () => {}) }));
 
 import { POST as createRoom } from "@/app/api/rooms/route";
-import { GET as getPages, POST as postPage } from "@/app/api/rooms/pages/route";
+import { POST as postPage } from "@/app/api/rooms/pages/route";
 import { GET as getMargins, POST as postMargin } from "@/app/api/rooms/margins/route";
 import { notifyAdminNewRoomPage } from "@/lib/admin-alerts";
 
@@ -129,25 +129,6 @@ describe("POST /api/rooms", () => {
     const res = await createRoom(jsonRequest(BASE, room));
     expect(res.status).toBe(409);
     expect((await res.json()).error).toMatch(/three rooms/);
-  });
-});
-
-describe("GET /api/rooms/pages", () => {
-  it("needs a section", async () => {
-    holder.current = createMockSupabase();
-    expect((await getPages(getRequest(`${BASE}/pages`))).status).toBe(400);
-  });
-
-  it("returns only approved pages, with no author", async () => {
-    const pages = [{ id: "p1", title: "On debt", body: "…", quote: null, locator: null, submitted_at: "x" }];
-    holder.current = createMockSupabase({ tables: { room_pages: { data: pages } } });
-    const res = await getPages(getRequest(`${BASE}/pages?section=s1`));
-    const body = await res.json();
-    expect(body).toEqual({ pages });
-    expectNoAuthor(body);
-    const q = holder.current.query("room_pages")!;
-    expect(q.eq).toHaveBeenCalledWith("status", "approved");
-    expect(q.select.mock.calls[0][0]).not.toMatch(/author/);
   });
 });
 

@@ -1,8 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { describeWork, getRoom, pageCounts, whereToFind } from "@/lib/room-data";
+import { describeWork, getRoom, pageCounts, sectionHref, whereToFind } from "@/lib/room-data";
 import { coverUrl } from "@/lib/open-library";
-import RoomSections from "../RoomSections";
 
 export const revalidate = 60;
 
@@ -71,13 +70,31 @@ export default async function RoomPage({ params }: { params: Promise<{ slug: str
         </div>
       )}
 
+      {/* A table of contents: labels and counts only, never page text, so
+          nothing ahead of a reader catches their eye (TODO §21). Each part is
+          read on its own page, where it is the reader's choice to open it. */}
       <p className="text-xs mb-4" style={{ ...sans, color: "var(--muted)" }}>
-        Every part starts closed, so nothing ahead of where you are can catch your eye. Open the one you&apos;ve reached.
+        Nothing from a part shows until you open it, so nothing ahead of where you are can catch your eye. Open the one you&apos;ve reached.
       </p>
-      <RoomSections
-        slug={room.slug}
-        sections={sections.map((s) => ({ ...s, count: counts[s.id] ?? 0 }))}
-      />
+      <ol className="space-y-2">
+        {sections.map((section) => {
+          const count = counts[section.id] ?? 0;
+          return (
+            <li key={section.id}>
+              <Link
+                href={sectionHref(room.slug, section)}
+                className="flex items-baseline justify-between gap-4 px-5 py-4 rounded-sm transition-opacity hover:opacity-80"
+                style={{ backgroundColor: "var(--card)", border: "1px solid var(--border)" }}
+              >
+                <span style={{ color: section.kind === "whole" ? "var(--terracotta)" : "var(--forest)" }}>{section.label}</span>
+                <span className="text-xs shrink-0" style={{ ...sans, color: "var(--muted)" }}>
+                  {count === 0 ? "Nothing yet" : `${count} ${count === 1 ? "page" : "pages"}`} →
+                </span>
+              </Link>
+            </li>
+          );
+        })}
+      </ol>
 
       {room.ol_work_key && (
         <p className="text-xs mt-12" style={{ ...sans, color: "var(--muted)" }}>

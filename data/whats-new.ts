@@ -30,6 +30,13 @@ export type WhatsNewEntry = {
 
 export const WHATS_NEW: WhatsNewEntry[] = [
   {
+    date: "2026-11-17",
+    title: "Easier reading in Reading Rooms",
+    blurb:
+      "Each part of a room now opens with a numbered list of its pages, so you can see what's there and jump to one. Every page has its own card and a link to the next, and margins fold away until you open them.",
+    href: "/rooms",
+  },
+  {
     date: "2026-10-28",
     title: "Change a paper you sent",
     blurb:
@@ -56,12 +63,5 @@ export const WHATS_NEW: WhatsNewEntry[] = [
     blurb:
       "The sign-in email now has a code as well as a link. Asked for it on your laptop but opened the email on your phone? Type the code into the page you started on and you're in.",
     href: "/account",
-  },
-  {
-    date: "2026-09-03",
-    title: "A new word now points at the month before",
-    blurb:
-      "In the first days of a month there is nothing published yet. The page no longer stops at \u201cbe the first\u201d \u2014 it links you to what people made for last month's word.",
-    href: "/words",
   },
 ];
