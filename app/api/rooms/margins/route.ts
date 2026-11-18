@@ -29,14 +29,14 @@ export async function GET(req: NextRequest) {
     .eq("page_id", page)
     .order("created_at", { ascending: true });
 
-  if (error) return NextResponse.json({ error: "Could not load margins." }, { status: 500 });
+  if (error) return NextResponse.json({ error: "Could not load comments." }, { status: 500 });
   return NextResponse.json({ margins: data ?? [] });
 }
 
 export async function POST(req: NextRequest) {
   const limit = await rateLimit(`room-margin:${clientIp(req)}`, MAX_MARGINS, WINDOW_SECONDS);
   if (!limit.allowed) {
-    return tooManyRequests(limit.retryAfter, "You've written several margins already. Please try again later.");
+    return tooManyRequests(limit.retryAfter, "You've written several comments already. Please try again later.");
   }
 
   let payload: Record<string, unknown>;
@@ -66,7 +66,7 @@ export async function POST(req: NextRequest) {
   const roomStatus = (page as { room_sections?: { rooms?: { status: string } | null } | null } | null)
     ?.room_sections?.rooms?.status;
   if (!page || (page as { status: string }).status !== "approved" || roomStatus !== "live") {
-    return NextResponse.json({ error: "That page isn't open for margins." }, { status: 404 });
+    return NextResponse.json({ error: "That page isn't open for comments." }, { status: 404 });
   }
 
   let parentId: string | null = null;
@@ -76,9 +76,9 @@ export async function POST(req: NextRequest) {
       .select("id, page_id, parent_id")
       .eq("id", parentRequested)
       .maybeSingle();
-    if (!parent) return NextResponse.json({ error: "That margin no longer exists." }, { status: 400 });
+    if (!parent) return NextResponse.json({ error: "That comment no longer exists." }, { status: 400 });
     if (parent.page_id !== pageId) {
-      return NextResponse.json({ error: "That margin belongs to a different page." }, { status: 400 });
+      return NextResponse.json({ error: "That comment belongs to a different page." }, { status: 400 });
     }
     parentId = parent.parent_id ?? parent.id;
   }
@@ -90,7 +90,7 @@ export async function POST(req: NextRequest) {
     .single();
   if (error || !margin) {
     console.error("Margin insert failed:", error?.message);
-    return NextResponse.json({ error: "Could not save your margin. Please try again." }, { status: 500 });
+    return NextResponse.json({ error: "Could not save your comment. Please try again." }, { status: 500 });
   }
 
   // Optional, private, and never allowed to fail the margin.

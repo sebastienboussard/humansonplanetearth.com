@@ -61,7 +61,7 @@ export default function Margins({ pageId, count: initialCount }: { pageId: strin
       body: JSON.stringify({ pageId, parentId: parentId ?? null, body }),
     });
     const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(data.error ?? "Could not save your margin.");
+    if (!res.ok) throw new Error(data.error ?? "Could not save your comment.");
     setLoaded((prev) => ({ state: "done", margins: [...(prev?.state === "done" ? prev.margins : []), data.margin] }));
     setCount((n) => n + 1);
     setReplyTo(null);
@@ -69,7 +69,7 @@ export default function Margins({ pageId, count: initialCount }: { pageId: strin
   }
 
   const threaded = loaded?.state === "done" ? buildTree(loaded.margins, (m) => m.parent_id) : [];
-  const label = `${count} ${count === 1 ? "margin" : "margins"}`;
+  const label = `${count} ${count === 1 ? "comment" : "comments"}`;
 
   return (
     <div className="mt-5 pt-4 text-xs" style={{ ...sans, borderTop: "1px solid var(--border)", color: "var(--muted)" }}>
@@ -82,9 +82,9 @@ export default function Margins({ pageId, count: initialCount }: { pageId: strin
       {open && loaded && (
         <div className="mt-3">
           {loaded.state === "loading" ? (
-            <p className="italic">Loading margins…</p>
+            <p className="italic">Loading comments…</p>
           ) : loaded.state === "failed" ? (
-            <p className="italic">Couldn&rsquo;t load margins. Close and open again to retry.</p>
+            <p className="italic">Couldn&rsquo;t load comments. Close and open again to retry.</p>
           ) : (
             threaded.length > 0 && (
               <ul className="space-y-3">
@@ -134,13 +134,13 @@ export default function Margins({ pageId, count: initialCount }: { pageId: strin
         {writing ? (
           <CommentForm
             onSubmit={(body) => post(body)}
-            placeholder="Write in the margin…"
-            buttonLabel="Add margin"
+            placeholder="Write a comment…"
+            buttonLabel="Add comment"
             onCancel={() => setWriting(false)}
           />
         ) : (
           <button onClick={startWriting} className="underline underline-offset-2" style={{ color: "var(--terracotta)" }}>
-            Write in the margin
+            Write a comment
           </button>
         )}
       </div>

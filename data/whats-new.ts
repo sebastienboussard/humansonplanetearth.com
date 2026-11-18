@@ -33,7 +33,7 @@ export const WHATS_NEW: WhatsNewEntry[] = [
     date: "2026-11-17",
     title: "Easier reading in Reading Rooms",
     blurb:
-      "Each part of a room now opens with a numbered list of its pages, so you can see what's there and jump to one. Every page has its own card and a link to the next, and margins fold away until you open them.",
+      "Each part of a room now opens with a numbered list of its pages, so you can see what's there and jump to one. Every page has its own card and a link to the next, and comments (once called margins) fold away until you open them.",
     href: "/rooms",
   },
   {

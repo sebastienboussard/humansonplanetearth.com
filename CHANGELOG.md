@@ -134,6 +134,10 @@ All notable changes to this project are documented here.
   the session from memory, and say why in a comment.
 
 ### Changed
+- **Margins are now called comments** (`TODO.md` §21). Only the words a
+  reader sees changed: the fold ("3 comments"), "Write a comment", the counts
+  in a part's page list, and the API's error messages. The `room_margins`
+  table, `/api/rooms/margins` and the code keep the old name, so no migration.
 - **Pages in a Reading Room can be told apart and moved between** (`TODO.md`
   §21). Once a part had a few pages, they ran together: every page is signed
   the same, titles are optional, and each one trailed its margins in boxes

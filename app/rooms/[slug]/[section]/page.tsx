@@ -41,7 +41,7 @@ export default async function SectionPage({ params }: { params: Promise<{ slug: 
       <p className="text-xs mb-8 flex flex-wrap gap-x-4" style={{ ...sans, color: "var(--muted)" }}>
         {pages.length > 0 && (
           <span>
-            {pages.length} {pages.length === 1 ? "page" : "pages"} · {marginTotal} {marginTotal === 1 ? "margin" : "margins"}
+            {pages.length} {pages.length === 1 ? "page" : "pages"} · {marginTotal} {marginTotal === 1 ? "comment" : "comments"}
           </span>
         )}
         <a href="#write" className="underline underline-offset-4" style={{ color: "var(--terracotta)" }}>
@@ -67,7 +67,7 @@ export default async function SectionPage({ params }: { params: Promise<{ slug: 
                         <span className="flex-1 min-w-0 truncate" style={{ color: "var(--forest)" }}>{pageHandle(page)}</span>
                         <span className="shrink-0 text-xs" style={{ color: "var(--muted)" }}>
                           {new Date(page.submitted_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                          {count > 0 && ` · ${count} ${count === 1 ? "margin" : "margins"}`}
+                          {count > 0 && ` · ${count} ${count === 1 ? "comment" : "comments"}`}
                         </span>
                       </a>
                     </li>
